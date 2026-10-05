@@ -6,9 +6,9 @@
   "scripts": {
     "dev": "tsx BackEnd/server.ts",
     "build": "vite build --config FrontEnd/vite.config.ts && esbuild BackEnd/server.ts --bundle --platform=node --format=cjs --packages=external --sourcemap --outfile=dist/server.cjs",
-    "start": "node dist/server.cjs",
+    "start": "node server.js",
     "preview": "vite preview --config FrontEnd/vite.config.ts",
-    "clean": "rm -rf dist server.js",
+    "clean": "node -e \"require('node:fs').rmSync('dist',{recursive:true,force:true})\"",
     "lint": "tsc --noEmit -p FrontEnd/tsconfig.json && tsc --noEmit -p BackEnd/tsconfig.json"
   },
   "dependencies": {
