@@ -25,6 +25,7 @@ import { User } from '../../types';
 import { api } from '../../services/api';
 import { useToast } from '../../components/ui/Toast';
 import { useAuth } from '../../context/AuthContext';
+import { isProtectedUser } from '../../utils/protectedUsers';
 
 interface UsersListPageProps {
   initialSearch?: string;
@@ -285,7 +286,7 @@ export const UsersListPage: React.FC<UsersListPageProps> = ({
                               setIsFormOpen(true);
                             },
                           },
-                          ...(currentUser?.role === 'Admin' && u.id !== currentUser.id
+                          ...(currentUser?.role === 'Admin' && u.id !== currentUser.id && !isProtectedUser(u)
                             ? [
                                 {
                                   label: 'Delete User',

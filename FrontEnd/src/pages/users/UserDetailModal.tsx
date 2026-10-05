@@ -5,6 +5,7 @@ import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
 import { Avatar } from '../../components/ui/Avatar';
 import { User } from '../../types';
+import { isProtectedUser } from '../../utils/protectedUsers';
 
 interface UserDetailModalProps {
   user: User | null;
@@ -102,17 +103,19 @@ export const UserDetailModal: React.FC<UserDetailModalProps> = ({
 
         {/* Footer Actions */}
         <div className="flex items-center justify-end gap-3 pt-2">
-          <Button
-            variant="danger"
-            size="sm"
-            onClick={() => {
-              onClose();
-              onDelete(user);
-            }}
-            leftIcon={<Trash2 className="w-4 h-4" />}
-          >
-            Delete User
-          </Button>
+          {!isProtectedUser(user) && (
+            <Button
+              variant="danger"
+              size="sm"
+              onClick={() => {
+                onClose();
+                onDelete(user);
+              }}
+              leftIcon={<Trash2 className="w-4 h-4" />}
+            >
+              Delete User
+            </Button>
+          )}
           <Button
             variant="accent"
             size="sm"

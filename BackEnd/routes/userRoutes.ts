@@ -60,11 +60,15 @@ userRouter.delete('/users/:id', authMiddleware, (req: AuthenticatedRequest, res:
   if (req.user?.role !== 'Admin') {
     return res.status(403).json({ error: 'Forbidden: Admin access required.' });
   }
-  const deleted = db.deleteUser(req.params.id);
-  if (!deleted) {
-    return res.status(404).json({ error: 'User not found' });
+  try {
+    const deleted = db.deleteUser(req.params.id);
+    if (!deleted) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    return res.json({ message: 'User deleted successfully' });
+  } catch (err: any) {
+    return res.status(400).json({ error: err.message || 'Failed to delete user' });
   }
-  return res.json({ message: 'User deleted successfully' });
 });
 
 // GET /api/profile

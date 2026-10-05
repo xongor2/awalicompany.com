@@ -108,9 +108,18 @@ interface DatabaseSchema {
   agencies?: Agency[];
   roles?: RoleDefinition[];
   sessions: Session[];
+  protectedUserIds?: string[];
+  migrations?: {
+    demoDataCleanupOctober2026?: boolean;
+  };
 }
 
 const DB_FILE = path.join(process.cwd(), 'DataBase', 'awali_database.json');
+
+const PROTECTED_USER_EMAILS = new Set([
+  'awalicompany2020@gmail.com',
+  'halsan252@gmail.com'
+]);
 
 const NATURE_PROFILE_IMAGES = [
   '/images/avatars/nature-tree.png',
@@ -835,8 +844,47 @@ class Database {
       this.save();
     }
 
-    this.ensureNatureProfileImages();
     this.ensureConfiguredAdmin();
+    this.ensureProtectedUsers();
+    this.runDemoDataCleanup();
+    this.ensureNatureProfileImages();
+  }
+
+  private isProtectedUser(user: User): boolean {
+    return PROTECTED_USER_EMAILS.has(user.email.trim().toLowerCase())
+      || (this.data.protectedUserIds || []).includes(user.id);
+  }
+
+  private ensureProtectedUsers(): void {
+    const protectedIds = new Set(this.data.protectedUserIds || []);
+    const initialSize = protectedIds.size;
+
+    this.data.users.forEach(user => {
+      if (PROTECTED_USER_EMAILS.has(user.email.trim().toLowerCase())) {
+        protectedIds.add(user.id);
+      }
+    });
+
+    this.data.protectedUserIds = Array.from(protectedIds);
+    if (protectedIds.size !== initialSize) this.save();
+  }
+
+  /**
+   * Removes the original demonstration records exactly once. The migration
+   * flag prevents any property, service, or user created later from being
+   * removed by a future server restart or deployment.
+   */
+  private runDemoDataCleanup(): void {
+    this.data.migrations ||= {};
+    if (this.data.migrations.demoDataCleanupOctober2026) return;
+
+    this.data.users = this.data.users.filter(user => this.isProtectedUser(user));
+    const retainedUserIds = new Set(this.data.users.map(user => user.id));
+    this.data.sessions = this.data.sessions.filter(session => retainedUserIds.has(session.userId));
+    this.data.properties = [];
+    this.data.services = [];
+    this.data.migrations.demoDataCleanupOctober2026 = true;
+    this.save();
   }
 
   private ensureNatureProfileImages(): void {
@@ -1004,6 +1052,12 @@ class Database {
   }
 
   public deleteUser(id: string): boolean {
+    const user = this.data.users.find(candidate => candidate.id === id);
+    if (!user) return false;
+    if (this.isProtectedUser(user)) {
+      throw new Error('This primary administrator account is protected and cannot be deleted.');
+    }
+
     const initialLength = this.data.users.length;
     this.data.users = this.data.users.filter(u => u.id !== id);
     this.data.sessions = this.data.sessions.filter(s => s.userId !== id);

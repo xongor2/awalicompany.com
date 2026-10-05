@@ -33,6 +33,7 @@ import { Property, User, DashboardStats } from '../../types';
 import { api } from '../../services/api';
 import { useToast } from '../../components/ui/Toast';
 import { NavSection } from '../../components/layout/Sidebar';
+import { isProtectedUser } from '../../utils/protectedUsers';
 
 interface DashboardPageProps {
   onNavigate: (section: NavSection) => void;
@@ -463,17 +464,19 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                             icon: <Edit2 className="w-4 h-4 text-[#FF7817]" />,
                             onClick: () => onEditUser(u),
                           },
-                          {
-                            label: 'Delete User',
-                            icon: <Trash2 className="w-4 h-4 text-rose-500" />,
-                            onClick: () =>
-                              setDeleteTarget({
-                                type: 'user',
-                                id: u.id,
-                                title: u.name,
-                              }),
-                            variant: 'danger',
-                          },
+                          ...(!isProtectedUser(u)
+                            ? [{
+                                label: 'Delete User',
+                                icon: <Trash2 className="w-4 h-4 text-rose-500" />,
+                                onClick: () =>
+                                  setDeleteTarget({
+                                    type: 'user',
+                                    id: u.id,
+                                    title: u.name,
+                                  }),
+                                variant: 'danger' as const,
+                              }]
+                            : []),
                         ]}
                       />
                     </div>
