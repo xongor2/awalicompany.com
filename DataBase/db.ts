@@ -112,6 +112,25 @@ interface DatabaseSchema {
 
 const DB_FILE = path.join(process.cwd(), 'DataBase', 'awali_database.json');
 
+const NATURE_PROFILE_IMAGES = [
+  '/images/avatars/nature-tree.png',
+  '/images/avatars/nature-orange-flower.png',
+  '/images/avatars/nature-ocean.png',
+  '/images/avatars/nature-forest.png',
+  '/images/avatars/nature-white-flowers.png',
+  '/images/avatars/nature-beach.png'
+];
+
+const LEGACY_PEOPLE_AVATAR_IDS = [
+  'photo-1534528741775-53994a69daeb',
+  'photo-1494790108377-be9c29b29330',
+  'photo-1507003211169-0a1dd7228f2d',
+  'photo-1573496359142-b8d87734a5a2',
+  'photo-1500648767791-00dcc994a43e',
+  'photo-1580489944761-15a19d654956',
+  'photo-1535713875002-d1d0cf377fde'
+];
+
 // Password security functions
 export function hashPassword(password: string, salt?: string): { hash: string; salt: string } {
   const finalSalt = salt || crypto.randomBytes(16).toString('hex');
@@ -145,7 +164,7 @@ function getInitialSeedData(): DatabaseSchema {
         password_salt: adminSalt,
         role: 'Admin',
         status: 'Active',
-        profile_image: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80',
+        profile_image: NATURE_PROFILE_IMAGES[0],
         phone: '+92 300 1234567',
         created_at: '2024-03-01T08:00:00Z',
         updated_at: '2024-03-01T08:00:00Z'
@@ -158,7 +177,7 @@ function getInitialSeedData(): DatabaseSchema {
         password_salt: agentSalt,
         role: 'Agent',
         status: 'Active',
-        profile_image: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&auto=format&fit=crop&q=80',
+        profile_image: NATURE_PROFILE_IMAGES[1],
         phone: '+92 301 9876543',
         created_at: '2024-03-10T10:30:00Z',
         updated_at: '2024-03-10T10:30:00Z'
@@ -171,7 +190,7 @@ function getInitialSeedData(): DatabaseSchema {
         password_salt: agentSalt,
         role: 'Client',
         status: 'Active',
-        profile_image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&auto=format&fit=crop&q=80',
+        profile_image: NATURE_PROFILE_IMAGES[2],
         phone: '+92 321 4455667',
         created_at: '2024-03-08T14:15:00Z',
         updated_at: '2024-03-08T14:15:00Z'
@@ -184,7 +203,7 @@ function getInitialSeedData(): DatabaseSchema {
         password_salt: agentSalt,
         role: 'Agent',
         status: 'Pending',
-        profile_image: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=200&auto=format&fit=crop&q=80',
+        profile_image: NATURE_PROFILE_IMAGES[3],
         phone: '+92 333 7788990',
         created_at: '2024-03-06T11:00:00Z',
         updated_at: '2024-03-06T11:00:00Z'
@@ -197,7 +216,7 @@ function getInitialSeedData(): DatabaseSchema {
         password_salt: agentSalt,
         role: 'Client',
         status: 'Active',
-        profile_image: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&auto=format&fit=crop&q=80',
+        profile_image: NATURE_PROFILE_IMAGES[4],
         phone: '+92 345 1122334',
         created_at: '2024-03-04T09:20:00Z',
         updated_at: '2024-03-04T09:20:00Z'
@@ -210,7 +229,7 @@ function getInitialSeedData(): DatabaseSchema {
         password_salt: adminSalt,
         role: 'Admin',
         status: 'Active',
-        profile_image: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=200&auto=format&fit=crop&q=80',
+        profile_image: NATURE_PROFILE_IMAGES[5],
         phone: '+92 312 9988776',
         created_at: '2024-03-01T15:45:00Z',
         updated_at: '2024-03-01T15:45:00Z'
@@ -816,7 +835,21 @@ class Database {
       this.save();
     }
 
+    this.ensureNatureProfileImages();
     this.ensureConfiguredAdmin();
+  }
+
+  private ensureNatureProfileImages(): void {
+    let changed = false;
+    this.data.users.forEach((user, index) => {
+      const isLegacyPeopleAvatar = LEGACY_PEOPLE_AVATAR_IDS.some(id => user.profile_image?.includes(id));
+      if (!user.profile_image || isLegacyPeopleAvatar) {
+        user.profile_image = NATURE_PROFILE_IMAGES[index % NATURE_PROFILE_IMAGES.length];
+        user.updated_at = new Date().toISOString();
+        changed = true;
+      }
+    });
+    if (changed) this.save();
   }
 
   /**
@@ -858,7 +891,7 @@ class Database {
       password_salt: salt,
       role: 'Admin',
       status: 'Active',
-      profile_image: '',
+      profile_image: NATURE_PROFILE_IMAGES[0],
       phone: '',
       created_at: now,
       updated_at: now
@@ -937,7 +970,7 @@ class Database {
       password_salt: salt,
       role: userData.role || 'Client',
       status: userData.status || 'Active',
-      profile_image: userData.profile_image || `https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200&auto=format&fit=crop&q=80`,
+      profile_image: userData.profile_image || NATURE_PROFILE_IMAGES[0],
       phone: userData.phone || '',
       created_at: now,
       updated_at: now

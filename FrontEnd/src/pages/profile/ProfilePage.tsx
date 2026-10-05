@@ -20,14 +20,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import { api } from '../../services/api';
 import { useToast } from '../../components/ui/Toast';
-
-const AVATAR_OPTIONS = [
-  'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80',
-  'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&auto=format&fit=crop&q=80',
-  'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&auto=format&fit=crop&q=80',
-  'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=200&auto=format&fit=crop&q=80',
-  'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&auto=format&fit=crop&q=80',
-];
+import { NATURE_AVATARS } from '../../constants/natureAvatars';
 
 export const ProfilePage: React.FC = () => {
   const { user, refreshUser } = useAuth();
@@ -54,7 +47,7 @@ export const ProfilePage: React.FC = () => {
       setName(user.name);
       setEmail(user.email);
       setPhone(user.phone || '');
-      setProfileImage(user.profile_image || AVATAR_OPTIONS[0]);
+      setProfileImage(user.profile_image || NATURE_AVATARS[0]);
     }
   }, [user]);
 
@@ -213,7 +206,7 @@ export const ProfilePage: React.FC = () => {
               />
               <div className="flex items-center gap-2 mt-2">
                 <span className="text-xs text-[#8A90A2]">Presets:</span>
-                {AVATAR_OPTIONS.map((url, i) => (
+                {NATURE_AVATARS.map((url, i) => (
                   <button
                     key={i}
                     type="button"
@@ -224,7 +217,7 @@ export const ProfilePage: React.FC = () => {
                         : 'border-transparent opacity-70 hover:opacity-100'
                     }`}
                   >
-                    <img src={url} alt={`Preset ${i}`} className="w-full h-full object-cover" />
+                    <img src={url} alt={`Nature preset ${i + 1}`} className="w-full h-full object-cover" />
                   </button>
                 ))}
               </div>

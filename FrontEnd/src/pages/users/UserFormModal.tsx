@@ -6,6 +6,7 @@ import { Button } from '../../components/ui/Button';
 import { User } from '../../types';
 import { api } from '../../services/api';
 import { useToast } from '../../components/ui/Toast';
+import { NATURE_AVATARS } from '../../constants/natureAvatars';
 
 interface UserFormModalProps {
   isOpen: boolean;
@@ -13,14 +14,6 @@ interface UserFormModalProps {
   onSuccess: () => void;
   userToEdit?: User | null;
 }
-
-const AVATAR_PRESETS = [
-  'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80',
-  'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&auto=format&fit=crop&q=80',
-  'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&auto=format&fit=crop&q=80',
-  'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=200&auto=format&fit=crop&q=80',
-  'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&auto=format&fit=crop&q=80',
-];
 
 export const UserFormModal: React.FC<UserFormModalProps> = ({
   isOpen,
@@ -37,7 +30,7 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
   const [role, setRole] = useState<'Admin' | 'Agent' | 'Client'>('Agent');
   const [status, setStatus] = useState<'Active' | 'Pending' | 'Inactive'>('Active');
   const [phone, setPhone] = useState('');
-  const [profileImage, setProfileImage] = useState(AVATAR_PRESETS[0]);
+  const [profileImage, setProfileImage] = useState<string>(NATURE_AVATARS[0]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -49,7 +42,7 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
       setRole(userToEdit.role);
       setStatus(userToEdit.status);
       setPhone(userToEdit.phone || '');
-      setProfileImage(userToEdit.profile_image || AVATAR_PRESETS[0]);
+      setProfileImage(userToEdit.profile_image || NATURE_AVATARS[0]);
     } else {
       setName('');
       setEmail('');
@@ -57,7 +50,7 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
       setRole('Agent');
       setStatus('Active');
       setPhone('+252 61 ');
-      setProfileImage(AVATAR_PRESETS[0]);
+      setProfileImage(NATURE_AVATARS[0]);
     }
     setError(null);
   }, [userToEdit, isOpen]);
@@ -201,9 +194,9 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
               className="w-12 h-12 rounded-full object-cover border border-[#D9DDE8] dark:border-[#252B5C]"
             />
             <div className="flex-1">
-              <p className="text-xs text-[#8A90A2] mb-1.5">Select from sample presets:</p>
+              <p className="text-xs text-[#8A90A2] mb-1.5">Choose a nature preset:</p>
               <div className="flex items-center gap-2">
-                {AVATAR_PRESETS.map((url, i) => (
+                {NATURE_AVATARS.map((url, i) => (
                   <button
                     key={i}
                     type="button"
@@ -214,7 +207,7 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
                         : 'border-transparent opacity-70 hover:opacity-100'
                     }`}
                   >
-                    <img src={url} alt={`Preset ${i}`} className="w-full h-full object-cover" />
+                    <img src={url} alt={`Nature preset ${i + 1}`} className="w-full h-full object-cover" />
                   </button>
                 ))}
               </div>
