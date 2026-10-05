@@ -1394,9 +1394,12 @@ class Database {
     const roles = this.getRoles();
     const index = roles.findIndex(role => role.id === id);
     if (index === -1) return null;
-    if (roles[index].type === 'System') throw new Error('System roles cannot be edited.');
-
-    const nextName = data.name?.trim() || roles[index].name;
+    // System role names are identity keys used by existing user accounts and
+    // authorization checks. Main Admin may edit their descriptions and page
+    // access rules, while the canonical name remains stable.
+    const nextName = roles[index].type === 'System'
+      ? roles[index].name
+      : data.name?.trim() || roles[index].name;
     if (roles.some(role => role.id !== id && role.name.toLowerCase() === nextName.toLowerCase())) {
       throw new Error('A role with this name already exists.');
     }

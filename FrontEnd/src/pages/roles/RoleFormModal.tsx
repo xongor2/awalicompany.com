@@ -70,7 +70,7 @@ export const RoleFormModal: React.FC<RoleFormModalProps> = ({ isOpen, role, onCl
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={role ? 'Edit Custom Role' : 'Create Custom Role'}
+      title={role ? `Edit ${role.type} Role` : 'Create Custom Role'}
       maxWidth="2xl"
     >
       <form onSubmit={handleSubmit} className="space-y-6">
@@ -81,10 +81,10 @@ export const RoleFormModal: React.FC<RoleFormModalProps> = ({ isOpen, role, onCl
           <select
             id="role-type"
             disabled
-            value="Custom Role"
+            value={role ? `${role.type} Role` : 'Custom Role'}
             className="w-full h-12 px-4 rounded-xl border border-[#D9DDE8] bg-[#F8F9FC] text-[#5F667A] dark:border-[#252B5C] dark:bg-[#0B1030] dark:text-[#D9DDE8]"
           >
-            <option>Custom Role</option>
+            <option>{role ? `${role.type} Role` : 'Custom Role'}</option>
           </select>
         </div>
 
@@ -96,10 +96,16 @@ export const RoleFormModal: React.FC<RoleFormModalProps> = ({ isOpen, role, onCl
             id="role-name"
             value={name}
             onChange={event => setName(event.target.value)}
+            readOnly={role?.type === 'System'}
             placeholder="e.g. Property Coordinator"
             autoFocus
-            className="w-full h-12 px-4 rounded-xl border border-[#D9DDE8] bg-white text-[#171A2B] placeholder:text-[#8A90A2] focus:border-[#FF7817] focus:ring-2 focus:ring-[#FF7817]/15 focus:outline-none dark:border-[#252B5C] dark:bg-[#0B1030] dark:text-white"
+            className="w-full h-12 px-4 rounded-xl border border-[#D9DDE8] bg-white text-[#171A2B] placeholder:text-[#8A90A2] focus:border-[#FF7817] focus:ring-2 focus:ring-[#FF7817]/15 focus:outline-none read-only:bg-[#F8F9FC] read-only:text-[#5F667A] dark:border-[#252B5C] dark:bg-[#0B1030] dark:text-white dark:read-only:bg-[#151A46]"
           />
+          {role?.type === 'System' ? (
+            <p className="text-xs text-[#5F667A] dark:text-[#8A90A2]">
+              The system role name stays fixed, while its description and page-access rules can be changed.
+            </p>
+          ) : null}
         </div>
 
         <div className="space-y-2">

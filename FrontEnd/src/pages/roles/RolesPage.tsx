@@ -152,26 +152,24 @@ export const RolesPage: React.FC = () => {
                     </td>
                     <td className="px-4 py-4 font-semibold text-[#171A2B] dark:text-[#D9DDE8]">{role.userCount || 0}</td>
                     <td className="px-6 py-4 text-right">
-                      {role.type === 'Custom' ? (
-                        <ActionMenu actions={[
-                          {
-                            label: 'Edit Role',
-                            icon: <Edit2 className="h-4 w-4 text-[#FF7817]" />,
-                            onClick: () => {
-                              setEditingRole(role);
-                              setIsFormOpen(true);
-                            }
-                          },
-                          {
-                            label: 'Delete Role',
-                            icon: <Trash2 className="h-4 w-4 text-rose-500" />,
-                            onClick: () => setDeletingRole(role),
-                            variant: 'danger'
+                      <ActionMenu actions={[
+                        {
+                          label: 'Edit Role',
+                          icon: <Edit2 className="h-4 w-4 text-[#FF7817]" />,
+                          onClick: () => {
+                            setEditingRole(role);
+                            setIsFormOpen(true);
                           }
-                        ]} />
-                      ) : (
-                        <span className="text-[11px] font-medium text-[#8A90A2]">Protected</span>
-                      )}
+                        },
+                        ...(role.type === 'Custom'
+                          ? [{
+                              label: 'Delete Role',
+                              icon: <Trash2 className="h-4 w-4 text-rose-500" />,
+                              onClick: () => setDeletingRole(role),
+                              variant: 'danger' as const
+                            }]
+                          : [])
+                      ]} />
                     </td>
                   </tr>
                 ))}
