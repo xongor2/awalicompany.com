@@ -1,0 +1,400 @@
+import { User, Property, Service, BlogPost, DashboardStats, Agency } from '../types';
+import { SAMPLE_AGENCIES } from '../data/sampleAgencies';
+
+const API_BASE = '/api';
+
+function getAuthHeaders(): HeadersInit {
+  const token = localStorage.getItem('aw_ali_token');
+  return {
+    'Content-Type': 'application/json',
+    ...(token ? { Authorization: `Bearer ${token}` } : {})
+  };
+}
+
+async function handleResponse<T>(res: Response): Promise<T> {
+  const isJson = res.headers.get('content-type')?.includes('application/json');
+  const data = isJson ? await res.json() : null;
+
+  if (!res.ok) {
+    const errorMsg = data?.error || `Request failed with status ${res.status}`;
+    throw new Error(errorMsg);
+  }
+  return data as T;
+}
+
+export const api = {
+  // Authentication
+  async login(email: string, password: string): Promise<{ token: string; user: User }> {
+    const res = await fetch(`${API_BASE}/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password })
+    });
+    return handleResponse(res);
+  },
+
+  async register(data: { name: string; email: string; password: string; confirmPassword: string; role?: string }): Promise<{ token: string; user: User }> {
+    const res = await fetch(`${API_BASE}/auth/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    return handleResponse(res);
+  },
+
+  async logout(): Promise<void> {
+    try {
+      await fetch(`${API_BASE}/auth/logout`, {
+        method: 'POST',
+        headers: getAuthHeaders()
+      });
+    } finally {
+      localStorage.removeItem('aw_ali_token');
+    }
+  },
+
+  async getMe(): Promise<{ user: User }> {
+    const res = await fetch(`${API_BASE}/auth/me`, {
+      headers: getAuthHeaders()
+    });
+    return handleResponse(res);
+  },
+
+  // Dashboard
+  async getDashboardStats(): Promise<DashboardStats> {
+    const res = await fetch(`${API_BASE}/dashboard/stats`, {
+      headers: getAuthHeaders()
+    });
+    return handleResponse(res);
+  },
+
+  async getRecentProperties(): Promise<Property[]> {
+    const res = await fetch(`${API_BASE}/dashboard/recent-properties`, {
+      headers: getAuthHeaders()
+    });
+    return handleResponse(res);
+  },
+
+  async getRecentUsers(): Promise<User[]> {
+    const res = await fetch(`${API_BASE}/dashboard/recent-users`, {
+      headers: getAuthHeaders()
+    });
+    return handleResponse(res);
+  },
+
+  async getChartData(): Promise<{ month: string; listings: number; sales: number }[]> {
+    const res = await fetch(`${API_BASE}/dashboard/chart`, {
+      headers: getAuthHeaders()
+    });
+    return handleResponse(res);
+  },
+
+  // Properties
+  async getProperties(params?: {
+    search?: string;
+    type?: string;
+    status?: string;
+    location?: string;
+    minPrice?: number;
+    maxPrice?: number;
+  }): Promise<Property[]> {
+    const query = new URLSearchParams();
+    if (params?.search) query.append('search', params.search);
+    if (params?.type && params.type !== 'All') query.append('type', params.type);
+    if (params?.status && params.status !== 'All') query.append('status', params.status);
+    if (params?.location && params.location !== 'All') query.append('location', params.location);
+    if (params?.minPrice) query.append('minPrice', String(params.minPrice));
+    if (params?.maxPrice) query.append('maxPrice', String(params.maxPrice));
+
+    const res = await fetch(`${API_BASE}/properties?${query.toString()}`, {
+      headers: getAuthHeaders()
+    });
+    return handleResponse(res);
+  },
+
+  async getProperty(id: string): Promise<Property> {
+    const res = await fetch(`${API_BASE}/properties/${id}`, {
+      headers: getAuthHeaders()
+    });
+    return handleResponse(res);
+  },
+
+  async createProperty(data: Partial<Property>): Promise<Property> {
+    const res = await fetch(`${API_BASE}/properties`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data)
+    });
+    return handleResponse(res);
+  },
+
+  async updateProperty(id: string, data: Partial<Property>): Promise<Property> {
+    const res = await fetch(`${API_BASE}/properties/${id}`, {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data)
+    });
+    return handleResponse(res);
+  },
+
+  async deleteProperty(id: string): Promise<{ message: string }> {
+    const res = await fetch(`${API_BASE}/properties/${id}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders()
+    });
+    return handleResponse(res);
+  },
+
+  // Services
+  async getServices(params?: { search?: string; category?: string; status?: string }): Promise<Service[]> {
+    const query = new URLSearchParams();
+    if (params?.search) query.append('search', params.search);
+    if (params?.category && params.category !== 'All') query.append('category', params.category);
+    if (params?.status && params.status !== 'All') query.append('status', params.status);
+
+    const res = await fetch(`${API_BASE}/services?${query.toString()}`, {
+      headers: getAuthHeaders()
+    });
+    return handleResponse(res);
+  },
+
+  async getService(id: string): Promise<Service> {
+    const res = await fetch(`${API_BASE}/services/${id}`, {
+      headers: getAuthHeaders()
+    });
+    return handleResponse(res);
+  },
+
+  async createService(data: Partial<Service>): Promise<Service> {
+    const res = await fetch(`${API_BASE}/services`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data)
+    });
+    return handleResponse(res);
+  },
+
+  async updateService(id: string, data: Partial<Service>): Promise<Service> {
+    const res = await fetch(`${API_BASE}/services/${id}`, {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data)
+    });
+    return handleResponse(res);
+  },
+
+  async deleteService(id: string): Promise<{ message: string }> {
+    const res = await fetch(`${API_BASE}/services/${id}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders()
+    });
+    return handleResponse(res);
+  },
+
+  // Blogs
+  async getBlogs(params?: { search?: string; category?: string; status?: string }): Promise<BlogPost[]> {
+    const query = new URLSearchParams();
+    if (params?.search) query.append('search', params.search);
+    if (params?.category && params.category !== 'All') query.append('category', params.category);
+    if (params?.status && params.status !== 'All') query.append('status', params.status);
+
+    const res = await fetch(`${API_BASE}/blogs?${query.toString()}`, {
+      headers: getAuthHeaders()
+    });
+    return handleResponse(res);
+  },
+
+  async getBlog(id: string): Promise<BlogPost> {
+    const res = await fetch(`${API_BASE}/blogs/${id}`, {
+      headers: getAuthHeaders()
+    });
+    return handleResponse(res);
+  },
+
+  async createBlog(data: {
+    title: string;
+    content: string;
+    thumbnail?: string;
+    categories: string[];
+    status: 'Published' | 'Draft';
+    published_date?: string;
+  }): Promise<BlogPost> {
+    const res = await fetch(`${API_BASE}/blogs`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data)
+    });
+    return handleResponse(res);
+  },
+
+  async updateBlog(id: string, data: Partial<BlogPost>): Promise<BlogPost> {
+    const res = await fetch(`${API_BASE}/blogs/${id}`, {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data)
+    });
+    return handleResponse(res);
+  },
+
+  async deleteBlog(id: string): Promise<{ message: string }> {
+    const res = await fetch(`${API_BASE}/blogs/${id}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders()
+    });
+    return handleResponse(res);
+  },
+
+  async getBlogCategories(): Promise<string[]> {
+    const res = await fetch(`${API_BASE}/blogs/categories/all`, {
+      headers: getAuthHeaders()
+    });
+    return handleResponse(res);
+  },
+
+  async createBlogCategory(name: string): Promise<{ category: string; alreadyExisted: boolean }> {
+    const res = await fetch(`${API_BASE}/blogs/categories/add`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ name })
+    });
+    return handleResponse(res);
+  },
+
+  // Users
+  async getUsers(params?: { search?: string; role?: string; status?: string }): Promise<User[]> {
+    const query = new URLSearchParams();
+    if (params?.search) query.append('search', params.search);
+    if (params?.role && params.role !== 'All') query.append('role', params.role);
+    if (params?.status && params.status !== 'All') query.append('status', params.status);
+
+    const res = await fetch(`${API_BASE}/users?${query.toString()}`, {
+      headers: getAuthHeaders()
+    });
+    return handleResponse(res);
+  },
+
+  async getUser(id: string): Promise<User> {
+    const res = await fetch(`${API_BASE}/users/${id}`, {
+      headers: getAuthHeaders()
+    });
+    return handleResponse(res);
+  },
+
+  async createUser(data: Partial<User> & { password: string }): Promise<User> {
+    const res = await fetch(`${API_BASE}/users`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data)
+    });
+    return handleResponse(res);
+  },
+
+  async updateUser(id: string, data: Partial<User>): Promise<User> {
+    const res = await fetch(`${API_BASE}/users/${id}`, {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data)
+    });
+    return handleResponse(res);
+  },
+
+  async deleteUser(id: string): Promise<{ message: string }> {
+    const res = await fetch(`${API_BASE}/users/${id}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders()
+    });
+    return handleResponse(res);
+  },
+
+  // Profile
+  async getProfile(): Promise<User> {
+    const res = await fetch(`${API_BASE}/profile`, {
+      headers: getAuthHeaders()
+    });
+    return handleResponse(res);
+  },
+
+  async updateProfile(data: Partial<User>): Promise<User> {
+    const res = await fetch(`${API_BASE}/profile`, {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data)
+    });
+    return handleResponse(res);
+  },
+
+  async updatePassword(data: { currentPassword: string; newPassword: string; confirmPassword?: string }): Promise<{ message: string }> {
+    const res = await fetch(`${API_BASE}/profile/password`, {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data)
+    });
+    return handleResponse(res);
+  },
+
+  // Agencies
+  async getAgencies(params?: { search?: string; country?: string; city?: string; verified?: string | boolean }): Promise<Agency[]> {
+    try {
+      const query = new URLSearchParams();
+      if (params?.search) query.append('search', params.search);
+      if (params?.country && params.country !== 'All') query.append('country', params.country);
+      if (params?.city && params.city !== 'All') query.append('city', params.city);
+      if (params?.verified !== undefined && params.verified !== 'All') query.append('verified', String(params.verified));
+      const res = await fetch(`${API_BASE}/agencies?${query.toString()}`);
+      if (res.ok) {
+        return await res.json();
+      }
+    } catch {
+      // Fallback to sample data
+    }
+    let result = [...SAMPLE_AGENCIES];
+    if (params?.search) {
+      const q = params.search.toLowerCase();
+      result = result.filter(a =>
+        a.name.toLowerCase().includes(q) ||
+        a.country.toLowerCase().includes(q) ||
+        a.city.toLowerCase().includes(q) ||
+        a.contactName.toLowerCase().includes(q) ||
+        a.email.toLowerCase().includes(q) ||
+        a.address.toLowerCase().includes(q)
+      );
+    }
+    if (params?.country && params.country !== 'All') {
+      result = result.filter(a => a.country.toLowerCase() === params.country!.toLowerCase());
+    }
+    if (params?.city && params.city !== 'All') {
+      result = result.filter(a => a.city.toLowerCase() === params.city!.toLowerCase());
+    }
+    if (params?.verified !== undefined && params?.verified !== 'All') {
+      const isVer = typeof params.verified === 'boolean' ? params.verified : params.verified === 'true';
+      result = result.filter(a => a.verified === isVer);
+    }
+    return result;
+  },
+
+  async createAgency(data: Omit<Agency, 'id' | 'createdAt'>): Promise<Agency> {
+    const res = await fetch(`${API_BASE}/agencies`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data)
+    });
+    return handleResponse(res);
+  },
+
+  async updateAgency(id: string, data: Partial<Agency>): Promise<Agency> {
+    const res = await fetch(`${API_BASE}/agencies/${id}`, {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data)
+    });
+    return handleResponse(res);
+  },
+
+  async deleteAgency(id: string): Promise<{ message: string }> {
+    const res = await fetch(`${API_BASE}/agencies/${id}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders()
+    });
+    return handleResponse(res);
+  }
+};

@@ -1,0 +1,6 @@
+{
+  "name": "AW Ali Company",
+  "description": "Centralized management dashboard for AW Ali Company covering Properties, Services, Blogs, Users, and Profile with authentic brand styling and Light/Dark themes.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
