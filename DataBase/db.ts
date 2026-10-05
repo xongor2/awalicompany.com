@@ -116,6 +116,8 @@ export function verifyPassword(password: string, hash: string, salt: string): bo
 // Initial Seed Data aligned with UI/UX specification figures
 function getInitialSeedData(): DatabaseSchema {
   const bootstrapPassword = process.env.SEED_ADMIN_PASSWORD || crypto.randomBytes(32).toString('hex');
+  const bootstrapEmail = (process.env.SEED_ADMIN_EMAIL || 'ahmed.ali@awali.com').toLowerCase();
+  const bootstrapName = process.env.SEED_ADMIN_NAME || 'Main Admin';
   const adminSalt = crypto.randomBytes(16).toString('hex');
   const adminHash = hashPassword(bootstrapPassword, adminSalt).hash;
 
@@ -126,8 +128,8 @@ function getInitialSeedData(): DatabaseSchema {
     users: [
       {
         id: 'usr-1',
-        name: 'Ahmed Ali',
-        email: 'ahmed.ali@awali.com',
+        name: bootstrapName,
+        email: bootstrapEmail,
         password_hash: adminHash,
         password_salt: adminSalt,
         role: 'Admin',
@@ -769,6 +771,55 @@ class Database {
       this.data = getInitialSeedData();
       this.save();
     }
+
+    this.ensureConfiguredAdmin();
+  }
+
+  /**
+   * Creates the configured production administrator once without committing
+   * credentials to source control. Existing accounts keep their password so
+   * changing it in the profile is not undone by a later restart.
+   */
+  private ensureConfiguredAdmin(): void {
+    const email = process.env.SEED_ADMIN_EMAIL?.trim().toLowerCase();
+    const password = process.env.SEED_ADMIN_PASSWORD;
+
+    if (!email || !password) return;
+
+    const existing = this.data.users.find(user => user.email.toLowerCase() === email);
+    if (existing) {
+      let changed = false;
+      if (existing.role !== 'Admin') {
+        existing.role = 'Admin';
+        changed = true;
+      }
+      if (existing.status !== 'Active') {
+        existing.status = 'Active';
+        changed = true;
+      }
+      if (changed) {
+        existing.updated_at = new Date().toISOString();
+        this.save();
+      }
+      return;
+    }
+
+    const { hash, salt } = hashPassword(password);
+    const now = new Date().toISOString();
+    this.data.users.push({
+      id: `usr-admin-${Date.now()}`,
+      name: process.env.SEED_ADMIN_NAME?.trim() || 'Main Admin',
+      email,
+      password_hash: hash,
+      password_salt: salt,
+      role: 'Admin',
+      status: 'Active',
+      profile_image: '',
+      phone: '',
+      created_at: now,
+      updated_at: now
+    });
+    this.save();
   }
 
   private save(): void {
