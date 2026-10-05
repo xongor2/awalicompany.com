@@ -89,6 +89,16 @@ export interface Session {
   expiresAt: number;
 }
 
+export interface RoleDefinition {
+  id: string;
+  name: string;
+  description: string;
+  type: 'System' | 'Custom';
+  pageAccess: string[];
+  createdAt: string;
+  updatedAt: string;
+}
+
 interface DatabaseSchema {
   users: User[];
   properties: Property[];
@@ -96,6 +106,7 @@ interface DatabaseSchema {
   blogs: BlogPost[];
   categories: string[];
   agencies?: Agency[];
+  roles?: RoleDefinition[];
   sessions: Session[];
 }
 
@@ -739,6 +750,35 @@ function getInitialSeedData(): DatabaseSchema {
         createdAt: '2026-03-12T16:20:00Z'
       }
     ],
+    roles: [
+      {
+        id: 'role-admin',
+        name: 'Admin',
+        description: 'Full access to every management page and configuration area.',
+        type: 'System',
+        pageAccess: ['dashboard', 'properties', 'services', 'agencies', 'blogs', 'users', 'roles', 'profile'],
+        createdAt: '2024-03-01T08:00:00Z',
+        updatedAt: '2024-03-01T08:00:00Z'
+      },
+      {
+        id: 'role-agent',
+        name: 'Agent',
+        description: 'Operational access for property, service, agency, and content work.',
+        type: 'System',
+        pageAccess: ['dashboard', 'properties', 'services', 'agencies', 'blogs', 'profile'],
+        createdAt: '2024-03-01T08:00:00Z',
+        updatedAt: '2024-03-01T08:00:00Z'
+      },
+      {
+        id: 'role-client',
+        name: 'Client',
+        description: 'Limited portal access for authorized clients.',
+        type: 'System',
+        pageAccess: ['dashboard', 'properties', 'services', 'profile'],
+        createdAt: '2024-03-01T08:00:00Z',
+        updatedAt: '2024-03-01T08:00:00Z'
+      }
+    ],
     sessions: []
   };
 }
@@ -760,6 +800,10 @@ class Database {
         }
         if (!Array.isArray(this.data.agencies) || this.data.agencies.length === 0) {
           this.data.agencies = getInitialSeedData().agencies;
+          this.save();
+        }
+        if (!Array.isArray(this.data.roles) || this.data.roles.length === 0) {
+          this.data.roles = getInitialSeedData().roles;
           this.save();
         }
       } catch (err) {
@@ -1313,6 +1357,70 @@ class Database {
       return true;
     }
     return false;
+  }
+
+  // --- ROLE TYPES & PAGE ACCESS ---
+  public getRoles(): RoleDefinition[] {
+    if (!Array.isArray(this.data.roles)) {
+      this.data.roles = getInitialSeedData().roles || [];
+      this.save();
+    }
+    return [...this.data.roles];
+  }
+
+  public createRole(data: Pick<RoleDefinition, 'name' | 'description' | 'pageAccess'>): RoleDefinition {
+    const name = data.name?.trim();
+    if (!name) throw new Error('Role name is required.');
+    if (this.getRoles().some(role => role.name.toLowerCase() === name.toLowerCase())) {
+      throw new Error('A role with this name already exists.');
+    }
+
+    const now = new Date().toISOString();
+    const role: RoleDefinition = {
+      id: `role-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+      name,
+      description: data.description?.trim() || '',
+      type: 'Custom',
+      pageAccess: Array.from(new Set(data.pageAccess || [])),
+      createdAt: now,
+      updatedAt: now
+    };
+    this.data.roles!.push(role);
+    this.save();
+    return role;
+  }
+
+  public updateRole(id: string, data: Partial<Pick<RoleDefinition, 'name' | 'description' | 'pageAccess'>>): RoleDefinition | null {
+    const roles = this.getRoles();
+    const index = roles.findIndex(role => role.id === id);
+    if (index === -1) return null;
+    if (roles[index].type === 'System') throw new Error('System roles cannot be edited.');
+
+    const nextName = data.name?.trim() || roles[index].name;
+    if (roles.some(role => role.id !== id && role.name.toLowerCase() === nextName.toLowerCase())) {
+      throw new Error('A role with this name already exists.');
+    }
+
+    const updated: RoleDefinition = {
+      ...roles[index],
+      ...data,
+      name: nextName,
+      description: data.description?.trim() ?? roles[index].description,
+      pageAccess: data.pageAccess ? Array.from(new Set(data.pageAccess)) : roles[index].pageAccess,
+      updatedAt: new Date().toISOString()
+    };
+    this.data.roles![index] = updated;
+    this.save();
+    return updated;
+  }
+
+  public deleteRole(id: string): boolean {
+    const role = this.getRoles().find(item => item.id === id);
+    if (!role) return false;
+    if (role.type === 'System') throw new Error('System roles cannot be deleted.');
+    this.data.roles = this.data.roles!.filter(item => item.id !== id);
+    this.save();
+    return true;
   }
 }
 

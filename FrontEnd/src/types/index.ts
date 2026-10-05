@@ -10,6 +10,17 @@ export interface User {
   updated_at?: string;
 }
 
+export interface RoleDefinition {
+  id: string;
+  name: string;
+  description: string;
+  type: 'System' | 'Custom';
+  pageAccess: string[];
+  userCount: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface Property {
   id: string;
   title: string;

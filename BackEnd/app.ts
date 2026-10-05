@@ -7,6 +7,7 @@ import { blogRouter } from './routes/blogRoutes.ts';
 import { dashboardRouter } from './routes/dashboardRoutes.ts';
 import { inquiryRouter } from './routes/inquiryRoutes.ts';
 import { userRouter } from './routes/userRoutes.ts';
+import { roleRouter } from './routes/roleRoutes.ts';
 import { testMySQLConnection } from '../DataBase/mysql.ts';
 
 export function createExpressApp() {
@@ -47,6 +48,7 @@ export function createExpressApp() {
   app.use('/api/agencies', agencyRouter);
   app.use('/api/blogs', blogRouter);
   app.use('/api', userRouter); // mounts /api/users and /api/profile
+  app.use('/api/roles', roleRouter);
   app.use('/api/inquiries', inquiryRouter);
   app.use('/api/newsletter', inquiryRouter);
 

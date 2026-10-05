@@ -14,6 +14,7 @@ import { BlogsListPage } from './pages/blogs/BlogsListPage';
 import { UsersListPage } from './pages/users/UsersListPage';
 import { ProfilePage } from './pages/profile/ProfilePage';
 import { AgenciesAdminPage } from './pages/agencies/AgenciesAdminPage';
+import { RolesPage } from './pages/roles/RolesPage';
 import { Property, User } from './types';
 import { BrandLogo } from './components/common/BrandLogo';
 import { LandingPageContainer } from './pages/public/LandingPageContainer';
@@ -200,6 +201,8 @@ const MainApplication: React.FC = () => {
           onClearSelectedUser={() => setSelectedUser(null)}
         />
       )}
+
+      {activeSection === 'roles' && <RolesPage />}
 
       {activeSection === 'profile' && <ProfilePage />}
     </DashboardLayout>

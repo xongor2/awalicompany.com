@@ -1,4 +1,4 @@
-import { User, Property, Service, BlogPost, DashboardStats, Agency } from '../types';
+import { User, Property, Service, BlogPost, DashboardStats, Agency, RoleDefinition } from '../types';
 import { SAMPLE_AGENCIES } from '../data/sampleAgencies';
 
 const API_BASE = '/api';
@@ -300,6 +300,38 @@ export const api = {
 
   async deleteUser(id: string): Promise<{ message: string }> {
     const res = await fetch(`${API_BASE}/users/${id}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders()
+    });
+    return handleResponse(res);
+  },
+
+  // Roles and page access
+  async getRoles(): Promise<RoleDefinition[]> {
+    const res = await fetch(`${API_BASE}/roles`, { headers: getAuthHeaders() });
+    return handleResponse(res);
+  },
+
+  async createRole(data: Pick<RoleDefinition, 'name' | 'description' | 'pageAccess'>): Promise<RoleDefinition> {
+    const res = await fetch(`${API_BASE}/roles`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data)
+    });
+    return handleResponse(res);
+  },
+
+  async updateRole(id: string, data: Pick<RoleDefinition, 'name' | 'description' | 'pageAccess'>): Promise<RoleDefinition> {
+    const res = await fetch(`${API_BASE}/roles/${id}`, {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data)
+    });
+    return handleResponse(res);
+  },
+
+  async deleteRole(id: string): Promise<{ message: string }> {
+    const res = await fetch(`${API_BASE}/roles/${id}`, {
       method: 'DELETE',
       headers: getAuthHeaders()
     });

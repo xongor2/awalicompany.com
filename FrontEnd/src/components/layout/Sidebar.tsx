@@ -8,13 +8,14 @@ import {
   LogOut,
   Newspaper,
   ShieldCheck,
+  KeyRound,
   X
 } from 'lucide-react';
 import { BrandLogo } from '../common/BrandLogo';
 import { Avatar } from '../ui/Avatar';
 import { useAuth } from '../../context/AuthContext';
 
-export type NavSection = 'dashboard' | 'properties' | 'services' | 'agencies' | 'blogs' | 'users' | 'profile';
+export type NavSection = 'dashboard' | 'properties' | 'services' | 'agencies' | 'blogs' | 'users' | 'roles' | 'profile';
 
 interface SidebarProps {
   currentSection: NavSection;
@@ -38,6 +39,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'agencies' as NavSection, label: 'Agencies', icon: ShieldCheck },
     { id: 'blogs' as NavSection, label: 'Blogs', icon: Newspaper },
     { id: 'users' as NavSection, label: 'Users', icon: Users },
+    ...(user?.role === 'Admin'
+      ? [{ id: 'roles' as NavSection, label: 'Roles', icon: KeyRound }]
+      : []),
     { id: 'profile' as NavSection, label: 'Profile', icon: User },
   ];
 
