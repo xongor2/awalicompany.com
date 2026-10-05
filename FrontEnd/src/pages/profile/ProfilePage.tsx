@@ -21,6 +21,7 @@ import { useTheme } from '../../context/ThemeContext';
 import { api } from '../../services/api';
 import { useToast } from '../../components/ui/Toast';
 import { NATURE_AVATARS } from '../../constants/natureAvatars';
+import { AvatarPicker } from '../../components/common/AvatarPicker';
 
 export const ProfilePage: React.FC = () => {
   const { user, refreshUser } = useAuth();
@@ -194,34 +195,7 @@ export const ProfilePage: React.FC = () => {
               leftIcon={<Phone className="w-4 h-4" />}
             />
 
-            {/* Profile Avatar Selection */}
-            <div>
-              <label className="block text-sm font-medium text-[#171A2B] dark:text-[#D9DDE8] mb-1.5">
-                Profile Avatar
-              </label>
-              <Input
-                value={profileImage}
-                onChange={(e) => setProfileImage(e.target.value)}
-                placeholder="https://..."
-              />
-              <div className="flex items-center gap-2 mt-2">
-                <span className="text-xs text-[#8A90A2]">Presets:</span>
-                {NATURE_AVATARS.map((url, i) => (
-                  <button
-                    key={i}
-                    type="button"
-                    onClick={() => setProfileImage(url)}
-                    className={`w-7 h-7 rounded-full overflow-hidden border-2 transition-all cursor-pointer ${
-                      profileImage === url
-                        ? 'border-[#FF7817] scale-110 shadow-sm'
-                        : 'border-transparent opacity-70 hover:opacity-100'
-                    }`}
-                  >
-                    <img src={url} alt={`Nature preset ${i + 1}`} className="w-full h-full object-cover" />
-                  </button>
-                ))}
-              </div>
-            </div>
+            <AvatarPicker value={profileImage} onChange={setProfileImage} />
 
             <Button
               type="submit"
