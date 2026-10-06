@@ -17,6 +17,15 @@ export const dbConfig = {
   keepAliveInitialDelay: 0,
 };
 
+export function assertDatabaseConfiguration(): void {
+  if (process.env.NODE_ENV !== 'production') return;
+  const required = ['DB_HOST', 'DB_USER', 'DB_PASSWORD', 'DB_NAME'] as const;
+  const missing = required.filter(key => !process.env[key]?.trim());
+  if (missing.length) {
+    throw new Error(`Missing required MySQL environment variables: ${missing.join(', ')}`);
+  }
+}
+
 let pool: mysql.Pool | null = null;
 let isConnected = false;
 
@@ -44,7 +53,7 @@ export async function testMySQLConnection(): Promise<boolean> {
     return true;
   } catch (err) {
     isConnected = false;
-    console.warn('[DataBase] MySQL not connected or unreachable. Running with resilient database adapter.');
+    console.warn('[DataBase] MySQL is not connected or reachable.');
     return false;
   }
 }

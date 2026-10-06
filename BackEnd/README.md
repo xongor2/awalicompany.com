@@ -23,4 +23,7 @@ This folder contains the complete backend REST API application built with **Node
 - **Framework**: Express.js
 - **Language**: TypeScript
 - **Database Driver**: `mysql2/promise` (connected to `../DataBase/mysql.ts`)
-- **Fallback Data Store**: `../DataBase/db.ts`
+- **Production Repository**: `../DataBase/repository.ts`
+
+The API fails closed when MySQL is unavailable; it never silently writes to a
+local JSON fallback in production.

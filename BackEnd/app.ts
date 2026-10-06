@@ -19,9 +19,22 @@ export function createExpressApp() {
 
   // CORS headers
   app.use((req, res, next) => {
-    res.header('Access-Control-Allow-Origin', '*');
+    const requestOrigin = req.headers.origin;
+    const configuredOrigins = (process.env.CORS_ORIGIN || process.env.APP_URL || '')
+      .split(',').map(value => value.trim()).filter(Boolean);
+    let sameOrigin = false;
+    if (requestOrigin) {
+      try { sameOrigin = new URL(requestOrigin).host === req.get('host'); } catch { sameOrigin = false; }
+    }
+    if (requestOrigin && (sameOrigin || configuredOrigins.includes(requestOrigin))) {
+      res.header('Access-Control-Allow-Origin', requestOrigin);
+      res.header('Vary', 'Origin');
+    }
     res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
     res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+    res.header('X-Content-Type-Options', 'nosniff');
+    res.header('X-Frame-Options', 'SAMEORIGIN');
+    res.header('Referrer-Policy', 'strict-origin-when-cross-origin');
     if (req.method === 'OPTIONS') {
       return res.sendStatus(200);
     }
@@ -35,7 +48,7 @@ export function createExpressApp() {
       status: 'OK',
       timestamp: new Date().toISOString(),
       backend: 'Node.js Express',
-      database: isMySQLUp ? 'MySQL (Connected)' : 'Fallback Data Layer (Active)',
+      database: isMySQLUp ? 'MySQL (Connected)' : 'MySQL (Unavailable)',
       mysqlConfigured: !!process.env.DB_HOST,
     });
   });
@@ -51,6 +64,11 @@ export function createExpressApp() {
   app.use('/api/roles', roleRouter);
   app.use('/api/inquiries', inquiryRouter);
   app.use('/api/newsletter', inquiryRouter);
+
+  app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+    console.error('[API]', err);
+    res.status(500).json({ error: 'The server could not complete this request.' });
+  });
 
   return app;
 }

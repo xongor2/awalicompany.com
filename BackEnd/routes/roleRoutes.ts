@@ -1,6 +1,7 @@
 import { Router, Response } from 'express';
-import { db } from '../../DataBase/db.ts';
+import { db } from '../../DataBase/repository.ts';
 import { authMiddleware, AuthenticatedRequest } from '../middleware/authMiddleware.ts';
+import { asyncHandler } from '../middleware/asyncHandler.ts';
 
 export const roleRouter = Router();
 
@@ -12,37 +13,38 @@ roleRouter.use((req: AuthenticatedRequest, res: Response, next) => {
   next();
 });
 
-roleRouter.get('/', (_req, res) => {
-  const roles = db.getRoles().map(role => ({
+roleRouter.get('/', asyncHandler(async (_req, res) => {
+  const roles = await db.getRoles();
+  const rolesWithCounts = await Promise.all(roles.map(async role => ({
     ...role,
-    userCount: db.getUsers({ role: role.name }).length
-  }));
-  return res.json(roles);
-});
+    userCount: (await db.getUsers({ role: role.name })).length
+  })));
+  return res.json(rolesWithCounts);
+}));
 
-roleRouter.post('/', (req, res) => {
+roleRouter.post('/', asyncHandler(async (req, res) => {
   try {
-    return res.status(201).json(db.createRole(req.body));
+    return res.status(201).json(await db.createRole(req.body));
   } catch (error: any) {
     return res.status(400).json({ error: error.message || 'Failed to create role.' });
   }
-});
+}));
 
-roleRouter.put('/:id', (req, res) => {
+roleRouter.put('/:id', asyncHandler(async (req, res) => {
   try {
-    const role = db.updateRole(req.params.id, req.body);
+    const role = await db.updateRole(req.params.id, req.body);
     if (!role) return res.status(404).json({ error: 'Role not found.' });
     return res.json(role);
   } catch (error: any) {
     return res.status(400).json({ error: error.message || 'Failed to update role.' });
   }
-});
+}));
 
-roleRouter.delete('/:id', (req, res) => {
+roleRouter.delete('/:id', asyncHandler(async (req, res) => {
   try {
-    if (!db.deleteRole(req.params.id)) return res.status(404).json({ error: 'Role not found.' });
+    if (!await db.deleteRole(req.params.id)) return res.status(404).json({ error: 'Role not found.' });
     return res.json({ message: 'Role deleted successfully.' });
   } catch (error: any) {
     return res.status(400).json({ error: error.message || 'Failed to delete role.' });
   }
-});
+}));

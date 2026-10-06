@@ -2,7 +2,8 @@ import express, { Request, Response } from 'express';
 import path from 'path';
 import { createServer as createViteServer } from 'vite';
 import { createExpressApp } from './app.ts';
-import { testMySQLConnection } from '../DataBase/mysql.ts';
+import { assertDatabaseConfiguration, testMySQLConnection } from '../DataBase/mysql.ts';
+import { initializeDatabase } from '../DataBase/repository.ts';
 
 const app = createExpressApp();
 
@@ -15,8 +16,10 @@ const PORT = !isNaN(portFromArg) ? portFromArg : 3000;
 // ==========================================
 
 async function startServer() {
-  // Test MySQL connection status on startup
-  await testMySQLConnection();
+  assertDatabaseConfiguration();
+  const connected = await testMySQLConnection();
+  if (!connected) throw new Error('MySQL is required but could not be reached.');
+  await initializeDatabase();
 
   if (process.env.NODE_ENV !== 'production') {
     const vite = await createViteServer({

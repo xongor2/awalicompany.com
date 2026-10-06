@@ -1,11 +1,7 @@
 import fs from 'fs';
 import path from 'path';
-import { fileURLToPath } from 'url';
 import mysql from 'mysql2/promise';
 import { dbConfig } from './mysql.ts';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 /**
  * Migration Script to apply schema.sql and seeds.sql to MySQL
@@ -13,25 +9,26 @@ const __dirname = path.dirname(__filename);
 export async function runMigrations() {
   console.log('[DataBase/Migrate] Starting MySQL migrations...');
   
-  // Connect without database first to ensure CREATE DATABASE works
   const adminConnection = await mysql.createConnection({
     host: dbConfig.host,
     port: dbConfig.port,
     user: dbConfig.user,
     password: dbConfig.password,
+    database: dbConfig.database,
     multipleStatements: true,
+    charset: 'utf8mb4',
   });
 
   try {
-    const schemaPath = path.join(__dirname, 'schema.sql');
+    const schemaPath = path.join(process.cwd(), 'DataBase', 'schema.sql');
     if (fs.existsSync(schemaPath)) {
       const schemaSql = fs.readFileSync(schemaPath, 'utf-8');
-      console.log('[DataBase/Migrate] Applying schema.sql...');
+      console.log('[DataBase/Migrate] Applying production schema...');
       await adminConnection.query(schemaSql);
       console.log('[DataBase/Migrate] Schema applied successfully.');
     }
 
-    const seedsPath = path.join(__dirname, 'seeds.sql');
+    const seedsPath = path.join(process.cwd(), 'DataBase', 'seeds.sql');
     if (fs.existsSync(seedsPath)) {
       const seedsSql = fs.readFileSync(seedsPath, 'utf-8');
       console.log('[DataBase/Migrate] Applying seeds.sql...');

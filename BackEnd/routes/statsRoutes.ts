@@ -1,16 +1,15 @@
 import { Router, Request, Response } from 'express';
-import { db } from '../../DataBase/db.ts';
+import { db } from '../../DataBase/repository.ts';
 import { authMiddleware, AuthenticatedRequest } from '../middleware/authMiddleware.ts';
+import { asyncHandler } from '../middleware/asyncHandler.ts';
 
 export const statsRouter = Router();
 
 // GET /api/stats (Admin overview stats)
-statsRouter.get('/', authMiddleware, (req: AuthenticatedRequest, res: Response) => {
-  const properties = db.getProperties();
-  const services = db.getServices();
-  const agencies = db.getAgencies();
-  const blogs = db.getBlogs();
-  const users = db.getUsers();
+statsRouter.get('/', authMiddleware, asyncHandler(async (_req: AuthenticatedRequest, res: Response) => {
+  const [properties, services, agencies, blogs, users] = await Promise.all([
+    db.getProperties(), db.getServices(), db.getAgencies(), db.getBlogs(), db.getUsers(),
+  ]);
 
   const totalPortfolioValue = properties.reduce((sum, p) => sum + (p.price || 0), 0);
 
@@ -32,4 +31,4 @@ statsRouter.get('/', authMiddleware, (req: AuthenticatedRequest, res: Response) 
       plot: properties.filter(p => p.property_type === 'Plot').length,
     }
   });
-});
+}));

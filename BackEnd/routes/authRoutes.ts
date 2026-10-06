@@ -1,18 +1,19 @@
 import { Router, Request, Response } from 'express';
-import { db, verifyPassword } from '../../DataBase/db.ts';
+import { db, verifyPassword } from '../../DataBase/repository.ts';
 import { authMiddleware, sanitizeUser, AuthenticatedRequest } from '../middleware/authMiddleware.ts';
+import { asyncHandler } from '../middleware/asyncHandler.ts';
 
 export const authRouter = Router();
 
 // POST /api/auth/login
-authRouter.post('/login', (req: Request, res: Response) => {
+authRouter.post('/login', asyncHandler(async (req: Request, res: Response) => {
   const { email, password } = req.body;
 
   if (!email || !password) {
     return res.status(400).json({ error: 'Email and password are required.' });
   }
 
-  const user = db.getUserByEmail(email);
+  const user = await db.getUserByEmail(email);
   if (!user) {
     return res.status(401).json({ error: 'Invalid email or password.' });
   }
@@ -26,16 +27,16 @@ authRouter.post('/login', (req: Request, res: Response) => {
     return res.status(401).json({ error: 'Invalid email or password.' });
   }
 
-  const token = db.createSession(user.id);
+  const token = await db.createSession(user.id);
   return res.json({
     message: 'Authentication successful',
     token,
     user: sanitizeUser(user)
   });
-});
+}));
 
 // POST /api/auth/register
-authRouter.post('/register', (req: Request, res: Response) => {
+authRouter.post('/register', asyncHandler(async (req: Request, res: Response) => {
   const { name, email, password, confirmPassword, role } = req.body;
 
   if (!name || !email || !password) {
@@ -51,7 +52,7 @@ authRouter.post('/register', (req: Request, res: Response) => {
   }
 
   try {
-    const newUser = db.createUser({
+    const newUser = await db.createUser({
       name,
       email,
       password,
@@ -59,7 +60,7 @@ authRouter.post('/register', (req: Request, res: Response) => {
       status: 'Active'
     });
 
-    const token = db.createSession(newUser.id);
+    const token = await db.createSession(newUser.id);
     return res.status(201).json({
       message: 'User registered successfully',
       token,
@@ -68,7 +69,7 @@ authRouter.post('/register', (req: Request, res: Response) => {
   } catch (err: any) {
     return res.status(400).json({ error: err.message || 'Registration failed' });
   }
-});
+}));
 
 // GET /api/auth/me
 authRouter.get('/me', authMiddleware, (req: AuthenticatedRequest, res: Response) => {
@@ -76,20 +77,20 @@ authRouter.get('/me', authMiddleware, (req: AuthenticatedRequest, res: Response)
 });
 
 // POST /api/auth/logout
-authRouter.post('/logout', (req: Request, res: Response) => {
+authRouter.post('/logout', asyncHandler(async (req: Request, res: Response) => {
   const authHeader = req.headers.authorization;
   const token = authHeader?.startsWith('Bearer ') ? authHeader.substring(7) : null;
   if (token) {
-    db.deleteSession(token);
+    await db.deleteSession(token);
   }
   return res.json({ message: 'Logged out successfully' });
-});
+}));
 
 // GET /api/auth/users (Admin only)
-authRouter.get('/users', authMiddleware, (req: AuthenticatedRequest, res: Response) => {
+authRouter.get('/users', authMiddleware, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
   if (req.user?.role !== 'Admin') {
     return res.status(403).json({ error: 'Forbidden: Admin access required.' });
   }
-  const users = db.getUsers().map(sanitizeUser);
+  const users = (await db.getUsers()).map(sanitizeUser);
   return res.json(users);
-});
+}));
