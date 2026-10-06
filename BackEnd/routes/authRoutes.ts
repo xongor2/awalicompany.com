@@ -52,11 +52,13 @@ authRouter.post('/register', asyncHandler(async (req: Request, res: Response) =>
   }
 
   try {
+    const publicRoles = ['Agent', 'Agency', 'Client'] as const;
+    const selectedRole = publicRoles.includes(role) ? role : 'Client';
     const newUser = await db.createUser({
       name,
       email,
       password,
-      role: role === 'Agent' ? 'Agent' : 'Client',
+      role: selectedRole,
       status: 'Active'
     });
 

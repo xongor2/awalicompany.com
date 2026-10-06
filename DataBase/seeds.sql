@@ -8,5 +8,7 @@ INSERT IGNORE INTO roles (id, name, description, type, page_access) VALUES
    '["dashboard","properties","services","agencies","blogs","users","roles","profile"]'),
   ('role-agent', 'Agent', 'Operational access for property, service, agency, and content work.', 'System',
    '["dashboard","properties","services","agencies","blogs","profile"]'),
+  ('role-agency', 'Agency', 'Partner agency account access for agency services and profile management.', 'System',
+   '["dashboard","agencies","profile"]'),
   ('role-client', 'Client', 'Limited portal access for authorized clients.', 'System',
    '["dashboard","properties","services","profile"]');

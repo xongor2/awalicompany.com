@@ -2,7 +2,7 @@ import React from 'react';
 
 export interface BadgeProps {
   children: React.ReactNode;
-  variant?: 'active' | 'pending' | 'sold' | 'inactive' | 'admin' | 'agent' | 'client' | 'neutral';
+  variant?: 'active' | 'pending' | 'sold' | 'inactive' | 'admin' | 'agent' | 'agency' | 'client' | 'neutral';
   className?: string;
 }
 
@@ -18,6 +18,7 @@ export const Badge: React.FC<BadgeProps> = ({ children, variant = 'neutral', cla
     // Roles
     admin: 'bg-[#151A46]/10 text-[#151A46] border-[#151A46]/20 dark:bg-[#FF7817]/10 dark:text-[#FF7817] dark:border-[#FF7817]/30 font-semibold',
     agent: 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/40 dark:text-blue-400 dark:border-blue-800/60 font-medium',
+    agency: 'bg-teal-50 text-teal-700 border-teal-200 dark:bg-teal-950/40 dark:text-teal-400 dark:border-teal-800/60 font-medium',
     client: 'bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950/40 dark:text-purple-400 dark:border-purple-800/60 font-medium',
     neutral: 'bg-gray-100 text-gray-700 border-gray-200 dark:bg-[#252B5C] dark:text-[#D9DDE8] dark:border-[#252B5C]',
   };

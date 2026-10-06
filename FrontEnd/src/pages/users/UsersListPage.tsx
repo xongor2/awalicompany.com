@@ -171,6 +171,7 @@ export const UsersListPage: React.FC<UsersListPageProps> = ({
                   { value: 'All', label: 'All Roles' },
                   { value: 'Admin', label: 'Admin' },
                   { value: 'Agent', label: 'Agent' },
+                  { value: 'Agency', label: 'Agency' },
                   { value: 'Client', label: 'Client' },
                 ]}
               />

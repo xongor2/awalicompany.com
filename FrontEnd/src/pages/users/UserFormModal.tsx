@@ -28,7 +28,7 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState<'Admin' | 'Agent' | 'Client'>('Agent');
+  const [role, setRole] = useState<'Admin' | 'Agent' | 'Agency' | 'Client'>('Agent');
   const [status, setStatus] = useState<'Active' | 'Pending' | 'Inactive'>('Active');
   const [phone, setPhone] = useState('');
   const [profileImage, setProfileImage] = useState<string>(NATURE_AVATARS[0]);
@@ -156,6 +156,7 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
               options={[
                 { value: 'Admin', label: 'Admin (Full Access)' },
                 { value: 'Agent', label: 'Agent (Manager)' },
+                { value: 'Agency', label: 'Agency / Partner' },
                 { value: 'Client', label: 'Client / Customer' },
               ]}
             />

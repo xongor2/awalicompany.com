@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS users (
   email VARCHAR(191) NOT NULL UNIQUE,
   password_hash VARCHAR(255) NOT NULL,
   password_salt VARCHAR(128) NOT NULL,
-  role ENUM('Admin', 'Agent', 'Client') NOT NULL DEFAULT 'Client',
+  role ENUM('Admin', 'Agent', 'Agency', 'Client') NOT NULL DEFAULT 'Client',
   status ENUM('Active', 'Pending', 'Inactive') NOT NULL DEFAULT 'Active',
   profile_image MEDIUMTEXT NULL,
   phone VARCHAR(50) NULL,
@@ -16,6 +16,10 @@ CREATE TABLE IF NOT EXISTS users (
   updated_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
   INDEX idx_users_role (role), INDEX idx_users_status (status)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Keep existing production databases aligned when a new account role is introduced.
+ALTER TABLE users
+  MODIFY COLUMN role ENUM('Admin', 'Agent', 'Agency', 'Client') NOT NULL DEFAULT 'Client';
 
 CREATE TABLE IF NOT EXISTS sessions (
   token VARCHAR(128) PRIMARY KEY,

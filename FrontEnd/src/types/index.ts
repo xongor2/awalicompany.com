@@ -2,7 +2,7 @@ export interface User {
   id: string;
   name: string;
   email: string;
-  role: 'Admin' | 'Agent' | 'Client';
+  role: 'Admin' | 'Agent' | 'Agency' | 'Client';
   status: 'Active' | 'Pending' | 'Inactive';
   profile_image: string;
   phone?: string;

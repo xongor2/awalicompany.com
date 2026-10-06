@@ -4,7 +4,7 @@ export interface User {
   email: string;
   password_hash: string;
   password_salt: string;
-  role: 'Admin' | 'Agent' | 'Client';
+  role: 'Admin' | 'Agent' | 'Agency' | 'Client';
   status: 'Active' | 'Pending' | 'Inactive';
   profile_image: string;
   phone?: string;

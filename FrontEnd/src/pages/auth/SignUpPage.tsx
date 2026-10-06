@@ -121,6 +121,7 @@ export const SignUpPage: React.FC<{
                 onChange={(e) => setRole(e.target.value)}
                 options={[
                   { value: 'Agent', label: 'Real Estate / Services Agent' },
+                  { value: 'Agency', label: 'Agency / Partner Account' },
                   { value: 'Client', label: 'Client / Customer Account' },
                 ]}
               />
