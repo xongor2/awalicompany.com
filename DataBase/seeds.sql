@@ -5,7 +5,7 @@ INSERT IGNORE INTO blog_categories (name) VALUES
 
 INSERT IGNORE INTO roles (id, name, description, type, page_access) VALUES
   ('role-admin', 'Admin', 'Full access to every management page and configuration area.', 'System',
-   '["dashboard","properties","services","agencies","blogs","users","roles","profile"]'),
+   '["dashboard","health","properties","services","agencies","blogs","users","roles","profile"]'),
   ('role-agent', 'Agent', 'Operational access for property, service, agency, and content work.', 'System',
    '["dashboard","properties","services","agencies","blogs","profile"]'),
   ('role-agency', 'Agency', 'Partner agency account access for agency services and profile management.', 'System',

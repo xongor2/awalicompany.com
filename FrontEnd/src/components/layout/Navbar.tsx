@@ -45,6 +45,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
   const sectionTitles: Record<NavSection, string> = {
     dashboard: 'Dashboard',
+    health: 'Health',
     properties: 'Properties',
     services: 'Services',
     agencies: 'Agencies',
