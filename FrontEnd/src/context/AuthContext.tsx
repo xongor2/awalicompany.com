@@ -75,9 +75,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch {
       localStorage.removeItem('aw_ali_token');
     } finally {
+      localStorage.removeItem('aw_ali_token');
       setUser(null);
       setToken(null);
       setIsLoading(false);
+      window.location.replace('/');
     }
   };
 
