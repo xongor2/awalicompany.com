@@ -10,13 +10,14 @@ import {
   ShieldCheck,
   KeyRound,
   HeartPulse,
+  Handshake,
   X
 } from 'lucide-react';
 import { BrandLogo } from '../common/BrandLogo';
 import { Avatar } from '../ui/Avatar';
 import { useAuth } from '../../context/AuthContext';
 
-export type NavSection = 'dashboard' | 'health' | 'properties' | 'services' | 'agencies' | 'blogs' | 'users' | 'roles' | 'profile';
+export type NavSection = 'dashboard' | 'consulting' | 'health' | 'properties' | 'services' | 'agencies' | 'blogs' | 'users' | 'roles' | 'profile';
 
 interface SidebarProps {
   currentSection: NavSection;
@@ -35,6 +36,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   const navItems = [
     { id: 'dashboard' as NavSection, label: 'Dashboard', icon: LayoutDashboard },
+    { id: 'consulting' as NavSection, label: 'Consulting', icon: Handshake },
     { id: 'health' as NavSection, label: 'Health', icon: HeartPulse },
     { id: 'properties' as NavSection, label: 'Properties', icon: Building2 },
     { id: 'services' as NavSection, label: 'Services', icon: BriefcaseBusiness },

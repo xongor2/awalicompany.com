@@ -16,6 +16,7 @@ import { ProfilePage } from './pages/profile/ProfilePage';
 import { AgenciesAdminPage } from './pages/agencies/AgenciesAdminPage';
 import { RolesPage } from './pages/roles/RolesPage';
 import { HealthPage } from './pages/health/HealthPage';
+import { ConsultingPage } from './pages/consulting/ConsultingPage';
 import { Property, User } from './types';
 import { BrandLogo } from './components/common/BrandLogo';
 import { LandingPageContainer } from './pages/public/LandingPageContainer';
@@ -166,6 +167,8 @@ const MainApplication: React.FC = () => {
           onEditUser={handleEditUserFromDashboard}
         />
       )}
+
+      {activeSection === 'consulting' && <ConsultingPage />}
 
       {activeSection === 'health' && <HealthPage />}
 

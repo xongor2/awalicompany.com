@@ -1,11 +1,12 @@
 import React, { FormEvent, useEffect, useState } from 'react';
-import { Check, LayoutDashboard, Building2, BriefcaseBusiness, ShieldCheck, Newspaper, Users, KeyRound, User, HeartPulse } from 'lucide-react';
+import { Check, LayoutDashboard, Building2, BriefcaseBusiness, ShieldCheck, Newspaper, Users, KeyRound, User, HeartPulse, Handshake } from 'lucide-react';
 import { Modal } from '../../components/ui/Modal';
 import { Button } from '../../components/ui/Button';
 import { RoleDefinition } from '../../types';
 
 export const ROLE_PAGES = [
   { id: 'dashboard', label: 'Dashboard', description: 'Overview and reporting', icon: LayoutDashboard },
+  { id: 'consulting', label: 'Consulting', description: 'Consulting services and engagements', icon: Handshake },
   { id: 'health', label: 'Health', description: 'Health services and records', icon: HeartPulse },
   { id: 'properties', label: 'Properties', description: 'Property listings and details', icon: Building2 },
   { id: 'services', label: 'Services', description: 'Company service management', icon: BriefcaseBusiness },
