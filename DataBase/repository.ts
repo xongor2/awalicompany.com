@@ -285,6 +285,26 @@ class MySQLRepository {
     return (await this.getPropertyLocationCategory(id))!;
   }
 
+  async ensurePropertyLocationCategory(
+    kind: PropertyLocationKind,
+    rawName: string,
+  ): Promise<PropertyLocationCategory> {
+    const name = rawName.trim();
+    if (!name) throw new Error(`${kind} name is required.`);
+    const id = `location-${Date.now()}-${crypto.randomBytes(3).toString('hex')}`;
+    await query(
+      `INSERT INTO property_location_categories (id, kind, name, description)
+       VALUES (?, ?, ?, '')
+       ON DUPLICATE KEY UPDATE name = VALUES(name)`,
+      [id, kind, name],
+    );
+    const rows = await query<any[]>(
+      'SELECT id FROM property_location_categories WHERE kind = ? AND LOWER(name) = LOWER(?) LIMIT 1',
+      [kind, name],
+    );
+    return (await this.getPropertyLocationCategory(rows[0].id))!;
+  }
+
   async updatePropertyLocationCategory(
     id: string,
     data: Partial<Pick<PropertyLocationCategory, 'name' | 'description'>>,

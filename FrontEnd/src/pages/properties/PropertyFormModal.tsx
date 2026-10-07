@@ -35,6 +35,7 @@ import { Button } from '../../components/ui/Button';
 import { Property } from '../../types';
 import { api } from '../../services/api';
 import { useToast } from '../../components/ui/Toast';
+import { CityAutocomplete } from './CityAutocomplete';
 
 interface PropertyFormModalProps {
   isOpen: boolean;
@@ -62,6 +63,7 @@ const SAMPLE_GALLERY_PRESETS = [
 interface FormErrors {
   title?: string;
   address?: string;
+  city?: string;
   price?: string;
   bedrooms?: string;
   bathrooms?: string;
@@ -83,6 +85,7 @@ export const PropertyFormModal: React.FC<PropertyFormModalProps> = ({
   const [title, setTitle] = useState('');
   // 2. address
   const [address, setAddress] = useState('');
+  const [city, setCity] = useState('');
   // 3. Price
   const [price, setPrice] = useState('');
   // 4. Buy / Rent: Sale or Rent
@@ -131,6 +134,7 @@ export const PropertyFormModal: React.FC<PropertyFormModalProps> = ({
   const resetForm = () => {
     setTitle('');
     setAddress('');
+    setCity('');
     setPrice('');
     setBuyRent('Sale');
     setBedrooms('');
@@ -160,6 +164,7 @@ export const PropertyFormModal: React.FC<PropertyFormModalProps> = ({
       if (propertyToEdit) {
         setTitle(propertyToEdit.title || '');
         setAddress(propertyToEdit.address || propertyToEdit.location || '');
+        setCity(propertyToEdit.location || '');
         setPrice(propertyToEdit.price !== undefined ? String(propertyToEdit.price) : '');
         setBuyRent(propertyToEdit.buy_rent || 'Sale');
         setBedrooms(propertyToEdit.bedrooms !== undefined ? String(propertyToEdit.bedrooms) : '');
@@ -279,6 +284,10 @@ export const PropertyFormModal: React.FC<PropertyFormModalProps> = ({
       newErrors.address = 'Street address / location is required.';
     }
 
+    if (!city.trim()) {
+      newErrors.city = 'City is required.';
+    }
+
     const numPrice = Number(price);
     if (!price || isNaN(numPrice) || numPrice <= 0) {
       newErrors.price = 'Please enter a valid numeric price greater than 0.';
@@ -328,7 +337,7 @@ export const PropertyFormModal: React.FC<PropertyFormModalProps> = ({
       const payload: Partial<Property> = {
         title: title.trim(),
         address: address.trim(),
-        location: address.trim(),
+        location: city.trim(),
         price: numPrice,
         buy_rent: buyRent,
         bedrooms: bedrooms !== '' ? Number(bedrooms) : undefined,
@@ -451,10 +460,10 @@ export const PropertyFormModal: React.FC<PropertyFormModalProps> = ({
               </div>
 
               <div className="p-5 space-y-5">
-                {/* Row 1: address, Price, Buy/Rent */}
+                {/* Row 1: address, city, Price, Buy/Rent */}
                 <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
                   {/* Address */}
-                  <div className="md:col-span-5">
+                  <div className="md:col-span-4">
                     <Input
                       id="property-address-input"
                       label="Address *"
@@ -470,8 +479,21 @@ export const PropertyFormModal: React.FC<PropertyFormModalProps> = ({
                     />
                   </div>
 
+                  {/* Searchable City Category */}
+                  <div className="md:col-span-3">
+                    <CityAutocomplete
+                      value={city}
+                      enabled={isOpen}
+                      error={errors.city}
+                      onChange={nextCity => {
+                        setCity(nextCity);
+                        if (errors.city) setErrors(prev => ({ ...prev, city: undefined }));
+                      }}
+                    />
+                  </div>
+
                   {/* Price */}
-                  <div className="md:col-span-4">
+                  <div className="md:col-span-3">
                     <Input
                       id="property-price-input"
                       label="Price (PKR) *"
@@ -490,7 +512,7 @@ export const PropertyFormModal: React.FC<PropertyFormModalProps> = ({
                   </div>
 
                   {/* Buy / Rent Radio Buttons */}
-                  <div className="md:col-span-3">
+                  <div className="md:col-span-2">
                     <label className="block text-sm font-medium text-[#171A2B] dark:text-[#D9DDE8] mb-2">
                       Buy / Rent *
                     </label>
