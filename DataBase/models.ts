@@ -18,6 +18,8 @@ export interface Property {
   description: string;
   property_type: 'Residential' | 'Commercial' | 'Apartment' | 'Villa' | 'Plot';
   location: string;
+  country?: string;
+  city?: string;
   price: number;
   image: string;
   status: 'Active' | 'Pending' | 'Sold';

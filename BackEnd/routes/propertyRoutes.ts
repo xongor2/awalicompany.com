@@ -62,15 +62,25 @@ propertyRouter.post('/', authMiddleware, asyncHandler(async (req: AuthenticatedR
     return res.status(403).json({ error: 'Forbidden: Admin or Agent role required to add properties.' });
   }
 
-  const { title, description, property_type, location, price, image } = req.body;
-  if (!title || !description || !property_type || !location || price === undefined) {
-    return res.status(400).json({ error: 'Missing required property fields: title, description, property_type, location, price' });
+  const { title, description, property_type, price, image } = req.body;
+  const city = String(req.body.city || '').trim();
+  const country = String(req.body.country || '').trim();
+  if (!title || !description || !property_type || !city || !country || price === undefined) {
+    return res.status(400).json({ error: 'Missing required property fields: title, description, property_type, city, country, price' });
   }
 
-  await db.ensurePropertyLocationCategory('City', String(location));
+  await Promise.all([
+    db.ensurePropertyLocationCategory('City', city),
+    db.ensurePropertyLocationCategory('Country', country),
+  ]);
+
+  const propertyData = { ...req.body };
+  delete propertyData.city;
+  delete propertyData.country;
 
   const newProperty = await db.createProperty({
-    ...req.body,
+    ...propertyData,
+    location: `${city}, ${country}`,
     price: Number(price),
     image: image || 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1200&auto=format&fit=crop&q=80',
     status: req.body.status || 'Active'
@@ -89,11 +99,23 @@ propertyRouter.put('/:id', authMiddleware, asyncHandler(async (req: Authenticate
     return res.status(404).json({ error: 'Property not found.' });
   }
 
-  if (typeof req.body.location === 'string' && req.body.location.trim()) {
-    await db.ensurePropertyLocationCategory('City', req.body.location);
+  const city = typeof req.body.city === 'string' ? req.body.city.trim() : '';
+  const country = typeof req.body.country === 'string' ? req.body.country.trim() : '';
+  if (city || country) {
+    if (!city || !country) {
+      return res.status(400).json({ error: 'Both city and country are required.' });
+    }
+    await Promise.all([
+      db.ensurePropertyLocationCategory('City', city),
+      db.ensurePropertyLocationCategory('Country', country),
+    ]);
   }
 
-  const updated = await db.updateProperty(req.params.id, req.body);
+  const propertyUpdates = { ...req.body };
+  delete propertyUpdates.city;
+  delete propertyUpdates.country;
+  if (city && country) propertyUpdates.location = `${city}, ${country}`;
+  const updated = await db.updateProperty(req.params.id, propertyUpdates);
   return res.json(updated);
 }));
 

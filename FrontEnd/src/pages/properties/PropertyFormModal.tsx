@@ -35,7 +35,7 @@ import { Button } from '../../components/ui/Button';
 import { Property } from '../../types';
 import { api } from '../../services/api';
 import { useToast } from '../../components/ui/Toast';
-import { CityAutocomplete } from './CityAutocomplete';
+import { LocationCategoryAutocomplete } from './CityAutocomplete';
 
 interface PropertyFormPageProps {
   onClose: () => void;
@@ -62,6 +62,7 @@ const SAMPLE_GALLERY_PRESETS = [
 interface FormErrors {
   title?: string;
   address?: string;
+  country?: string;
   city?: string;
   price?: string;
   bedrooms?: string;
@@ -83,6 +84,7 @@ export const PropertyFormPage: React.FC<PropertyFormPageProps> = ({
   const [title, setTitle] = useState('');
   // 2. address
   const [address, setAddress] = useState('');
+  const [country, setCountry] = useState('');
   const [city, setCity] = useState('');
   // 3. Price
   const [price, setPrice] = useState('');
@@ -132,6 +134,7 @@ export const PropertyFormPage: React.FC<PropertyFormPageProps> = ({
   const resetForm = () => {
     setTitle('');
     setAddress('');
+    setCountry('');
     setCity('');
     setPrice('');
     setBuyRent('Sale');
@@ -159,9 +162,11 @@ export const PropertyFormPage: React.FC<PropertyFormPageProps> = ({
   // Populate or reset the dedicated page when the selected property changes.
   useEffect(() => {
       if (propertyToEdit) {
+        const locationParts = (propertyToEdit.location || '').split(',').map(part => part.trim()).filter(Boolean);
         setTitle(propertyToEdit.title || '');
         setAddress(propertyToEdit.address || propertyToEdit.location || '');
-        setCity(propertyToEdit.location || '');
+        setCity(propertyToEdit.city || (locationParts.length > 1 ? locationParts[0] : propertyToEdit.location || ''));
+        setCountry(propertyToEdit.country || (locationParts.length > 1 ? locationParts[locationParts.length - 1] : ''));
         setPrice(propertyToEdit.price !== undefined ? String(propertyToEdit.price) : '');
         setBuyRent(propertyToEdit.buy_rent || 'Sale');
         setBedrooms(propertyToEdit.bedrooms !== undefined ? String(propertyToEdit.bedrooms) : '');
@@ -283,6 +288,10 @@ export const PropertyFormPage: React.FC<PropertyFormPageProps> = ({
       newErrors.city = 'City is required.';
     }
 
+    if (!country.trim()) {
+      newErrors.country = 'Country is required.';
+    }
+
     const numPrice = Number(price);
     if (!price || isNaN(numPrice) || numPrice <= 0) {
       newErrors.price = 'Please enter a valid numeric price greater than 0.';
@@ -332,7 +341,9 @@ export const PropertyFormPage: React.FC<PropertyFormPageProps> = ({
       const payload: Partial<Property> = {
         title: title.trim(),
         address: address.trim(),
-        location: city.trim(),
+        location: `${city.trim()}, ${country.trim()}`,
+        city: city.trim(),
+        country: country.trim(),
         price: numPrice,
         buy_rent: buyRent,
         bedrooms: bedrooms !== '' ? Number(bedrooms) : undefined,
@@ -463,10 +474,10 @@ export const PropertyFormPage: React.FC<PropertyFormPageProps> = ({
               </div>
 
               <div className="p-5 space-y-5">
-                {/* Row 1: address, city, Price, Buy/Rent */}
+                {/* Row 1: address, Price, Buy/Rent */}
                 <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
                   {/* Address */}
-                  <div className="md:col-span-4">
+                  <div className="md:col-span-6">
                     <Input
                       id="property-address-input"
                       label="Address *"
@@ -482,21 +493,8 @@ export const PropertyFormPage: React.FC<PropertyFormPageProps> = ({
                     />
                   </div>
 
-                  {/* Searchable City Category */}
-                  <div className="md:col-span-3">
-                    <CityAutocomplete
-                      value={city}
-                      enabled
-                      error={errors.city}
-                      onChange={nextCity => {
-                        setCity(nextCity);
-                        if (errors.city) setErrors(prev => ({ ...prev, city: undefined }));
-                      }}
-                    />
-                  </div>
-
                   {/* Price */}
-                  <div className="md:col-span-3">
+                  <div className="md:col-span-4">
                     <Input
                       id="property-price-input"
                       label="Price (PKR) *"
@@ -870,6 +868,7 @@ export const PropertyFormPage: React.FC<PropertyFormPageProps> = ({
                 </div>
               </div>
             </div>
+
           </div>
 
           {/* RIGHT COLUMN: Media, Featured Image & Gallery */}
@@ -1074,6 +1073,36 @@ export const PropertyFormPage: React.FC<PropertyFormPageProps> = ({
                     Load Sample Gallery Pack (5 photos)
                   </button>
                 </div>
+              </div>
+            </div>
+
+            {/* Box 6: Property Location Categories */}
+            <div className="rounded-xl border border-[#D9DDE8] dark:border-[#252B5C] bg-white dark:bg-[#151A46] shadow-xs overflow-visible">
+              <div className="px-4 py-3 bg-[#F8F9FC] dark:bg-[#0B1030]/80 border-b border-[#D9DDE8] dark:border-[#252B5C] flex items-center gap-1.5 rounded-t-xl">
+                <MapPin className="w-4 h-4 text-[#FF7817]" />
+                <h3 className="font-heading text-sm font-bold text-[#151A46] dark:text-white">
+                  Property Location
+                </h3>
+              </div>
+              <div className="p-4 space-y-4">
+                <LocationCategoryAutocomplete
+                  kind="Country"
+                  value={country}
+                  error={errors.country}
+                  onChange={nextCountry => {
+                    setCountry(nextCountry);
+                    if (errors.country) setErrors(prev => ({ ...prev, country: undefined }));
+                  }}
+                />
+                <LocationCategoryAutocomplete
+                  kind="City"
+                  value={city}
+                  error={errors.city}
+                  onChange={nextCity => {
+                    setCity(nextCity);
+                    if (errors.city) setErrors(prev => ({ ...prev, city: undefined }));
+                  }}
+                />
               </div>
             </div>
           </div>
