@@ -48,6 +48,7 @@ export const Navbar: React.FC<NavbarProps> = ({
     consulting: 'Consulting',
     health: 'Health',
     properties: 'Properties',
+    'property-form': 'Property Form',
     countries: 'Countries',
     cities: 'Cities',
     services: 'Services',

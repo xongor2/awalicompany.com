@@ -21,23 +21,20 @@ import { EmptyState } from '../../components/ui/EmptyState';
 import { TableSkeleton } from '../../components/ui/Skeleton';
 import { ConfirmModal } from '../../components/common/ConfirmModal';
 import { PropertyDetailModal } from './PropertyDetailModal';
-import { PropertyFormModal } from './PropertyFormModal';
 import { Property } from '../../types';
 import { api } from '../../services/api';
 import { useToast } from '../../components/ui/Toast';
 
 interface PropertiesListPageProps {
   initialSearch?: string;
-  isAddModalOpen?: boolean;
-  onCloseAddModal?: () => void;
+  onOpenPropertyForm: (property?: Property) => void;
   selectedProperty?: Property | null;
   onClearSelectedProperty?: () => void;
 }
 
 export const PropertiesListPage: React.FC<PropertiesListPageProps> = ({
   initialSearch = '',
-  isAddModalOpen = false,
-  onCloseAddModal,
+  onOpenPropertyForm,
   selectedProperty,
   onClearSelectedProperty,
 }) => {
@@ -57,16 +54,10 @@ export const PropertiesListPage: React.FC<PropertiesListPageProps> = ({
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 6;
 
-  // Modal states
-  const [isFormOpen, setIsFormOpen] = useState(isAddModalOpen);
-  const [propertyToEdit, setPropertyToEdit] = useState<Property | null>(null);
+  // Detail and confirmation modal states
   const [viewProperty, setViewProperty] = useState<Property | null>(selectedProperty || null);
   const [deleteProperty, setDeleteProperty] = useState<Property | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
-
-  useEffect(() => {
-    if (isAddModalOpen) setIsFormOpen(true);
-  }, [isAddModalOpen]);
 
   useEffect(() => {
     if (selectedProperty) setViewProperty(selectedProperty);
@@ -152,10 +143,7 @@ export const PropertiesListPage: React.FC<PropertiesListPageProps> = ({
         action={
           <Button
             variant="accent"
-            onClick={() => {
-              setPropertyToEdit(null);
-              setIsFormOpen(true);
-            }}
+            onClick={() => onOpenPropertyForm()}
             leftIcon={<Plus className="w-4 h-4" />}
           >
             Add Property
@@ -258,10 +246,7 @@ export const PropertiesListPage: React.FC<PropertiesListPageProps> = ({
               onAction={
                 hasActiveFilters
                   ? resetFilters
-                  : () => {
-                      setPropertyToEdit(null);
-                      setIsFormOpen(true);
-                    }
+                  : () => onOpenPropertyForm()
               }
             />
           ) : (
@@ -355,10 +340,7 @@ export const PropertiesListPage: React.FC<PropertiesListPageProps> = ({
                           {
                             label: 'Edit Property',
                             icon: <Edit2 className="w-4 h-4 text-[#FF7817]" />,
-                            onClick: () => {
-                              setPropertyToEdit(prop);
-                              setIsFormOpen(true);
-                            },
+                            onClick: () => onOpenPropertyForm(prop),
                           },
                           {
                             label: 'Delete',
@@ -387,18 +369,6 @@ export const PropertiesListPage: React.FC<PropertiesListPageProps> = ({
         )}
       </Card>
 
-      {/* Property Form Modal (Add / Edit) */}
-      <PropertyFormModal
-        isOpen={isFormOpen}
-        onClose={() => {
-          setIsFormOpen(false);
-          setPropertyToEdit(null);
-          if (onCloseAddModal) onCloseAddModal();
-        }}
-        onSuccess={loadProperties}
-        propertyToEdit={propertyToEdit}
-      />
-
       {/* Property Details Modal */}
       <PropertyDetailModal
         property={viewProperty}
@@ -408,8 +378,8 @@ export const PropertiesListPage: React.FC<PropertiesListPageProps> = ({
           if (onClearSelectedProperty) onClearSelectedProperty();
         }}
         onEdit={(prop) => {
-          setPropertyToEdit(prop);
-          setIsFormOpen(true);
+          setViewProperty(null);
+          onOpenPropertyForm(prop);
         }}
         onDelete={(prop) => setDeleteProperty(prop)}
       />

@@ -20,7 +20,7 @@ import { BrandLogo } from '../common/BrandLogo';
 import { Avatar } from '../ui/Avatar';
 import { useAuth } from '../../context/AuthContext';
 
-export type NavSection = 'dashboard' | 'consulting' | 'health' | 'properties' | 'countries' | 'cities' | 'services' | 'agencies' | 'blogs' | 'users' | 'roles' | 'profile';
+export type NavSection = 'dashboard' | 'consulting' | 'health' | 'properties' | 'property-form' | 'countries' | 'cities' | 'services' | 'agencies' | 'blogs' | 'users' | 'roles' | 'profile';
 
 interface SidebarProps {
   currentSection: NavSection;
@@ -36,7 +36,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onMobileClose
 }) => {
   const { user, logout } = useAuth();
-  const isPropertySection = currentSection === 'properties' || currentSection === 'countries' || currentSection === 'cities';
+  const isPropertySection = currentSection === 'properties' || currentSection === 'property-form' || currentSection === 'countries' || currentSection === 'cities';
   const [isPropertiesExpanded, setIsPropertiesExpanded] = useState(isPropertySection);
 
   useEffect(() => {

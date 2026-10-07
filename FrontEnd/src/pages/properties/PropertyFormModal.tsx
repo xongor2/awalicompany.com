@@ -26,9 +26,9 @@ import {
   Quote,
   Eye,
   Code,
+  ArrowLeft,
   RotateCcw
 } from 'lucide-react';
-import { Modal } from '../../components/ui/Modal';
 import { Input } from '../../components/ui/Input';
 import { Select } from '../../components/ui/Select';
 import { Button } from '../../components/ui/Button';
@@ -37,8 +37,7 @@ import { api } from '../../services/api';
 import { useToast } from '../../components/ui/Toast';
 import { CityAutocomplete } from './CityAutocomplete';
 
-interface PropertyFormModalProps {
-  isOpen: boolean;
+interface PropertyFormPageProps {
   onClose: () => void;
   onSuccess: () => void;
   propertyToEdit?: Property | null;
@@ -71,8 +70,7 @@ interface FormErrors {
   image?: string;
 }
 
-export const PropertyFormModal: React.FC<PropertyFormModalProps> = ({
-  isOpen,
+export const PropertyFormPage: React.FC<PropertyFormPageProps> = ({
   onClose,
   onSuccess,
   propertyToEdit,
@@ -158,9 +156,8 @@ export const PropertyFormModal: React.FC<PropertyFormModalProps> = ({
     if (galleryInputRef.current) galleryInputRef.current.value = '';
   };
 
-  // Populate or Reset form on open or propertyToEdit change
+  // Populate or reset the dedicated page when the selected property changes.
   useEffect(() => {
-    if (isOpen) {
       if (propertyToEdit) {
         setTitle(propertyToEdit.title || '');
         setAddress(propertyToEdit.address || propertyToEdit.location || '');
@@ -185,11 +182,9 @@ export const PropertyFormModal: React.FC<PropertyFormModalProps> = ({
         setGeneralError(null);
         setDescViewMode('visual');
       } else {
-        // When opening to create a new property, ensure the form is completely empty
         resetForm();
       }
-    }
-  }, [isOpen, propertyToEdit]);
+  }, [propertyToEdit]);
 
   // Handle Featured Image Upload (File -> Data URL)
   const handleFeaturedFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -377,27 +372,35 @@ export const PropertyFormModal: React.FC<PropertyFormModalProps> = ({
   };
 
   return (
-    <Modal
-      isOpen={isOpen}
-      onClose={handleClose}
-      title={
-        <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg bg-[#FFF0E4] dark:bg-[#252B5C] flex items-center justify-center text-[#FF7817]">
-            <Building className="w-4 h-4" />
+    <div className="space-y-6">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={handleClose}
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-[#D9DDE8] bg-white text-[#5F667A] transition-colors hover:border-[#FF7817] hover:text-[#FF7817] dark:border-[#252B5C] dark:bg-[#151A46] dark:text-[#D9DDE8]"
+            aria-label="Back to properties"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </button>
+          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#FFF0E4] text-[#FF7817] dark:bg-[#252B5C]">
+            <Building className="h-5 w-5" />
           </div>
           <div>
-            <span className="font-heading text-lg font-bold text-[#151A46] dark:text-white">
+            <h1 className="font-heading text-2xl font-bold text-[#151A46] dark:text-white">
               {isEdit ? 'Edit Property Listing' : 'Add New Property'}
-            </span>
-            <p className="text-[11px] text-[#8A90A2] font-normal">
+            </h1>
+            <p className="text-sm font-normal text-[#8A90A2]">
               AW Ali Company Real Estate Property System
             </p>
           </div>
         </div>
-      }
-      maxWidth="4xl"
-    >
-      <form onSubmit={handleSubmit} className="space-y-6">
+        <Button type="button" variant="secondary" onClick={handleClose} leftIcon={<ArrowLeft className="h-4 w-4" />}>
+          Back to Properties
+        </Button>
+      </div>
+
+      <form onSubmit={handleSubmit} className="space-y-6 rounded-2xl border border-[#D9DDE8] bg-white p-4 shadow-sm sm:p-6 dark:border-[#252B5C] dark:bg-[#0E1335]">
         {/* Banner Alert for Errors */}
         {generalError && (
           <div className="p-3.5 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 flex items-start gap-3 text-rose-700 dark:text-rose-300 text-xs">
@@ -483,7 +486,7 @@ export const PropertyFormModal: React.FC<PropertyFormModalProps> = ({
                   <div className="md:col-span-3">
                     <CityAutocomplete
                       value={city}
-                      enabled={isOpen}
+                      enabled
                       error={errors.city}
                       onChange={nextCity => {
                         setCity(nextCity);
@@ -1112,6 +1115,6 @@ export const PropertyFormModal: React.FC<PropertyFormModalProps> = ({
           </div>
         </div>
       </form>
-    </Modal>
+    </div>
   );
 };

@@ -10,6 +10,7 @@ import { NavSection } from './components/layout/Sidebar';
 import { DashboardPage } from './pages/dashboard/DashboardPage';
 import { PropertiesListPage } from './pages/properties/PropertiesListPage';
 import { LocationCategoriesPage } from './pages/properties/LocationCategoriesPage';
+import { PropertyFormPage } from './pages/properties/PropertyFormModal';
 import { ServicesListPage } from './pages/services/ServicesListPage';
 import { BlogsListPage } from './pages/blogs/BlogsListPage';
 import { UsersListPage } from './pages/users/UsersListPage';
@@ -29,7 +30,6 @@ const MainApplication: React.FC = () => {
   const [activeSection, setActiveSection] = useState<NavSection>('dashboard');
 
   // Deep linking and quick action navigation states
-  const [isAddPropertyModalOpen, setIsAddPropertyModalOpen] = useState(false);
   const [isAddServiceModalOpen, setIsAddServiceModalOpen] = useState(false);
   const [isAddUserModalOpen, setIsAddUserModalOpen] = useState(false);
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
@@ -96,8 +96,8 @@ const MainApplication: React.FC = () => {
 
   // Handlers for cross-page interactions
   const handleOpenAddProperty = () => {
-    setActiveSection('properties');
-    setIsAddPropertyModalOpen(true);
+    setSelectedProperty(null);
+    setActiveSection('property-form');
   };
 
   const handleOpenAddService = () => {
@@ -117,8 +117,7 @@ const MainApplication: React.FC = () => {
 
   const handleEditPropertyFromDashboard = (prop: Property) => {
     setSelectedProperty(prop);
-    setIsAddPropertyModalOpen(true);
-    setActiveSection('properties');
+    setActiveSection('property-form');
   };
 
   const handleViewUserFromDashboard = (u: User) => {
@@ -176,10 +175,26 @@ const MainApplication: React.FC = () => {
       {activeSection === 'properties' && (
         <PropertiesListPage
           initialSearch={globalSearchTerm}
-          isAddModalOpen={isAddPropertyModalOpen}
-          onCloseAddModal={() => setIsAddPropertyModalOpen(false)}
+          onOpenPropertyForm={(property) => {
+            setSelectedProperty(property || null);
+            setActiveSection('property-form');
+          }}
           selectedProperty={selectedProperty}
           onClearSelectedProperty={() => setSelectedProperty(null)}
+        />
+      )}
+
+      {activeSection === 'property-form' && (
+        <PropertyFormPage
+          propertyToEdit={selectedProperty}
+          onClose={() => {
+            setSelectedProperty(null);
+            setActiveSection('properties');
+          }}
+          onSuccess={() => {
+            setSelectedProperty(null);
+            setActiveSection('properties');
+          }}
         />
       )}
 
