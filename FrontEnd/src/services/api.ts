@@ -1,4 +1,4 @@
-import { User, Property, Service, BlogPost, DashboardStats, Agency, RoleDefinition } from '../types';
+import { User, Property, PropertyLocationCategory, PropertyLocationKind, Service, BlogPost, DashboardStats, Agency, RoleDefinition } from '../types';
 import { SAMPLE_AGENCIES } from '../data/sampleAgencies';
 
 const API_BASE = '/api';
@@ -139,6 +139,50 @@ export const api = {
 
   async deleteProperty(id: string): Promise<{ message: string }> {
     const res = await fetch(`${API_BASE}/properties/${id}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders()
+    });
+    return handleResponse(res);
+  },
+
+  async getPropertyLocationCategories(kind: PropertyLocationKind): Promise<PropertyLocationCategory[]> {
+    const path = kind === 'Country' ? 'countries' : 'cities';
+    const res = await fetch(`${API_BASE}/property-locations/${path}`, {
+      headers: getAuthHeaders()
+    });
+    return handleResponse(res);
+  },
+
+  async createPropertyLocationCategory(
+    kind: PropertyLocationKind,
+    data: Pick<PropertyLocationCategory, 'name' | 'description'>,
+  ): Promise<PropertyLocationCategory> {
+    const path = kind === 'Country' ? 'countries' : 'cities';
+    const res = await fetch(`${API_BASE}/property-locations/${path}`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data)
+    });
+    return handleResponse(res);
+  },
+
+  async updatePropertyLocationCategory(
+    kind: PropertyLocationKind,
+    id: string,
+    data: Pick<PropertyLocationCategory, 'name' | 'description'>,
+  ): Promise<PropertyLocationCategory> {
+    const path = kind === 'Country' ? 'countries' : 'cities';
+    const res = await fetch(`${API_BASE}/property-locations/${path}/${id}`, {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data)
+    });
+    return handleResponse(res);
+  },
+
+  async deletePropertyLocationCategory(kind: PropertyLocationKind, id: string): Promise<{ message: string }> {
+    const path = kind === 'Country' ? 'countries' : 'cities';
+    const res = await fetch(`${API_BASE}/property-locations/${path}/${id}`, {
       method: 'DELETE',
       headers: getAuthHeaders()
     });

@@ -38,6 +38,18 @@ export interface Property {
   updated_at: string;
 }
 
+export type PropertyLocationKind = 'Country' | 'City';
+
+export interface PropertyLocationCategory {
+  id: string;
+  kind: PropertyLocationKind;
+  name: string;
+  description: string;
+  listingCount: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface Service {
   id: string;
   name: string;

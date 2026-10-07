@@ -45,6 +45,18 @@ CREATE TABLE IF NOT EXISTS properties (
   INDEX idx_properties_location (location), INDEX idx_properties_price (price)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE IF NOT EXISTS property_location_categories (
+  id VARCHAR(64) PRIMARY KEY,
+  kind ENUM('Country', 'City') NOT NULL,
+  name VARCHAR(150) NOT NULL,
+  description TEXT NOT NULL,
+  created_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  updated_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
+  UNIQUE KEY uq_property_location_kind_name (kind, name),
+  INDEX idx_property_location_kind (kind),
+  INDEX idx_property_location_name (name)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE IF NOT EXISTS services (
   id VARCHAR(64) PRIMARY KEY, name VARCHAR(255) NOT NULL,
   category ENUM('Education', 'Consulting', 'Import / Export', 'Real Estate') NOT NULL,

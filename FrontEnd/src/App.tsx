@@ -9,6 +9,7 @@ import { DashboardLayout } from './components/layout/DashboardLayout';
 import { NavSection } from './components/layout/Sidebar';
 import { DashboardPage } from './pages/dashboard/DashboardPage';
 import { PropertiesListPage } from './pages/properties/PropertiesListPage';
+import { LocationCategoriesPage } from './pages/properties/LocationCategoriesPage';
 import { ServicesListPage } from './pages/services/ServicesListPage';
 import { BlogsListPage } from './pages/blogs/BlogsListPage';
 import { UsersListPage } from './pages/users/UsersListPage';
@@ -181,6 +182,10 @@ const MainApplication: React.FC = () => {
           onClearSelectedProperty={() => setSelectedProperty(null)}
         />
       )}
+
+      {activeSection === 'countries' && <LocationCategoriesPage kind="Country" />}
+
+      {activeSection === 'cities' && <LocationCategoriesPage kind="City" />}
 
       {activeSection === 'services' && (
         <ServicesListPage

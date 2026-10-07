@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   LayoutDashboard,
   Building2,
@@ -11,13 +11,16 @@ import {
   KeyRound,
   HeartPulse,
   Handshake,
+  ChevronDown,
+  Globe2,
+  MapPin,
   X
 } from 'lucide-react';
 import { BrandLogo } from '../common/BrandLogo';
 import { Avatar } from '../ui/Avatar';
 import { useAuth } from '../../context/AuthContext';
 
-export type NavSection = 'dashboard' | 'consulting' | 'health' | 'properties' | 'services' | 'agencies' | 'blogs' | 'users' | 'roles' | 'profile';
+export type NavSection = 'dashboard' | 'consulting' | 'health' | 'properties' | 'countries' | 'cities' | 'services' | 'agencies' | 'blogs' | 'users' | 'roles' | 'profile';
 
 interface SidebarProps {
   currentSection: NavSection;
@@ -33,6 +36,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onMobileClose
 }) => {
   const { user, logout } = useAuth();
+  const isPropertySection = currentSection === 'properties' || currentSection === 'countries' || currentSection === 'cities';
+  const [isPropertiesExpanded, setIsPropertiesExpanded] = useState(isPropertySection);
+
+  useEffect(() => {
+    if (isPropertySection) setIsPropertiesExpanded(true);
+  }, [isPropertySection]);
 
   const navItems = [
     { id: 'dashboard' as NavSection, label: 'Dashboard', icon: LayoutDashboard },
@@ -72,7 +81,59 @@ export const Sidebar: React.FC<SidebarProps> = ({
       <nav className="flex-1 px-4 py-6 space-y-1.5 overflow-y-auto">
         {navItems.map((item) => {
           const Icon = item.icon;
-          const isActive = currentSection === item.id;
+          const isPropertiesItem = item.id === 'properties';
+          const isActive = isPropertiesItem ? isPropertySection : currentSection === item.id;
+
+          if (isPropertiesItem) {
+            return (
+              <div key={item.id}>
+                <div className={`flex items-center rounded-lg transition-all ${isActive ? 'bg-[#FF7817] shadow-md' : 'hover:bg-[#252B5C]/50'}`}>
+                  <button
+                    onClick={() => {
+                      setIsPropertiesExpanded(true);
+                      handleNavClick('properties');
+                    }}
+                    className={`flex min-w-0 flex-1 items-center gap-3.5 px-3.5 py-3 text-sm font-medium cursor-pointer ${isActive ? 'text-white font-semibold' : 'text-[#D9DDE8] hover:text-white'}`}
+                  >
+                    <Icon className={`h-5 w-5 ${isActive ? 'text-white' : 'text-[#8A90A2]'}`} />
+                    <span>{item.label}</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsPropertiesExpanded(open => !open)}
+                    className={`mr-1 rounded-md p-2 transition-colors cursor-pointer ${isActive ? 'text-white hover:bg-white/15' : 'text-[#8A90A2] hover:text-white'}`}
+                    aria-label={`${isPropertiesExpanded ? 'Collapse' : 'Expand'} property pages`}
+                    aria-expanded={isPropertiesExpanded}
+                  >
+                    <ChevronDown className={`h-4 w-4 transition-transform ${isPropertiesExpanded ? 'rotate-180' : ''}`} />
+                  </button>
+                </div>
+
+                {isPropertiesExpanded && (
+                  <div className="ml-5 mt-1.5 space-y-1 border-l border-[#3A4070] pl-3">
+                    {[
+                      { id: 'countries' as NavSection, label: 'Countries', icon: Globe2 },
+                      { id: 'cities' as NavSection, label: 'Cities', icon: MapPin },
+                    ].map(child => {
+                      const ChildIcon = child.icon;
+                      const isChildActive = currentSection === child.id;
+                      return (
+                        <button
+                          key={child.id}
+                          onClick={() => handleNavClick(child.id)}
+                          className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors cursor-pointer ${isChildActive ? 'bg-[#FF7817]/15 font-semibold text-[#FF9A52]' : 'text-[#AEB4C7] hover:bg-[#252B5C]/50 hover:text-white'}`}
+                        >
+                          <ChildIcon className="h-4 w-4" />
+                          <span>{child.label}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            );
+          }
+
           return (
             <button
               key={item.id}

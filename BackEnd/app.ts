@@ -8,6 +8,7 @@ import { dashboardRouter } from './routes/dashboardRoutes.ts';
 import { inquiryRouter } from './routes/inquiryRoutes.ts';
 import { userRouter } from './routes/userRoutes.ts';
 import { roleRouter } from './routes/roleRoutes.ts';
+import { propertyLocationRouter } from './routes/propertyLocationRoutes.ts';
 import { testMySQLConnection } from '../DataBase/mysql.ts';
 
 export function createExpressApp() {
@@ -57,6 +58,7 @@ export function createExpressApp() {
   app.use('/api/auth', authRouter);
   app.use('/api/dashboard', dashboardRouter);
   app.use('/api/properties', propertyRouter);
+  app.use('/api/property-locations', propertyLocationRouter);
   app.use('/api/services', serviceRouter);
   app.use('/api/agencies', agencyRouter);
   app.use('/api/blogs', blogRouter);

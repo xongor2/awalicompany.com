@@ -5,7 +5,7 @@ import type { ResultSetHeader } from 'mysql2';
 import { query } from './mysql.ts';
 import { runMigrations } from './migrate.ts';
 import { hashPassword } from './security.ts';
-import type { Agency, BlogPost, Inquiry, Property, RoleDefinition, Service, User } from './models.ts';
+import type { Agency, BlogPost, Inquiry, Property, PropertyLocationCategory, PropertyLocationKind, RoleDefinition, Service, User } from './models.ts';
 
 const PROTECTED_EMAILS = new Set(['awalicompany2020@gmail.com', 'halsan252@gmail.com']);
 const DEFAULT_AVATAR = '/images/avatars/nature-tree.png';
@@ -51,6 +51,16 @@ const toProperty = (row: any): Property => ({
   gallery: jsonArray(row.gallery),
   created_at: iso(row.created_at),
   updated_at: iso(row.updated_at),
+});
+
+const toPropertyLocationCategory = (row: any): PropertyLocationCategory => ({
+  id: row.id,
+  kind: row.kind,
+  name: row.name,
+  description: row.description || '',
+  listingCount: Number(row.listing_count || 0),
+  createdAt: iso(row.created_at),
+  updatedAt: iso(row.updated_at),
 });
 
 const toService = (row: any): Service => ({
@@ -228,6 +238,73 @@ class MySQLRepository {
 
   async deleteProperty(id: string): Promise<boolean> {
     return (await query<ResultSetHeader>('DELETE FROM properties WHERE id = ?', [id])).affectedRows > 0;
+  }
+
+  async getPropertyLocationCategories(kind: PropertyLocationKind): Promise<PropertyLocationCategory[]> {
+    const rows = await query<any[]>(
+      `SELECT category.*, COUNT(p.id) AS listing_count
+       FROM property_location_categories category
+       LEFT JOIN properties p ON p.location LIKE CONCAT('%', category.name, '%')
+       WHERE category.kind = ?
+       GROUP BY category.id, category.kind, category.name, category.description, category.created_at, category.updated_at
+       ORDER BY category.name`,
+      [kind],
+    );
+    return rows.map(toPropertyLocationCategory);
+  }
+
+  async getPropertyLocationCategory(id: string): Promise<PropertyLocationCategory | null> {
+    const rows = await query<any[]>(
+      `SELECT category.*, COUNT(p.id) AS listing_count
+       FROM property_location_categories category
+       LEFT JOIN properties p ON p.location LIKE CONCAT('%', category.name, '%')
+       WHERE category.id = ?
+       GROUP BY category.id, category.kind, category.name, category.description, category.created_at, category.updated_at
+       LIMIT 1`,
+      [id],
+    );
+    return rows[0] ? toPropertyLocationCategory(rows[0]) : null;
+  }
+
+  async createPropertyLocationCategory(
+    kind: PropertyLocationKind,
+    data: Pick<PropertyLocationCategory, 'name' | 'description'>,
+  ): Promise<PropertyLocationCategory> {
+    const name = data.name.trim();
+    if (!name) throw new Error(`${kind} name is required.`);
+    const duplicate = await query<any[]>(
+      'SELECT id FROM property_location_categories WHERE kind = ? AND LOWER(name) = LOWER(?) LIMIT 1',
+      [kind, name],
+    );
+    if (duplicate.length) throw new Error(`${kind} already exists.`);
+    const id = `location-${Date.now()}-${crypto.randomBytes(3).toString('hex')}`;
+    await query(
+      'INSERT INTO property_location_categories (id, kind, name, description) VALUES (?, ?, ?, ?)',
+      [id, kind, name, data.description?.trim() || ''],
+    );
+    return (await this.getPropertyLocationCategory(id))!;
+  }
+
+  async updatePropertyLocationCategory(
+    id: string,
+    data: Partial<Pick<PropertyLocationCategory, 'name' | 'description'>>,
+  ): Promise<PropertyLocationCategory | null> {
+    const current = await this.getPropertyLocationCategory(id);
+    if (!current) return null;
+    const name = data.name?.trim() || current.name;
+    const duplicate = await query<any[]>(
+      'SELECT id FROM property_location_categories WHERE kind = ? AND LOWER(name) = LOWER(?) AND id <> ? LIMIT 1',
+      [current.kind, name, id],
+    );
+    if (duplicate.length) throw new Error(`${current.kind} already exists.`);
+    await updateColumns('property_location_categories', id, { ...data, name }, {
+      name: 'name', description: 'description',
+    });
+    return this.getPropertyLocationCategory(id);
+  }
+
+  async deletePropertyLocationCategory(id: string): Promise<boolean> {
+    return (await query<ResultSetHeader>('DELETE FROM property_location_categories WHERE id = ?', [id])).affectedRows > 0;
   }
 
   async getServices(): Promise<Service[]> {
@@ -446,5 +523,5 @@ export async function initializeDatabase():Promise<void>{
   console.log('[DataBase] MySQL schema and production data are ready.');
 }
 
-export type { User, Property, Service, BlogPost, Agency, RoleDefinition, Inquiry } from './models.ts';
+export type { User, Property, PropertyLocationCategory, PropertyLocationKind, Service, BlogPost, Agency, RoleDefinition, Inquiry } from './models.ts';
 export { verifyPassword } from './security.ts';
