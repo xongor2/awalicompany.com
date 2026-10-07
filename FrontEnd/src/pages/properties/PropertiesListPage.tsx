@@ -21,7 +21,7 @@ import { EmptyState } from '../../components/ui/EmptyState';
 import { TableSkeleton } from '../../components/ui/Skeleton';
 import { ConfirmModal } from '../../components/common/ConfirmModal';
 import { PropertyDetailModal } from './PropertyDetailModal';
-import { Property } from '../../types';
+import { Property, PropertyLocationCategory } from '../../types';
 import { api } from '../../services/api';
 import { useToast } from '../../components/ui/Toast';
 
@@ -47,7 +47,10 @@ export const PropertiesListPage: React.FC<PropertiesListPageProps> = ({
   const [search, setSearch] = useState(initialSearch);
   const [typeFilter, setTypeFilter] = useState('All');
   const [statusFilter, setStatusFilter] = useState('All');
-  const [locationFilter, setLocationFilter] = useState('All');
+  const [countryFilter, setCountryFilter] = useState('All');
+  const [cityFilter, setCityFilter] = useState('All');
+  const [countries, setCountries] = useState<PropertyLocationCategory[]>([]);
+  const [cities, setCities] = useState<PropertyLocationCategory[]>([]);
   const [priceSort, setPriceSort] = useState<'none' | 'asc' | 'desc'>('none');
 
   // Pagination state
@@ -63,6 +66,25 @@ export const PropertiesListPage: React.FC<PropertiesListPageProps> = ({
     if (selectedProperty) setViewProperty(selectedProperty);
   }, [selectedProperty]);
 
+  useEffect(() => {
+    let cancelled = false;
+    Promise.all([
+      api.getPropertyLocationCategories('Country'),
+      api.getPropertyLocationCategories('City'),
+    ])
+      .then(([countryItems, cityItems]) => {
+        if (cancelled) return;
+        setCountries(countryItems);
+        setCities(cityItems);
+      })
+      .catch((err: any) => {
+        if (!cancelled) showToast(err.message || 'Failed to load location categories.', 'error');
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const loadProperties = async () => {
     try {
       setIsLoading(true);
@@ -70,7 +92,11 @@ export const PropertiesListPage: React.FC<PropertiesListPageProps> = ({
         search: search || undefined,
         type: typeFilter !== 'All' ? typeFilter : undefined,
         status: statusFilter !== 'All' ? statusFilter : undefined,
-        location: locationFilter !== 'All' ? locationFilter : undefined,
+        location: cityFilter !== 'All'
+          ? cityFilter
+          : countryFilter !== 'All'
+            ? countryFilter
+            : undefined,
       });
       setProperties(data);
     } catch (err: any) {
@@ -83,15 +109,21 @@ export const PropertiesListPage: React.FC<PropertiesListPageProps> = ({
   useEffect(() => {
     loadProperties();
     setCurrentPage(1);
-  }, [search, typeFilter, statusFilter, locationFilter]);
+  }, [search, typeFilter, statusFilter, countryFilter, cityFilter]);
 
   // Client-side sorting & pagination
   const processedProperties = useMemo(() => {
     let list = [...properties];
+    if (countryFilter !== 'All') {
+      list = list.filter(property => property.location.toLocaleLowerCase().includes(countryFilter.toLocaleLowerCase()));
+    }
+    if (cityFilter !== 'All') {
+      list = list.filter(property => property.location.toLocaleLowerCase().includes(cityFilter.toLocaleLowerCase()));
+    }
     if (priceSort === 'asc') list.sort((a, b) => a.price - b.price);
     if (priceSort === 'desc') list.sort((a, b) => b.price - a.price);
     return list;
-  }, [properties, priceSort]);
+  }, [properties, countryFilter, cityFilter, priceSort]);
 
   const paginatedProperties = useMemo(() => {
     const start = (currentPage - 1) * pageSize;
@@ -102,12 +134,13 @@ export const PropertiesListPage: React.FC<PropertiesListPageProps> = ({
     setSearch('');
     setTypeFilter('All');
     setStatusFilter('All');
-    setLocationFilter('All');
+    setCountryFilter('All');
+    setCityFilter('All');
     setPriceSort('none');
     setCurrentPage(1);
   };
 
-  const hasActiveFilters = search || typeFilter !== 'All' || statusFilter !== 'All' || locationFilter !== 'All' || priceSort !== 'none';
+  const hasActiveFilters = search || typeFilter !== 'All' || statusFilter !== 'All' || countryFilter !== 'All' || cityFilter !== 'All' || priceSort !== 'none';
 
   const handleDeleteConfirm = async () => {
     if (!deleteProperty) return;
@@ -192,15 +225,22 @@ export const PropertiesListPage: React.FC<PropertiesListPageProps> = ({
 
             <div className="w-full sm:w-36">
               <Select
-                value={locationFilter}
-                onChange={(e) => setLocationFilter(e.target.value)}
+                value={countryFilter}
+                onChange={(e) => setCountryFilter(e.target.value)}
+                options={[
+                  { value: 'All', label: 'All Countries' },
+                  ...countries.map(country => ({ value: country.name, label: country.name })),
+                ]}
+              />
+            </div>
+
+            <div className="w-full sm:w-36">
+              <Select
+                value={cityFilter}
+                onChange={(e) => setCityFilter(e.target.value)}
                 options={[
                   { value: 'All', label: 'All Cities' },
-                  { value: 'Lahore', label: 'Lahore' },
-                  { value: 'Karachi', label: 'Karachi' },
-                  { value: 'Islamabad', label: 'Islamabad' },
-                  { value: 'Faisalabad', label: 'Faisalabad' },
-                  { value: 'Multan', label: 'Multan' },
+                  ...cities.map(city => ({ value: city.name, label: city.name })),
                 ]}
               />
             </div>
