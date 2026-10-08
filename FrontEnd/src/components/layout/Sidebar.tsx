@@ -14,13 +14,14 @@ import {
   ChevronDown,
   Globe2,
   MapPin,
+  Settings,
   X
 } from 'lucide-react';
 import { BrandLogo } from '../common/BrandLogo';
 import { Avatar } from '../ui/Avatar';
 import { useAuth } from '../../context/AuthContext';
 
-export type NavSection = 'dashboard' | 'health' | 'education' | 'properties' | 'property-form' | 'countries' | 'cities' | 'services' | 'agencies' | 'blogs' | 'users' | 'roles' | 'profile';
+export type NavSection = 'dashboard' | 'health' | 'education' | 'properties' | 'property-form' | 'countries' | 'cities' | 'services' | 'agencies' | 'settings' | 'blogs' | 'users' | 'roles' | 'profile';
 
 interface SidebarProps {
   currentSection: NavSection;
@@ -50,6 +51,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'properties' as NavSection, label: 'Properties', icon: Building2 },
     { id: 'services' as NavSection, label: 'Consulting', icon: Handshake },
     { id: 'agencies' as NavSection, label: 'Agencies', icon: ShieldCheck },
+    { id: 'settings' as NavSection, label: 'Settings', icon: Settings },
     { id: 'blogs' as NavSection, label: 'Blogs', icon: Newspaper },
     { id: 'users' as NavSection, label: 'Users', icon: Users },
     ...(user?.role === 'Admin'

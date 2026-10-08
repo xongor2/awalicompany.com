@@ -53,6 +53,7 @@ export const Navbar: React.FC<NavbarProps> = ({
     cities: 'Cities',
     services: 'Consulting',
     agencies: 'Agencies',
+    settings: 'Settings',
     blogs: 'Blogs',
     users: 'Users',
     roles: 'Roles',
