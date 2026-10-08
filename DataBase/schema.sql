@@ -99,6 +99,23 @@ PREPARE education_thumbnail_statement FROM @education_thumbnail_sql;
 EXECUTE education_thumbnail_statement;
 DEALLOCATE PREPARE education_thumbnail_statement;
 
+CREATE TABLE IF NOT EXISTS health_specialties (
+  id VARCHAR(64) PRIMARY KEY,
+  category VARCHAR(150) NOT NULL,
+  name VARCHAR(255) NOT NULL,
+  tagline VARCHAR(500) NOT NULL,
+  description TEXT NOT NULL,
+  key_procedures JSON NOT NULL,
+  destinations JSON NOT NULL,
+  image MEDIUMTEXT NOT NULL,
+  status ENUM('Active', 'Inactive') NOT NULL DEFAULT 'Active',
+  created_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  updated_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
+  INDEX idx_health_specialties_category (category),
+  INDEX idx_health_specialties_status (status),
+  INDEX idx_health_specialties_name (name(100))
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE IF NOT EXISTS blogs (
   id VARCHAR(64) PRIMARY KEY, title VARCHAR(255) NOT NULL, content LONGTEXT NOT NULL,
   thumbnail MEDIUMTEXT NOT NULL, categories JSON NOT NULL,

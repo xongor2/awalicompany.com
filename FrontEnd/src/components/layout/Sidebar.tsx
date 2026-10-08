@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import {
   LayoutDashboard,
   Building2,
-  BriefcaseBusiness,
   Users,
   User,
   LogOut,
@@ -21,7 +20,7 @@ import { BrandLogo } from '../common/BrandLogo';
 import { Avatar } from '../ui/Avatar';
 import { useAuth } from '../../context/AuthContext';
 
-export type NavSection = 'dashboard' | 'consulting' | 'health' | 'education' | 'properties' | 'property-form' | 'countries' | 'cities' | 'services' | 'agencies' | 'blogs' | 'users' | 'roles' | 'profile';
+export type NavSection = 'dashboard' | 'health' | 'education' | 'properties' | 'property-form' | 'countries' | 'cities' | 'services' | 'agencies' | 'blogs' | 'users' | 'roles' | 'profile';
 
 interface SidebarProps {
   currentSection: NavSection;
@@ -46,11 +45,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   const navItems = [
     { id: 'dashboard' as NavSection, label: 'Dashboard', icon: LayoutDashboard },
-    { id: 'consulting' as NavSection, label: 'Consulting', icon: Handshake },
     { id: 'health' as NavSection, label: 'Health', icon: HeartPulse },
     { id: 'education' as NavSection, label: 'Education', icon: GraduationCap },
     { id: 'properties' as NavSection, label: 'Properties', icon: Building2 },
-    { id: 'services' as NavSection, label: 'Consulting', icon: BriefcaseBusiness },
+    { id: 'services' as NavSection, label: 'Consulting', icon: Handshake },
     { id: 'agencies' as NavSection, label: 'Agencies', icon: ShieldCheck },
     { id: 'blogs' as NavSection, label: 'Blogs', icon: Newspaper },
     { id: 'users' as NavSection, label: 'Users', icon: Users },
@@ -66,7 +64,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   };
 
   const content = (
-    <div className="flex flex-col h-full bg-[#151A46] dark:bg-[#0B1030] text-white border-r border-[#252B5C] select-none">
+    <div className="flex flex-col h-full bg-white dark:bg-[#0B1030] text-white border-r border-[#252B5C] select-none">
       {/* Brand Header */}
       <div className="p-6 border-b border-[#252B5C]/60 flex items-center justify-between">
         <BrandLogo variant="sidebar" />

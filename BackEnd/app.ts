@@ -10,6 +10,7 @@ import { userRouter } from './routes/userRoutes.ts';
 import { roleRouter } from './routes/roleRoutes.ts';
 import { propertyLocationRouter } from './routes/propertyLocationRoutes.ts';
 import { educationRouter } from './routes/educationRoutes.ts';
+import { healthSpecialtyRouter } from './routes/healthSpecialtyRoutes.ts';
 import { testMySQLConnection } from '../DataBase/mysql.ts';
 
 export function createExpressApp() {
@@ -62,6 +63,7 @@ export function createExpressApp() {
   app.use('/api/property-locations', propertyLocationRouter);
   app.use('/api/services', serviceRouter);
   app.use('/api/education', educationRouter);
+  app.use('/api/health-specialties', healthSpecialtyRouter);
   app.use('/api/agencies', agencyRouter);
   app.use('/api/blogs', blogRouter);
   app.use('/api', userRouter); // mounts /api/users and /api/profile

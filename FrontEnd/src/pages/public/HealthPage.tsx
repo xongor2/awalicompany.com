@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   HeartPulse,
   Stethoscope,
@@ -21,6 +21,7 @@ import {
   Send,
   HelpCircle,
 } from 'lucide-react';
+import { api } from '../../services/api';
 
 export interface HealthPageProps {
   onNavigateHome: () => void;
@@ -36,7 +37,7 @@ interface Specialty {
   description: string;
   keyProcedures: string[];
   destinations: string[];
-  iconName: string;
+  iconName?: string;
   image: string;
 }
 
@@ -45,6 +46,8 @@ export const HealthPage: React.FC<HealthPageProps> = ({
   onNavigate,
 }) => {
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
+  const [specialties, setSpecialties] = useState<Specialty[]>([]);
+  const [isSpecialtiesLoading, setIsSpecialtiesLoading] = useState(true);
   const [activeModalSpecialty, setActiveModalSpecialty] = useState<Specialty | null>(null);
   const [isInquiryModalOpen, setIsInquiryModalOpen] = useState(false);
   const [inquirySuccess, setInquirySuccess] = useState(false);
@@ -60,17 +63,25 @@ export const HealthPage: React.FC<HealthPageProps> = ({
     medicalNotes: '',
   });
 
-  const categories = [
-    'All',
-    'Complex Surgeries',
-    'Oncology & Cancer Care',
-    'Cardiology & Heart',
-    'Orthopedics & Spine',
-    'Organ Transplant',
-    'Diagnostic & IVF',
-  ];
+  useEffect(() => {
+    let active = true;
+    setIsSpecialtiesLoading(true);
+    api.getHealthSpecialties()
+      .then(items => {
+        if (active) setSpecialties(items.filter(item => item.status === 'Active'));
+      })
+      .catch(() => {
+        if (active) setSpecialties([]);
+      })
+      .finally(() => {
+        if (active) setIsSpecialtiesLoading(false);
+      });
+    return () => { active = false; };
+  }, []);
 
-  const specialties: Specialty[] = [
+  const categories = ['All', ...new Set(specialties.map(item => item.category))];
+
+  const legacySpecialties: Specialty[] = [
     {
       id: 'cardio',
       category: 'Cardiology & Heart',
@@ -514,6 +525,20 @@ export const HealthPage: React.FC<HealthPageProps> = ({
           </div>
 
           {/* Specialty Grid */}
+          {isSpecialtiesLoading && (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8" aria-label="Loading health specialties">
+              {[0, 1, 2].map(index => (
+                <div key={index} className="h-[520px] animate-pulse rounded-3xl bg-white dark:bg-[#111638]" />
+              ))}
+            </div>
+          )}
+          {!isSpecialtiesLoading && filteredSpecialties.length === 0 && (
+            <div className="rounded-3xl border border-[#E2E6EF] bg-white px-6 py-14 text-center dark:border-[#202754] dark:bg-[#111638]">
+              <HeartPulse className="mx-auto mb-3 h-9 w-9 text-[#FF7817]" />
+              <h3 className="font-heading text-lg font-bold text-[#151A46] dark:text-white">No health specialties available</h3>
+              <p className="mt-1 text-sm text-[#5F667A] dark:text-[#AAB2CA]">New clinical programs will appear here when they are published.</p>
+            </div>
+          )}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {filteredSpecialties.map((spec) => (
               <div
@@ -922,12 +947,9 @@ export const HealthPage: React.FC<HealthPageProps> = ({
                       }
                       className="w-full px-3.5 py-2.5 rounded-xl border border-[#D9DDE8] dark:border-[#252B5C] bg-[#F8F9FC] dark:bg-[#151A46] text-xs text-[#171A2B] dark:text-white focus:outline-none focus:border-[#FF7817]"
                     >
-                      <option value="Cardiology & Heart Surgery">Cardiology & Heart Surgery</option>
-                      <option value="Oncology & Cancer Treatment">Oncology & Cancer Treatment</option>
-                      <option value="Orthopedics & Spine">Orthopedics & Spine</option>
-                      <option value="Organ Transplantation">Organ Transplantation</option>
-                      <option value="Neurosurgery">Neurosurgery</option>
-                      <option value="Fertility (IVF) & Diagnostics">Fertility (IVF) & Diagnostics</option>
+                      {specialties.map(specialty => (
+                        <option key={specialty.id} value={specialty.name}>{specialty.name}</option>
+                      ))}
                       <option value="Hospital & Clinic Advisory">Hospital & Clinic Advisory</option>
                       <option value="Medical Equipment Procurement">Medical Equipment Procurement</option>
                     </select>

@@ -5,7 +5,7 @@ import type { ResultSetHeader } from 'mysql2';
 import { query } from './mysql.ts';
 import { runMigrations } from './migrate.ts';
 import { hashPassword } from './security.ts';
-import type { Agency, BlogPost, EducationOpportunity, Inquiry, Property, PropertyLocationCategory, PropertyLocationKind, RoleDefinition, Service, User } from './models.ts';
+import type { Agency, BlogPost, EducationOpportunity, HealthSpecialty, Inquiry, Property, PropertyLocationCategory, PropertyLocationKind, RoleDefinition, Service, User } from './models.ts';
 
 const PROTECTED_EMAILS = new Set(['awalicompany2020@gmail.com', 'halsan252@gmail.com']);
 const DEFAULT_AVATAR = '/images/avatars/nature-tree.png';
@@ -77,6 +77,20 @@ const toEducationOpportunity = (row: any): EducationOpportunity => ({
   thumbnail: row.thumbnail || '',
   availableDegrees: jsonArray(row.available_degrees) as EducationOpportunity['availableDegrees'],
   universityUrl: row.university_url,
+  createdAt: iso(row.created_at),
+  updatedAt: iso(row.updated_at),
+});
+
+const toHealthSpecialty = (row: any): HealthSpecialty => ({
+  id: row.id,
+  category: row.category,
+  name: row.name,
+  tagline: row.tagline,
+  description: row.description,
+  keyProcedures: jsonArray(row.key_procedures),
+  destinations: jsonArray(row.destinations),
+  image: row.image,
+  status: row.status,
   createdAt: iso(row.created_at),
   updatedAt: iso(row.updated_at),
 });
@@ -409,6 +423,48 @@ class MySQLRepository {
     return (await query<ResultSetHeader>('DELETE FROM education_opportunities WHERE id = ?', [id])).affectedRows > 0;
   }
 
+  async getHealthSpecialties(): Promise<HealthSpecialty[]> {
+    return (await query<any[]>('SELECT * FROM health_specialties ORDER BY created_at DESC')).map(toHealthSpecialty);
+  }
+
+  async getHealthSpecialtyById(id: string): Promise<HealthSpecialty | null> {
+    const rows = await query<any[]>('SELECT * FROM health_specialties WHERE id = ? LIMIT 1', [id]);
+    return rows[0] ? toHealthSpecialty(rows[0]) : null;
+  }
+
+  async createHealthSpecialty(
+    data: Omit<HealthSpecialty, 'id' | 'createdAt' | 'updatedAt'>,
+  ): Promise<HealthSpecialty> {
+    const id = `health-${Date.now()}-${crypto.randomBytes(3).toString('hex')}`;
+    await query(
+      'INSERT INTO health_specialties (id, category, name, tagline, description, key_procedures, destinations, image, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [id, data.category, data.name, data.tagline, data.description, JSON.stringify(data.keyProcedures), JSON.stringify(data.destinations), data.image, data.status],
+    );
+    return (await this.getHealthSpecialtyById(id))!;
+  }
+
+  async updateHealthSpecialty(
+    id: string,
+    updates: Partial<Omit<HealthSpecialty, 'id' | 'createdAt' | 'updatedAt'>>,
+  ): Promise<HealthSpecialty | null> {
+    if (!await this.getHealthSpecialtyById(id)) return null;
+    await updateColumns(
+      'health_specialties',
+      id,
+      updates,
+      {
+        category: 'category', name: 'name', tagline: 'tagline', description: 'description',
+        keyProcedures: 'key_procedures', destinations: 'destinations', image: 'image', status: 'status',
+      },
+      new Set(['keyProcedures', 'destinations']),
+    );
+    return this.getHealthSpecialtyById(id);
+  }
+
+  async deleteHealthSpecialty(id: string): Promise<boolean> {
+    return (await query<ResultSetHeader>('DELETE FROM health_specialties WHERE id = ?', [id])).affectedRows > 0;
+  }
+
   async getBlogs(filter?: { search?: string; category?: string; status?: string }): Promise<BlogPost[]> {
     let blogs = (await query<any[]>('SELECT * FROM blogs ORDER BY created_at DESC')).map(toBlog);
     if (filter?.search) {
@@ -599,5 +655,5 @@ export async function initializeDatabase():Promise<void>{
   console.log('[DataBase] MySQL schema and production data are ready.');
 }
 
-export type { User, Property, PropertyLocationCategory, PropertyLocationKind, Service, EducationOpportunity, BlogPost, Agency, RoleDefinition, Inquiry } from './models.ts';
+export type { User, Property, PropertyLocationCategory, PropertyLocationKind, Service, EducationOpportunity, HealthSpecialty, BlogPost, Agency, RoleDefinition, Inquiry } from './models.ts';
 export { verifyPassword } from './security.ts';

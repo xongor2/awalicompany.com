@@ -1,4 +1,4 @@
-import { User, Property, PropertyLocationCategory, PropertyLocationKind, Service, EducationOpportunity, BlogPost, DashboardStats, Agency, RoleDefinition } from '../types';
+import { User, Property, PropertyLocationCategory, PropertyLocationKind, Service, EducationOpportunity, HealthSpecialty, BlogPost, DashboardStats, Agency, RoleDefinition } from '../types';
 import { SAMPLE_AGENCIES } from '../data/sampleAgencies';
 
 const API_BASE = '/api';
@@ -272,6 +272,42 @@ export const api = {
     const res = await fetch(`${API_BASE}/education/${id}`, {
       method: 'DELETE',
       headers: getAuthHeaders()
+    });
+    return handleResponse(res);
+  },
+
+  // Health specialties
+  async getHealthSpecialties(search?: string): Promise<HealthSpecialty[]> {
+    const query = new URLSearchParams();
+    if (search) query.append('search', search);
+    const res = await fetch(`${API_BASE}/health-specialties?${query.toString()}`, {
+      headers: getAuthHeaders()
+    });
+    return handleResponse(res);
+  },
+
+  async createHealthSpecialty(
+    data: Pick<HealthSpecialty, 'category' | 'name' | 'tagline' | 'description' | 'keyProcedures' | 'destinations' | 'image' | 'status'>,
+  ): Promise<HealthSpecialty> {
+    const res = await fetch(`${API_BASE}/health-specialties`, {
+      method: 'POST', headers: getAuthHeaders(), body: JSON.stringify(data)
+    });
+    return handleResponse(res);
+  },
+
+  async updateHealthSpecialty(
+    id: string,
+    data: Pick<HealthSpecialty, 'category' | 'name' | 'tagline' | 'description' | 'keyProcedures' | 'destinations' | 'image' | 'status'>,
+  ): Promise<HealthSpecialty> {
+    const res = await fetch(`${API_BASE}/health-specialties/${id}`, {
+      method: 'PUT', headers: getAuthHeaders(), body: JSON.stringify(data)
+    });
+    return handleResponse(res);
+  },
+
+  async deleteHealthSpecialty(id: string): Promise<{ message: string }> {
+    const res = await fetch(`${API_BASE}/health-specialties/${id}`, {
+      method: 'DELETE', headers: getAuthHeaders()
     });
     return handleResponse(res);
   },

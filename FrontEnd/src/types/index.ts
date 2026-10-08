@@ -88,6 +88,22 @@ export interface EducationOpportunity {
   updatedAt: string;
 }
 
+export type HealthSpecialtyStatus = 'Active' | 'Inactive';
+
+export interface HealthSpecialty {
+  id: string;
+  category: string;
+  name: string;
+  tagline: string;
+  description: string;
+  keyProcedures: string[];
+  destinations: string[];
+  image: string;
+  status: HealthSpecialtyStatus;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface BlogPost {
   id: string;
   title: string;

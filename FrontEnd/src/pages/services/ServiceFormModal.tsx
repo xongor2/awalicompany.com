@@ -38,7 +38,6 @@ import {
 } from 'lucide-react';
 import { Modal } from '../../components/ui/Modal';
 import { Button } from '../../components/ui/Button';
-import { Select } from '../../components/ui/Select';
 import { Service } from '../../types';
 import { api } from '../../services/api';
 import { useToast } from '../../components/ui/Toast';
@@ -96,11 +95,6 @@ export const ServiceFormModal: React.FC<ServiceFormModalProps> = ({
   // 3. Featured Image (Single main service image from Screenshot 2)
   const [featuredImage, setFeaturedImage] = useState('');
 
-  // Operational meta
-  const [category, setCategory] = useState<'Education' | 'Consulting' | 'Import / Export' | 'Real Estate'>('Consulting');
-  const [status, setStatus] = useState<'Active' | 'Pending' | 'Inactive'>('Active');
-  const [featuresStr, setFeaturesStr] = useState('');
-
   // Collapsible panels matching screenshot UI
   const [isSettingsOpen, setIsSettingsOpen] = useState(true);
   const [isFeaturedBoxOpen, setIsFeaturedBoxOpen] = useState(true);
@@ -131,9 +125,6 @@ export const ServiceFormModal: React.FC<ServiceFormModalProps> = ({
     setEditorMode('visual');
     setHeadingFormat('Paragraph');
     setFeaturedImage('');
-    setCategory('Consulting');
-    setStatus('Active');
-    setFeaturesStr('');
     setErrors({});
     setGeneralError(null);
     if (featuredFileInputRef.current) featuredFileInputRef.current.value = '';
@@ -147,9 +138,6 @@ export const ServiceFormModal: React.FC<ServiceFormModalProps> = ({
         setTitle(serviceToEdit.title || serviceToEdit.name || '');
         setInfo(serviceToEdit.description || '');
         setFeaturedImage(serviceToEdit.image || '');
-        setCategory(serviceToEdit.category || 'Consulting');
-        setStatus(serviceToEdit.status || 'Active');
-        setFeaturesStr(serviceToEdit.features ? serviceToEdit.features.join('\n') : '');
         setErrors({});
         setGeneralError(null);
       } else {
@@ -296,30 +284,18 @@ export const ServiceFormModal: React.FC<ServiceFormModalProps> = ({
     setIsSubmitting(true);
     try {
       // Fallback preset if image wasn't set by user
-      const defaultImage =
-        category === 'Education'
-          ? PRESET_SERVICE_IMAGES[0].url
-          : category === 'Consulting'
-          ? PRESET_SERVICE_IMAGES[1].url
-          : category === 'Import / Export'
-          ? PRESET_SERVICE_IMAGES[2].url
-          : PRESET_SERVICE_IMAGES[3].url;
+      const defaultImage = PRESET_SERVICE_IMAGES[1].url;
 
       const resolvedImage = featuredImage.trim() || defaultImage;
-
-      const features = featuresStr
-        .split('\n')
-        .map((f) => f.trim())
-        .filter(Boolean);
 
       const payload: Partial<Service> = {
         name: title.trim(),
         title: title.trim(),
-        category,
+        category: 'Consulting',
         description: info.trim(),
         image: resolvedImage,
-        status,
-        features,
+        status: 'Active',
+        features: serviceToEdit?.features || [],
       };
 
       if (isEdit && serviceToEdit) {
@@ -841,26 +817,6 @@ export const ServiceFormModal: React.FC<ServiceFormModalProps> = ({
                             Click to upload or drag & drop an image here
                           </p>
                         </div>
-
-                        {/* Quick Presets Toggle */}
-                        <div className="pt-2 border-t border-[#ccd0d4]/60 dark:border-[#252B5C]/60">
-                          <span className="text-[10px] uppercase font-bold text-[#8A90A2] block mb-1.5">
-                            Or select business preset:
-                          </span>
-                          <div className="grid grid-cols-2 gap-1.5">
-                            {PRESET_SERVICE_IMAGES.map((preset) => (
-                              <button
-                                key={preset.label}
-                                type="button"
-                                onClick={() => setFeaturedImage(preset.url)}
-                                className="text-[10px] p-1 rounded border border-[#ccd0d4] dark:border-[#252B5C] hover:border-[#FF7817] bg-white dark:bg-[#151A46] text-[#151A46] dark:text-[#D9DDE8] truncate text-left transition-colors cursor-pointer"
-                                title={preset.label}
-                              >
-                                {preset.category}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
                       </div>
                     ) : (
                       /* State B: Image IS Set - Full Preview, Replace & Remove */
@@ -910,68 +866,6 @@ export const ServiceFormModal: React.FC<ServiceFormModalProps> = ({
                     )}
                   </div>
                 )}
-              </div>
-
-              {/* 4. Publishing & Category Configuration Box */}
-              <div className="rounded-md border border-[#ccd0d4] dark:border-[#252B5C] bg-white dark:bg-[#151A46] shadow-xs overflow-hidden">
-                <div className="px-4 py-2.5 bg-[#F8F9FC] dark:bg-[#0B1030]/80 border-b border-[#ccd0d4] dark:border-[#252B5C]">
-                  <span className="font-heading text-sm font-semibold text-[#151A46] dark:text-white">
-                    Publishing Details
-                  </span>
-                </div>
-
-                <div className="p-4 space-y-4">
-                  {/* Category Selection */}
-                  <div>
-                    <Select
-                      label="Sector Category *"
-                      value={category}
-                      onChange={(e) => {
-                        const newCat = e.target.value as any;
-                        setCategory(newCat);
-                        // Auto-assign matching high-res image if none set
-                        if (!featuredImage) {
-                          const preset = PRESET_SERVICE_IMAGES.find((p) => p.category === newCat);
-                          if (preset) setFeaturedImage(preset.url);
-                        }
-                      }}
-                      options={[
-                        { value: 'Education', label: 'Education Advisory' },
-                        { value: 'Consulting', label: 'Strategic Consulting' },
-                        { value: 'Import / Export', label: 'Import / Export Trade' },
-                        { value: 'Real Estate', label: 'Real Estate Advisory' },
-                      ]}
-                    />
-                  </div>
-
-                  {/* Status Selection */}
-                  <div>
-                    <Select
-                      label="Offering Status *"
-                      value={status}
-                      onChange={(e) => setStatus(e.target.value as any)}
-                      options={[
-                        { value: 'Active', label: 'Active Offering' },
-                        { value: 'Pending', label: 'Pending Review' },
-                        { value: 'Inactive', label: 'Inactive / Archived' },
-                      ]}
-                    />
-                  </div>
-
-                  {/* Key Capabilities / Features */}
-                  <div>
-                    <label className="block text-xs font-semibold text-[#151A46] dark:text-[#D9DDE8] mb-1">
-                      Key Inclusions (One per line)
-                    </label>
-                    <textarea
-                      rows={3}
-                      value={featuresStr}
-                      onChange={(e) => setFeaturesStr(e.target.value)}
-                      placeholder="e.g.&#10;Advisory Consultation&#10;Documentation Review&#10;Executive Briefing"
-                      className="w-full p-2.5 text-xs rounded border border-[#ccd0d4] dark:border-[#252B5C] bg-white dark:bg-[#0B1030] text-[#151A46] dark:text-white focus:outline-none focus:border-[#FF7817]"
-                    />
-                  </div>
-                </div>
               </div>
             </div>
           </div>
