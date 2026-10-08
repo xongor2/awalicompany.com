@@ -25,6 +25,7 @@ import {
 } from 'lucide-react';
 import { Service } from '../../types';
 import { api } from '../../services/api';
+import educationAdvisoryImage from '../../assets/images/hero_guidance_education_business_1790222125018.jpg';
 
 const universityLogos = [
   { src: '/images/UN-slide-emage/شعار-الجامعات-بالصفحة-الرئيسية.jpg', alt: 'Partner university logo 1' },
@@ -81,6 +82,53 @@ const UniversityLogoSlider: React.FC = () => (
             ))}
           </div>
         ))}
+      </div>
+    </div>
+  </section>
+);
+
+const EducationMajorCTA: React.FC = () => (
+  <section className="bg-[#F6F8FC] dark:bg-[#090F30] px-4 py-10 sm:px-8 sm:py-14 lg:px-16">
+    <div className="mx-auto grid max-w-[1312px] overflow-hidden rounded-3xl border border-[#DCE2EE] bg-white shadow-[0_18px_50px_rgba(15,23,42,0.08)] dark:border-[#252D62] dark:bg-[#12183F] lg:grid-cols-[1.05fr_0.95fr]">
+      <div className="flex flex-col justify-center px-6 py-9 sm:px-10 sm:py-12 lg:px-14">
+        <div className="mb-5 flex items-center gap-3">
+          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#FFF0E5] text-[#FF7817] dark:bg-[#FF7817]/15">
+            <GraduationCap className="h-5 w-5" aria-hidden="true" />
+          </span>
+          <span className="text-xs font-bold uppercase tracking-[0.18em] text-[#FF7817]">
+            University Program Finder
+          </span>
+        </div>
+
+        <h2 className="max-w-2xl text-3xl font-bold leading-tight text-[#101735] dark:text-white sm:text-4xl lg:text-[42px]">
+          Easily find your major through our website
+        </h2>
+        <p className="mt-5 max-w-xl text-base leading-7 text-[#667085] dark:text-[#B4BDD5] sm:text-lg">
+          Explore university programs, compare study options, and discover the major that best matches your goals and future career.
+        </p>
+
+        <div className="mt-8">
+          <a
+            href="https://agent-uni.com/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-[#FF7817] px-6 py-3 text-sm font-bold text-white shadow-[0_10px_24px_rgba(255,120,23,0.28)] transition-all hover:-translate-y-0.5 hover:bg-[#E9680A] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF7817] focus-visible:ring-offset-2 dark:focus-visible:ring-offset-[#12183F]"
+            aria-label="Find your university major on Agent Uni (opens in a new tab)"
+          >
+            Find Your Major
+            <ArrowRight className="h-4 w-4" aria-hidden="true" />
+          </a>
+        </div>
+      </div>
+
+      <div className="relative min-h-[280px] sm:min-h-[360px] lg:min-h-[440px]">
+        <img
+          src={educationAdvisoryImage}
+          alt="Students receiving university program guidance on a modern campus"
+          className="absolute inset-0 h-full w-full object-cover"
+          loading="lazy"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#090F30]/45 via-transparent to-transparent lg:bg-gradient-to-r lg:from-[#12183F]/15 lg:to-transparent" />
       </div>
     </div>
   </section>
@@ -376,6 +424,8 @@ export const ServicesPage: React.FC<ServicesPageProps> = ({
       </section>
 
       {isEducation && <UniversityLogoSlider />}
+
+      {isEducation && <EducationMajorCTA />}
 
       {/* Main Services Filter & Gallery Section */}
       <section className="max-w-[1440px] mx-auto px-4 sm:px-8 lg:px-16 py-12 space-y-10">
