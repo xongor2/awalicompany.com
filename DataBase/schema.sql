@@ -103,6 +103,8 @@ CREATE TABLE IF NOT EXISTS health_specialties (
   id VARCHAR(64) PRIMARY KEY,
   category VARCHAR(150) NOT NULL,
   name VARCHAR(255) NOT NULL,
+  country VARCHAR(150) NOT NULL DEFAULT '',
+  city VARCHAR(150) NOT NULL DEFAULT '',
   tagline VARCHAR(500) NOT NULL,
   description TEXT NOT NULL,
   key_procedures JSON NOT NULL,
@@ -115,6 +117,33 @@ CREATE TABLE IF NOT EXISTS health_specialties (
   INDEX idx_health_specialties_status (status),
   INDEX idx_health_specialties_name (name(100))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Add hospital location safely when upgrading an earlier Health table.
+SET @health_country_exists = (
+  SELECT COUNT(*) FROM information_schema.COLUMNS
+  WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'health_specialties' AND COLUMN_NAME = 'country'
+);
+SET @health_country_sql = IF(
+  @health_country_exists = 0,
+  'ALTER TABLE health_specialties ADD COLUMN country VARCHAR(150) NOT NULL DEFAULT '''' AFTER name',
+  'SELECT 1'
+);
+PREPARE health_country_statement FROM @health_country_sql;
+EXECUTE health_country_statement;
+DEALLOCATE PREPARE health_country_statement;
+
+SET @health_city_exists = (
+  SELECT COUNT(*) FROM information_schema.COLUMNS
+  WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'health_specialties' AND COLUMN_NAME = 'city'
+);
+SET @health_city_sql = IF(
+  @health_city_exists = 0,
+  'ALTER TABLE health_specialties ADD COLUMN city VARCHAR(150) NOT NULL DEFAULT '''' AFTER country',
+  'SELECT 1'
+);
+PREPARE health_city_statement FROM @health_city_sql;
+EXECUTE health_city_statement;
+DEALLOCATE PREPARE health_city_statement;
 
 CREATE TABLE IF NOT EXISTS blogs (
   id VARCHAR(64) PRIMARY KEY, title VARCHAR(255) NOT NULL, content LONGTEXT NOT NULL,

@@ -85,6 +85,8 @@ const toHealthSpecialty = (row: any): HealthSpecialty => ({
   id: row.id,
   category: row.category,
   name: row.name,
+  country: row.country || '',
+  city: row.city || '',
   tagline: row.tagline,
   description: row.description,
   keyProcedures: jsonArray(row.key_procedures),
@@ -437,8 +439,8 @@ class MySQLRepository {
   ): Promise<HealthSpecialty> {
     const id = `health-${Date.now()}-${crypto.randomBytes(3).toString('hex')}`;
     await query(
-      'INSERT INTO health_specialties (id, category, name, tagline, description, key_procedures, destinations, image, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [id, data.category, data.name, data.tagline, data.description, JSON.stringify(data.keyProcedures), JSON.stringify(data.destinations), data.image, data.status],
+      'INSERT INTO health_specialties (id, category, name, country, city, tagline, description, key_procedures, destinations, image, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [id, data.category, data.name, data.country, data.city, data.tagline, data.description, JSON.stringify(data.keyProcedures), JSON.stringify(data.destinations), data.image, data.status],
     );
     return (await this.getHealthSpecialtyById(id))!;
   }
@@ -453,7 +455,7 @@ class MySQLRepository {
       id,
       updates,
       {
-        category: 'category', name: 'name', tagline: 'tagline', description: 'description',
+        category: 'category', name: 'name', country: 'country', city: 'city', tagline: 'tagline', description: 'description',
         keyProcedures: 'key_procedures', destinations: 'destinations', image: 'image', status: 'status',
       },
       new Set(['keyProcedures', 'destinations']),

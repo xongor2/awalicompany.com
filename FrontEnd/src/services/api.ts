@@ -287,7 +287,7 @@ export const api = {
   },
 
   async createHealthSpecialty(
-    data: Pick<HealthSpecialty, 'category' | 'name' | 'tagline' | 'description' | 'keyProcedures' | 'destinations' | 'image' | 'status'>,
+    data: Pick<HealthSpecialty, 'category' | 'name' | 'country' | 'city' | 'description' | 'keyProcedures' | 'destinations' | 'image' | 'status'>,
   ): Promise<HealthSpecialty> {
     const res = await fetch(`${API_BASE}/health-specialties`, {
       method: 'POST', headers: getAuthHeaders(), body: JSON.stringify(data)
@@ -297,7 +297,7 @@ export const api = {
 
   async updateHealthSpecialty(
     id: string,
-    data: Pick<HealthSpecialty, 'category' | 'name' | 'tagline' | 'description' | 'keyProcedures' | 'destinations' | 'image' | 'status'>,
+    data: Pick<HealthSpecialty, 'category' | 'name' | 'country' | 'city' | 'description' | 'keyProcedures' | 'destinations' | 'image' | 'status'>,
   ): Promise<HealthSpecialty> {
     const res = await fetch(`${API_BASE}/health-specialties/${id}`, {
       method: 'PUT', headers: getAuthHeaders(), body: JSON.stringify(data)
