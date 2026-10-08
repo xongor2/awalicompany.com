@@ -5,7 +5,7 @@ import type { ResultSetHeader } from 'mysql2';
 import { query } from './mysql.ts';
 import { runMigrations } from './migrate.ts';
 import { hashPassword } from './security.ts';
-import type { Agency, BlogPost, Inquiry, Property, PropertyLocationCategory, PropertyLocationKind, RoleDefinition, Service, User } from './models.ts';
+import type { Agency, BlogPost, EducationOpportunity, Inquiry, Property, PropertyLocationCategory, PropertyLocationKind, RoleDefinition, Service, User } from './models.ts';
 
 const PROTECTED_EMAILS = new Set(['awalicompany2020@gmail.com', 'halsan252@gmail.com']);
 const DEFAULT_AVATAR = '/images/avatars/nature-tree.png';
@@ -68,6 +68,16 @@ const toService = (row: any): Service => ({
   features: jsonArray(row.features),
   created_at: iso(row.created_at),
   updated_at: iso(row.updated_at),
+});
+
+const toEducationOpportunity = (row: any): EducationOpportunity => ({
+  id: row.id,
+  title: row.title,
+  description: row.description,
+  availableDegrees: jsonArray(row.available_degrees) as EducationOpportunity['availableDegrees'],
+  universityUrl: row.university_url,
+  createdAt: iso(row.created_at),
+  updatedAt: iso(row.updated_at),
 });
 
 const toBlog = (row: any): BlogPost => ({
@@ -353,6 +363,50 @@ class MySQLRepository {
     return (await query<ResultSetHeader>('DELETE FROM services WHERE id = ?', [id])).affectedRows > 0;
   }
 
+  async getEducationOpportunities(): Promise<EducationOpportunity[]> {
+    return (await query<any[]>('SELECT * FROM education_opportunities ORDER BY created_at DESC')).map(toEducationOpportunity);
+  }
+
+  async getEducationOpportunityById(id: string): Promise<EducationOpportunity | null> {
+    const rows = await query<any[]>('SELECT * FROM education_opportunities WHERE id = ? LIMIT 1', [id]);
+    return rows[0] ? toEducationOpportunity(rows[0]) : null;
+  }
+
+  async createEducationOpportunity(
+    data: Omit<EducationOpportunity, 'id' | 'createdAt' | 'updatedAt'>,
+  ): Promise<EducationOpportunity> {
+    const id = `edu-${Date.now()}-${crypto.randomBytes(3).toString('hex')}`;
+    await query(
+      'INSERT INTO education_opportunities (id, title, description, available_degrees, university_url) VALUES (?, ?, ?, ?, ?)',
+      [id, data.title, data.description, JSON.stringify(data.availableDegrees), data.universityUrl],
+    );
+    return (await this.getEducationOpportunityById(id))!;
+  }
+
+  async updateEducationOpportunity(
+    id: string,
+    updates: Partial<Omit<EducationOpportunity, 'id' | 'createdAt' | 'updatedAt'>>,
+  ): Promise<EducationOpportunity | null> {
+    if (!await this.getEducationOpportunityById(id)) return null;
+    await updateColumns(
+      'education_opportunities',
+      id,
+      updates,
+      {
+        title: 'title',
+        description: 'description',
+        availableDegrees: 'available_degrees',
+        universityUrl: 'university_url',
+      },
+      new Set(['availableDegrees']),
+    );
+    return this.getEducationOpportunityById(id);
+  }
+
+  async deleteEducationOpportunity(id: string): Promise<boolean> {
+    return (await query<ResultSetHeader>('DELETE FROM education_opportunities WHERE id = ?', [id])).affectedRows > 0;
+  }
+
   async getBlogs(filter?: { search?: string; category?: string; status?: string }): Promise<BlogPost[]> {
     let blogs = (await query<any[]>('SELECT * FROM blogs ORDER BY created_at DESC')).map(toBlog);
     if (filter?.search) {
@@ -543,5 +597,5 @@ export async function initializeDatabase():Promise<void>{
   console.log('[DataBase] MySQL schema and production data are ready.');
 }
 
-export type { User, Property, PropertyLocationCategory, PropertyLocationKind, Service, BlogPost, Agency, RoleDefinition, Inquiry } from './models.ts';
+export type { User, Property, PropertyLocationCategory, PropertyLocationKind, Service, EducationOpportunity, BlogPost, Agency, RoleDefinition, Inquiry } from './models.ts';
 export { verifyPassword } from './security.ts';

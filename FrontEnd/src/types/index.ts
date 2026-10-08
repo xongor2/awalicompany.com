@@ -75,6 +75,18 @@ export interface Service {
   updated_at?: string;
 }
 
+export type EducationDegree = 'Certificate' | 'Bachelor' | 'Master' | 'PHD';
+
+export interface EducationOpportunity {
+  id: string;
+  title: string;
+  description: string;
+  availableDegrees: EducationDegree[];
+  universityUrl: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface BlogPost {
   id: string;
   title: string;

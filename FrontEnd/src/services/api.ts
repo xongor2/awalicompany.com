@@ -1,4 +1,4 @@
-import { User, Property, PropertyLocationCategory, PropertyLocationKind, Service, BlogPost, DashboardStats, Agency, RoleDefinition } from '../types';
+import { User, Property, PropertyLocationCategory, PropertyLocationKind, Service, EducationOpportunity, BlogPost, DashboardStats, Agency, RoleDefinition } from '../types';
 import { SAMPLE_AGENCIES } from '../data/sampleAgencies';
 
 const API_BASE = '/api';
@@ -229,6 +229,47 @@ export const api = {
 
   async deleteService(id: string): Promise<{ message: string }> {
     const res = await fetch(`${API_BASE}/services/${id}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders()
+    });
+    return handleResponse(res);
+  },
+
+  // Education opportunities
+  async getEducationOpportunities(search?: string): Promise<EducationOpportunity[]> {
+    const query = new URLSearchParams();
+    if (search) query.append('search', search);
+    const res = await fetch(`${API_BASE}/education?${query.toString()}`, {
+      headers: getAuthHeaders()
+    });
+    return handleResponse(res);
+  },
+
+  async createEducationOpportunity(
+    data: Pick<EducationOpportunity, 'title' | 'description' | 'availableDegrees' | 'universityUrl'>,
+  ): Promise<EducationOpportunity> {
+    const res = await fetch(`${API_BASE}/education`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data)
+    });
+    return handleResponse(res);
+  },
+
+  async updateEducationOpportunity(
+    id: string,
+    data: Pick<EducationOpportunity, 'title' | 'description' | 'availableDegrees' | 'universityUrl'>,
+  ): Promise<EducationOpportunity> {
+    const res = await fetch(`${API_BASE}/education/${id}`, {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data)
+    });
+    return handleResponse(res);
+  },
+
+  async deleteEducationOpportunity(id: string): Promise<{ message: string }> {
+    const res = await fetch(`${API_BASE}/education/${id}`, {
       method: 'DELETE',
       headers: getAuthHeaders()
     });

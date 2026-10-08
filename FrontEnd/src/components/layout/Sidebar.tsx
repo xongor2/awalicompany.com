@@ -11,6 +11,7 @@ import {
   KeyRound,
   HeartPulse,
   Handshake,
+  GraduationCap,
   ChevronDown,
   Globe2,
   MapPin,
@@ -20,7 +21,7 @@ import { BrandLogo } from '../common/BrandLogo';
 import { Avatar } from '../ui/Avatar';
 import { useAuth } from '../../context/AuthContext';
 
-export type NavSection = 'dashboard' | 'consulting' | 'health' | 'properties' | 'property-form' | 'countries' | 'cities' | 'services' | 'agencies' | 'blogs' | 'users' | 'roles' | 'profile';
+export type NavSection = 'dashboard' | 'consulting' | 'health' | 'education' | 'properties' | 'property-form' | 'countries' | 'cities' | 'services' | 'agencies' | 'blogs' | 'users' | 'roles' | 'profile';
 
 interface SidebarProps {
   currentSection: NavSection;
@@ -47,6 +48,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'dashboard' as NavSection, label: 'Dashboard', icon: LayoutDashboard },
     { id: 'consulting' as NavSection, label: 'Consulting', icon: Handshake },
     { id: 'health' as NavSection, label: 'Health', icon: HeartPulse },
+    { id: 'education' as NavSection, label: 'Education', icon: GraduationCap },
     { id: 'properties' as NavSection, label: 'Properties', icon: Building2 },
     { id: 'services' as NavSection, label: 'Services', icon: BriefcaseBusiness },
     { id: 'agencies' as NavSection, label: 'Agencies', icon: ShieldCheck },

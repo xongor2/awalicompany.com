@@ -71,6 +71,17 @@ CREATE TABLE IF NOT EXISTS services (
   INDEX idx_services_category (category), INDEX idx_services_status (status)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE IF NOT EXISTS education_opportunities (
+  id VARCHAR(64) PRIMARY KEY,
+  title VARCHAR(255) NOT NULL,
+  description TEXT NOT NULL,
+  available_degrees JSON NOT NULL,
+  university_url VARCHAR(2048) NOT NULL,
+  created_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  updated_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
+  INDEX idx_education_opportunities_title (title(100))
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE IF NOT EXISTS blogs (
   id VARCHAR(64) PRIMARY KEY, title VARCHAR(255) NOT NULL, content LONGTEXT NOT NULL,
   thumbnail MEDIUMTEXT NOT NULL, categories JSON NOT NULL,
