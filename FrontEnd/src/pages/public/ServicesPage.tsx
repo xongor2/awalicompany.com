@@ -26,6 +26,66 @@ import {
 import { Service } from '../../types';
 import { api } from '../../services/api';
 
+const universityLogos = [
+  { src: '/images/UN-slide-emage/شعار-الجامعات-بالصفحة-الرئيسية.jpg', alt: 'Partner university logo 1' },
+  { src: '/images/UN-slide-emage/شعار-الجامعات-بالصفحة-الرئيسية-3.jpg', alt: 'Partner university logo 2' },
+  { src: '/images/UN-slide-emage/شعار-الجامعات-بالصفحة-الرئيسية-4.jpg', alt: 'Partner university logo 3' },
+  { src: '/images/UN-slide-emage/شعار-الجامعات-بالصفحة-الرئيسية-5.jpg', alt: 'Partner university logo 4' },
+  { src: '/images/UN-slide-emage/شعار-الجامعات-بالصفحة-الرئيسية-6.jpg', alt: 'Partner university logo 5' },
+  { src: '/images/UN-slide-emage/جامعة-نيشان-تاشي-.webp', alt: 'Nişantaşı University' },
+  { src: '/images/UN-slide-emage/جامعة-ميديبول-.webp', alt: 'Istanbul Medipol University' },
+  { src: '/images/UN-slide-emage/جامعة-كينت.webp', alt: 'Istanbul Kent University' },
+  { src: '/images/UN-slide-emage/جامعة-جيليشيم-1-1.webp', alt: 'Istanbul Gelişim University' },
+  { src: '/images/UN-slide-emage/جامعة-توبكابي-.webp', alt: 'Istanbul Topkapı University' },
+  { src: '/images/UN-slide-emage/جامعة-ايدن.webp', alt: 'Istanbul Aydın University' },
+  { src: '/images/UN-slide-emage/جامعة-البيروني.webp', alt: 'Biruni University' },
+  { src: '/images/UN-slide-emage/جامعة-اسكودار.webp', alt: 'Üsküdar University' },
+];
+
+const UniversityLogoSlider: React.FC = () => (
+  <section
+    aria-label="Partner universities"
+    className="border-b border-[#D8DFEE] dark:border-[#202754] bg-white dark:bg-[#0E1438] py-7 sm:py-9 overflow-hidden"
+  >
+    <div className="max-w-[1440px] mx-auto px-4 sm:px-8 lg:px-16 mb-5">
+      <div className="flex items-center gap-3">
+        <span className="h-px w-8 bg-[#FF7817]" />
+        <p className="text-[11px] sm:text-xs font-bold uppercase tracking-[0.18em] text-[#5F667A] dark:text-[#AAB2CA]">
+          Our Partner Universities
+        </p>
+      </div>
+    </div>
+
+    <div className="relative">
+      <div className="absolute inset-y-0 left-0 z-10 w-12 sm:w-24 bg-gradient-to-r from-white dark:from-[#0E1438] to-transparent pointer-events-none" />
+      <div className="absolute inset-y-0 right-0 z-10 w-12 sm:w-24 bg-gradient-to-l from-white dark:from-[#0E1438] to-transparent pointer-events-none" />
+      <div className="university-logo-marquee flex">
+        {[0, 1].map((copyIndex) => (
+          <div
+            key={copyIndex}
+            aria-hidden={copyIndex === 1}
+            className="flex shrink-0 items-center gap-7 sm:gap-10 pr-7 sm:pr-10"
+          >
+            {universityLogos.map((logo) => (
+              <div
+                key={`${copyIndex}-${logo.src}`}
+                className="flex h-20 w-32 sm:h-24 sm:w-40 shrink-0 items-center justify-center rounded-xl border border-[#E2E6EF] dark:border-[#252B5C] bg-white px-4 py-3 shadow-xs"
+              >
+                <img
+                  src={logo.src}
+                  alt={copyIndex === 0 ? logo.alt : ''}
+                  className="h-full w-full object-contain"
+                  loading="lazy"
+                />
+              </div>
+            ))}
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+);
+
 export interface ServicesPageProps {
   initialCategory?: string;
   onNavigateHome: () => void;
@@ -314,6 +374,8 @@ export const ServicesPage: React.FC<ServicesPageProps> = ({
           </div>
         </div>
       </section>
+
+      {isEducation && <UniversityLogoSlider />}
 
       {/* Main Services Filter & Gallery Section */}
       <section className="max-w-[1440px] mx-auto px-4 sm:px-8 lg:px-16 py-12 space-y-10">

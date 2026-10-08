@@ -34,6 +34,32 @@
   background: rgba(138, 144, 162, 0.5);
 }
 
+@keyframes university-logo-marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.university-logo-marquee {
+  width: max-content;
+  animation: university-logo-marquee 46s linear infinite;
+  will-change: transform;
+}
+
+.university-logo-marquee:hover {
+  animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .university-logo-marquee {
+    animation: none;
+    transform: none;
+  }
+}
+
 /* ─────────────────────────────────────────────────────────────
    Google Website Translator Silent Integration
 ───────────────────────────────────────────────────────────── */
