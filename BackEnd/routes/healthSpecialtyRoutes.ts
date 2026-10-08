@@ -41,6 +41,8 @@ healthSpecialtyRouter.get('/', asyncHandler(async (req: Request, res: Response) 
     items = items.filter(item =>
       item.name.toLowerCase().includes(search) ||
       item.category.toLowerCase().includes(search) ||
+      item.country.toLowerCase().includes(search) ||
+      item.city.toLowerCase().includes(search) ||
       item.description.toLowerCase().includes(search) ||
       item.keyProcedures.some(procedure => procedure.toLowerCase().includes(search)) ||
       item.destinations.some(destination => destination.toLowerCase().includes(search)),
@@ -56,21 +58,23 @@ healthSpecialtyRouter.post('/', authMiddleware, asyncHandler(async (req: Authent
 
   const category = text(req.body.category, 150);
   const name = text(req.body.name, 255);
-  const tagline = text(req.body.tagline, 500);
+  const country = text(req.body.country, 150);
+  const city = text(req.body.city, 150);
+  const tagline = `${city}, ${country}`;
   const description = text(req.body.description, 10_000);
   const keyProcedures = stringList(req.body.keyProcedures);
   const destinations = stringList(req.body.destinations);
   const image = imageValue(req.body.image);
   const status: HealthSpecialtyStatus = VALID_STATUSES.includes(req.body.status) ? req.body.status : 'Active';
 
-  if (!category || !name || !tagline || !description || !image || keyProcedures.length === 0 || destinations.length === 0) {
+  if (!category || !name || !country || !city || !description || !image || keyProcedures.length === 0 || destinations.length === 0) {
     return res.status(400).json({
-      error: 'Category, title, tagline, description, image, clinical focus, and destination are required.',
+      error: 'Category, title, country, city, description, image, clinical focus, and destination are required.',
     });
   }
 
   return res.status(201).json(await db.createHealthSpecialty({
-    category, name, tagline, description, keyProcedures, destinations, image, status,
+    category, name, country, city, tagline, description, keyProcedures, destinations, image, status,
   }));
 }));
 
@@ -84,7 +88,9 @@ healthSpecialtyRouter.put('/:id', authMiddleware, asyncHandler(async (req: Authe
 
   const category = req.body.category === undefined ? current.category : text(req.body.category, 150);
   const name = req.body.name === undefined ? current.name : text(req.body.name, 255);
-  const tagline = req.body.tagline === undefined ? current.tagline : text(req.body.tagline, 500);
+  const country = req.body.country === undefined ? current.country : text(req.body.country, 150);
+  const city = req.body.city === undefined ? current.city : text(req.body.city, 150);
+  const tagline = `${city}, ${country}`;
   const description = req.body.description === undefined ? current.description : text(req.body.description, 10_000);
   const keyProcedures = req.body.keyProcedures === undefined ? current.keyProcedures : stringList(req.body.keyProcedures);
   const destinations = req.body.destinations === undefined ? current.destinations : stringList(req.body.destinations);
@@ -93,14 +99,14 @@ healthSpecialtyRouter.put('/:id', authMiddleware, asyncHandler(async (req: Authe
     ? current.status
     : VALID_STATUSES.includes(req.body.status) ? req.body.status as HealthSpecialtyStatus : null;
 
-  if (!category || !name || !tagline || !description || !image || !status || keyProcedures.length === 0 || destinations.length === 0) {
+  if (!category || !name || !country || !city || !description || !image || !status || keyProcedures.length === 0 || destinations.length === 0) {
     return res.status(400).json({
-      error: 'Category, title, tagline, description, image, clinical focus, destination, and valid status are required.',
+      error: 'Category, title, country, city, description, image, clinical focus, destination, and valid status are required.',
     });
   }
 
   return res.json(await db.updateHealthSpecialty(req.params.id, {
-    category, name, tagline, description, keyProcedures, destinations, image, status,
+    category, name, country, city, tagline, description, keyProcedures, destinations, image, status,
   }));
 }));
 

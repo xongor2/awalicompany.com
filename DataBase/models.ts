@@ -83,6 +83,8 @@ export interface HealthSpecialty {
   id: string;
   category: string;
   name: string;
+  country: string;
+  city: string;
   tagline: string;
   description: string;
   keyProcedures: string[];

@@ -33,6 +33,8 @@ interface Specialty {
   id: string;
   category: string;
   name: string;
+  country?: string;
+  city?: string;
   tagline: string;
   description: string;
   keyProcedures: string[];
@@ -561,7 +563,9 @@ export const HealthPage: React.FC<HealthPageProps> = ({
                     </div>
                     <div className="absolute bottom-3 left-4 right-4 text-white">
                       <h3 className="font-heading text-base font-bold line-clamp-1">{spec.name}</h3>
-                      <p className="text-[11px] text-[#D9DDE8] line-clamp-1">{spec.tagline}</p>
+                      <p className="text-[11px] text-[#D9DDE8] line-clamp-1">
+                        {spec.city && spec.country ? `${spec.city}, ${spec.country}` : spec.tagline}
+                      </p>
                     </div>
                   </div>
 
@@ -805,7 +809,11 @@ export const HealthPage: React.FC<HealthPageProps> = ({
                   {activeModalSpecialty.category}
                 </span>
                 <h3 className="font-heading text-xl sm:text-2xl font-black">{activeModalSpecialty.name}</h3>
-                <p className="text-xs text-[#D9DDE8]">{activeModalSpecialty.tagline}</p>
+                <p className="text-xs text-[#D9DDE8]">
+                  {activeModalSpecialty.city && activeModalSpecialty.country
+                    ? `${activeModalSpecialty.city}, ${activeModalSpecialty.country}`
+                    : activeModalSpecialty.tagline}
+                </p>
               </div>
             </div>
 

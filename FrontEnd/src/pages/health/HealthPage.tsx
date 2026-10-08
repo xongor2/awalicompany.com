@@ -5,7 +5,6 @@ import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { Textarea } from '../../components/ui/Textarea';
 import { Select } from '../../components/ui/Select';
-import { Modal } from '../../components/ui/Modal';
 import { ActionMenu } from '../../components/ui/Dropdown';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { ConfirmModal } from '../../components/common/ConfirmModal';
@@ -13,7 +12,7 @@ import { useToast } from '../../components/ui/Toast';
 import { api } from '../../services/api';
 import type { HealthSpecialty, HealthSpecialtyStatus } from '../../types';
 
-type FormErrors = Partial<Record<'category' | 'name' | 'tagline' | 'description' | 'keyProcedures' | 'destinations' | 'image', string>>;
+type FormErrors = Partial<Record<'category' | 'name' | 'country' | 'city' | 'description' | 'keyProcedures' | 'destinations' | 'image', string>>;
 
 const linesToList = (value: string): string[] => [...new Set(
   value.split(/\r?\n|,/).map(item => item.trim()).filter(Boolean),
@@ -29,7 +28,8 @@ export const HealthPage: React.FC = () => {
   const [deleting, setDeleting] = useState<HealthSpecialty | null>(null);
   const [category, setCategory] = useState('');
   const [name, setName] = useState('');
-  const [tagline, setTagline] = useState('');
+  const [country, setCountry] = useState('');
+  const [city, setCity] = useState('');
   const [description, setDescription] = useState('');
   const [keyProcedures, setKeyProcedures] = useState('');
   const [destinations, setDestinations] = useState('');
@@ -57,20 +57,22 @@ export const HealthPage: React.FC = () => {
     return items.filter(item =>
       item.name.toLowerCase().includes(term) ||
       item.category.toLowerCase().includes(term) ||
+      item.country.toLowerCase().includes(term) ||
+      item.city.toLowerCase().includes(term) ||
       item.description.toLowerCase().includes(term) ||
       item.destinations.some(destination => destination.toLowerCase().includes(term)),
     );
   }, [items, search]);
 
   const resetForm = () => {
-    setCategory(''); setName(''); setTagline(''); setDescription('');
+    setCategory(''); setName(''); setCountry(''); setCity(''); setDescription('');
     setKeyProcedures(''); setDestinations(''); setImage(''); setStatus('Active'); setErrors({});
   };
 
   const openCreateForm = () => { setEditing(null); resetForm(); setIsFormOpen(true); };
 
   const openEditForm = (item: HealthSpecialty) => {
-    setEditing(item); setCategory(item.category); setName(item.name); setTagline(item.tagline);
+    setEditing(item); setCategory(item.category); setName(item.name); setCountry(item.country); setCity(item.city);
     setDescription(item.description); setKeyProcedures(item.keyProcedures.join('\n'));
     setDestinations(item.destinations.join('\n')); setImage(item.image); setStatus(item.status);
     setErrors({}); setIsFormOpen(true);
@@ -108,7 +110,8 @@ export const HealthPage: React.FC = () => {
     const destinationList = linesToList(destinations);
     if (!category.trim()) nextErrors.category = 'Category is required.';
     if (!name.trim()) nextErrors.name = 'Title is required.';
-    if (!tagline.trim()) nextErrors.tagline = 'Tagline is required.';
+    if (!country.trim()) nextErrors.country = 'Country is required.';
+    if (!city.trim()) nextErrors.city = 'City is required.';
     if (!description.trim()) nextErrors.description = 'Description is required.';
     if (procedures.length === 0) nextErrors.keyProcedures = 'Add at least one clinical focus.';
     if (destinationList.length === 0) nextErrors.destinations = 'Add at least one destination.';
@@ -116,7 +119,7 @@ export const HealthPage: React.FC = () => {
     if (Object.keys(nextErrors).length > 0) { setErrors(nextErrors); return; }
 
     const payload = {
-      category: category.trim(), name: name.trim(), tagline: tagline.trim(), description: description.trim(),
+      category: category.trim(), name: name.trim(), country: country.trim(), city: city.trim(), description: description.trim(),
       keyProcedures: procedures, destinations: destinationList, image, status,
     };
     setIsSaving(true);
@@ -147,6 +150,47 @@ export const HealthPage: React.FC = () => {
       showToast(error instanceof Error ? error.message : 'Failed to delete health specialty.', 'error');
     } finally { setIsSaving(false); }
   };
+
+  if (isFormOpen) {
+    return (
+      <div className="space-y-6">
+        <PageHeader
+          title={editing ? 'Edit Health Service' : 'Add Health Service'}
+          subtitle="Enter the clinical specialty information that will appear on the public Health page."
+          action={<Button type="button" variant="secondary" onClick={closeForm} disabled={isSaving}>Back to Health</Button>}
+        />
+
+        <section className="rounded-xl border border-[#D9DDE8] bg-white p-5 shadow-xs sm:p-7 dark:border-[#252B5C] dark:bg-[#151A46]">
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Input label="Category *" value={category} onChange={event => setCategory(event.target.value)} placeholder="e.g. Cardiology & Heart" error={errors.category} autoFocus />
+              <Select label="Status *" value={status} onChange={event => setStatus(event.target.value as HealthSpecialtyStatus)} options={[{ value: 'Active', label: 'Active' }, { value: 'Inactive', label: 'Inactive' }]} />
+            </div>
+            <Input label="Title *" value={name} onChange={event => setName(event.target.value)} placeholder="e.g. Cardiology & Advanced Heart Surgery" error={errors.name} />
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Input label="Country *" value={country} onChange={event => setCountry(event.target.value)} placeholder="e.g. Turkey" error={errors.country} />
+              <Input label="City *" value={city} onChange={event => setCity(event.target.value)} placeholder="e.g. Istanbul" error={errors.city} />
+            </div>
+            <Textarea label="Description *" value={description} onChange={event => setDescription(event.target.value)} placeholder="Describe the specialty and treatment program." error={errors.description} />
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Textarea label="Included Clinical Focus *" value={keyProcedures} onChange={event => setKeyProcedures(event.target.value)} placeholder={'One item per line\nCoronary Artery Bypass\nHeart Valve Replacement'} helperText="Enter one clinical procedure per line." error={errors.keyProcedures} />
+              <Textarea label="Destinations *" value={destinations} onChange={event => setDestinations(event.target.value)} placeholder={'One destination per line\nTurkey (Istanbul)\nIndia (New Delhi)'} helperText="Enter one destination per line." error={errors.destinations} />
+            </div>
+            <div>
+              <label className="mb-1.5 block text-sm font-medium text-[#171A2B] dark:text-[#D9DDE8]">Card Image *</label>
+              {image ? (
+                <div className="relative overflow-hidden rounded-xl border border-[#D9DDE8] dark:border-[#252B5C]"><img src={image} alt="Health service preview" className="h-72 w-full object-cover" /><button type="button" onClick={() => setImage('')} className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-[#0B1030]/75 text-white hover:bg-rose-600" aria-label="Remove image"><X className="h-4 w-4" /></button><label className="absolute bottom-3 right-3 inline-flex cursor-pointer items-center gap-2 rounded-lg bg-white/95 px-3 py-2 text-xs font-bold text-[#151A46] shadow-lg"><Upload className="h-4 w-4 text-[#FF7817]" /> Change Image<input type="file" accept="image/*" onChange={handleImageUpload} className="sr-only" /></label></div>
+              ) : (
+                <label className="flex min-h-56 cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-[#C5CBE0] bg-[#F8F9FC] px-6 py-8 text-center hover:border-[#FF7817] dark:border-[#3A4070] dark:bg-[#0B1030]"><ImageIcon className="mb-3 h-7 w-7 text-[#FF7817]" /><span className="text-sm font-bold text-[#151A46] dark:text-white">Upload Health Service Image</span><span className="mt-1 text-xs text-[#8A90A2]">PNG, JPG or WebP · maximum 5 MB</span><input type="file" accept="image/*" onChange={handleImageUpload} className="sr-only" /></label>
+              )}
+              {errors.image && <p className="mt-2 text-xs font-medium text-rose-500">{errors.image}</p>}
+            </div>
+            <div className="flex justify-end gap-3 border-t border-[#D9DDE8] pt-5 dark:border-[#252B5C]"><Button type="button" variant="secondary" onClick={closeForm} disabled={isSaving}>Cancel</Button><Button type="submit" variant="accent" size="lg" isLoading={isSaving} leftIcon={<CheckCircle2 className="h-5 w-5" />}>{editing ? 'Save Changes' : 'Add Health Service'}</Button></div>
+          </form>
+        </section>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -181,7 +225,7 @@ export const HealthPage: React.FC = () => {
               <tbody className="divide-y divide-[#E8EAF0] dark:divide-[#252B5C]">
                 {filteredItems.map(item => (
                   <tr key={item.id} className="transition-colors hover:bg-[#FFF8F2] dark:hover:bg-[#1A2053]">
-                    <td className="px-6 py-5"><div className="flex items-center gap-3"><img src={item.image} alt="" className="h-12 w-16 shrink-0 rounded-xl border border-[#D9DDE8] object-cover dark:border-[#252B5C]" /><div className="max-w-xs"><p className="font-semibold text-[#171A2B] dark:text-white">{item.name}</p><p className="line-clamp-1 text-xs text-[#8A90A2]">{item.tagline}</p></div></div></td>
+                    <td className="px-6 py-5"><div className="flex items-center gap-3"><img src={item.image} alt="" className="h-12 w-16 shrink-0 rounded-xl border border-[#D9DDE8] object-cover dark:border-[#252B5C]" /><div className="max-w-xs"><p className="font-semibold text-[#171A2B] dark:text-white">{item.name}</p><p className="line-clamp-1 text-xs text-[#8A90A2]">{item.city}, {item.country}</p></div></div></td>
                     <td className="px-6 py-5 text-sm text-[#5F667A] dark:text-[#D9DDE8]">{item.category}</td>
                     <td className="px-6 py-5 text-sm text-[#5F667A] dark:text-[#D9DDE8]">{item.keyProcedures.length} items</td>
                     <td className="max-w-xs px-6 py-5 text-sm text-[#5F667A] dark:text-[#D9DDE8]"><p className="line-clamp-2">{item.destinations.join(', ')}</p></td>
@@ -195,32 +239,6 @@ export const HealthPage: React.FC = () => {
           </div>
         )}
       </section>
-
-      <Modal isOpen={isFormOpen} onClose={closeForm} title={editing ? 'Edit Health Service' : 'Add Health Service'} maxWidth="3xl">
-        <form onSubmit={handleSubmit} className="space-y-5">
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Input label="Category *" value={category} onChange={event => setCategory(event.target.value)} placeholder="e.g. Cardiology & Heart" error={errors.category} autoFocus />
-            <Select label="Status *" value={status} onChange={event => setStatus(event.target.value as HealthSpecialtyStatus)} options={[{ value: 'Active', label: 'Active' }, { value: 'Inactive', label: 'Inactive' }]} />
-          </div>
-          <Input label="Title *" value={name} onChange={event => setName(event.target.value)} placeholder="e.g. Cardiology & Advanced Heart Surgery" error={errors.name} />
-          <Input label="Tagline *" value={tagline} onChange={event => setTagline(event.target.value)} placeholder="Short text displayed over the image" error={errors.tagline} />
-          <Textarea label="Description *" value={description} onChange={event => setDescription(event.target.value)} placeholder="Describe the specialty and treatment program." error={errors.description} />
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Textarea label="Included Clinical Focus *" value={keyProcedures} onChange={event => setKeyProcedures(event.target.value)} placeholder={'One item per line\nCoronary Artery Bypass\nHeart Valve Replacement'} helperText="Enter one clinical procedure per line." error={errors.keyProcedures} />
-            <Textarea label="Destinations *" value={destinations} onChange={event => setDestinations(event.target.value)} placeholder={'One destination per line\nTurkey (Istanbul)\nIndia (New Delhi)'} helperText="Enter one destination per line." error={errors.destinations} />
-          </div>
-          <div>
-            <label className="mb-1.5 block text-sm font-medium text-[#171A2B] dark:text-[#D9DDE8]">Card Image *</label>
-            {image ? (
-              <div className="relative overflow-hidden rounded-xl border border-[#D9DDE8] dark:border-[#252B5C]"><img src={image} alt="Health service preview" className="h-52 w-full object-cover" /><button type="button" onClick={() => setImage('')} className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-[#0B1030]/75 text-white hover:bg-rose-600" aria-label="Remove image"><X className="h-4 w-4" /></button><label className="absolute bottom-3 right-3 inline-flex cursor-pointer items-center gap-2 rounded-lg bg-white/95 px-3 py-2 text-xs font-bold text-[#151A46] shadow-lg"><Upload className="h-4 w-4 text-[#FF7817]" /> Change Image<input type="file" accept="image/*" onChange={handleImageUpload} className="sr-only" /></label></div>
-            ) : (
-              <label className="flex min-h-40 cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-[#C5CBE0] bg-[#F8F9FC] px-6 py-8 text-center hover:border-[#FF7817] dark:border-[#3A4070] dark:bg-[#0B1030]"><ImageIcon className="mb-3 h-7 w-7 text-[#FF7817]" /><span className="text-sm font-bold text-[#151A46] dark:text-white">Upload Health Service Image</span><span className="mt-1 text-xs text-[#8A90A2]">PNG, JPG or WebP · maximum 5 MB</span><input type="file" accept="image/*" onChange={handleImageUpload} className="sr-only" /></label>
-            )}
-            {errors.image && <p className="mt-2 text-xs font-medium text-rose-500">{errors.image}</p>}
-          </div>
-          <div className="flex justify-end gap-3 border-t border-[#D9DDE8] pt-5 dark:border-[#252B5C]"><Button type="button" variant="secondary" onClick={closeForm} disabled={isSaving}>Cancel</Button><Button type="submit" variant="accent" size="lg" isLoading={isSaving} leftIcon={<CheckCircle2 className="h-5 w-5" />}>{editing ? 'Save Changes' : 'Add Health Service'}</Button></div>
-        </form>
-      </Modal>
 
       <ConfirmModal isOpen={Boolean(deleting)} onClose={() => setDeleting(null)} onConfirm={handleDelete} title="Delete Health Service" message={`Are you sure you want to delete “${deleting?.name || ''}”? It will also disappear from the public Health page.`} confirmText="Delete Health Service" isLoading={isSaving} />
     </div>
