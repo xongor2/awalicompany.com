@@ -25,7 +25,7 @@ export interface Property {
   status: 'Active' | 'Pending' | 'Sold';
   address?: string;
   buy_rent?: 'Sale' | 'Rent';
-  bedrooms?: number;
+  bedrooms?: string;
   bathrooms?: number;
   balcony?: 'Yes' | 'No';
   sqm?: number;

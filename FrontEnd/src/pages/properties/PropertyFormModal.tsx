@@ -297,10 +297,6 @@ export const PropertyFormPage: React.FC<PropertyFormPageProps> = ({
       newErrors.price = 'Please enter a valid numeric price greater than 0.';
     }
 
-    if (bedrooms && (isNaN(Number(bedrooms)) || Number(bedrooms) < 0)) {
-      newErrors.bedrooms = 'Bedrooms must be 0 or a positive number.';
-    }
-
     if (bathrooms && (isNaN(Number(bathrooms)) || Number(bathrooms) < 0)) {
       newErrors.bathrooms = 'Bathrooms must be 0 or a positive number.';
     }
@@ -346,7 +342,7 @@ export const PropertyFormPage: React.FC<PropertyFormPageProps> = ({
         country: country.trim(),
         price: numPrice,
         buy_rent: buyRent,
-        bedrooms: bedrooms !== '' ? Number(bedrooms) : undefined,
+        bedrooms: bedrooms.trim() || undefined,
         bathrooms: bathrooms !== '' ? Number(bathrooms) : undefined,
         balcony,
         sqm: numSqm,
@@ -550,12 +546,11 @@ export const PropertyFormPage: React.FC<PropertyFormPageProps> = ({
                     <Input
                       id="property-bedrooms-input"
                       label="Bedrooms"
-                      type="number"
-                      min="0"
+                      type="text"
                       value={bedrooms}
                       error={errors.bedrooms}
                       onChange={(e) => setBedrooms(e.target.value)}
-                      placeholder="e.g. 4"
+                      placeholder="e.g. 4 or 3+1"
                       leftIcon={<Bed className="w-4 h-4" />}
                     />
                   </div>

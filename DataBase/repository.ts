@@ -44,7 +44,7 @@ const toUser = (row: any): User => ({
 const toProperty = (row: any): Property => ({
   ...row,
   price: Number(row.price || 0),
-  bedrooms: row.bedrooms == null ? undefined : Number(row.bedrooms),
+  bedrooms: row.bedrooms == null ? undefined : String(row.bedrooms),
   bathrooms: row.bathrooms == null ? undefined : Number(row.bathrooms),
   sqm: row.sqm == null ? undefined : Number(row.sqm),
   area_sqft: row.area_sqft == null ? undefined : Number(row.area_sqft),

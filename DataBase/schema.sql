@@ -35,7 +35,7 @@ CREATE TABLE IF NOT EXISTS properties (
   property_type ENUM('Residential', 'Commercial', 'Apartment', 'Villa', 'Plot') NOT NULL,
   location VARCHAR(191) NOT NULL, price DECIMAL(14,2) NOT NULL DEFAULT 0, image MEDIUMTEXT NOT NULL,
   status ENUM('Active', 'Pending', 'Sold') NOT NULL DEFAULT 'Active', address VARCHAR(255) NULL,
-  buy_rent ENUM('Sale', 'Rent') NULL, bedrooms INT UNSIGNED NULL, bathrooms INT UNSIGNED NULL,
+  buy_rent ENUM('Sale', 'Rent') NULL, bedrooms VARCHAR(100) NULL, bathrooms INT UNSIGNED NULL,
   balcony ENUM('Yes', 'No') NULL, sqm DECIMAL(10,2) NULL, area_sqft DECIMAL(10,2) NULL,
   street VARCHAR(100) NULL, furnishing_status ENUM('Furnished', 'Semi-Furnished', 'Unfurnished') NULL,
   shopping VARCHAR(100) NULL, masjid ENUM('Near', 'Far') NULL, payment VARCHAR(100) NULL, gallery JSON NULL,
@@ -44,6 +44,10 @@ CREATE TABLE IF NOT EXISTS properties (
   INDEX idx_properties_status (status), INDEX idx_properties_type (property_type),
   INDEX idx_properties_location (location), INDEX idx_properties_price (price)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Bedrooms can contain descriptive text such as "3+1" or "Studio".
+ALTER TABLE properties
+  MODIFY COLUMN bedrooms VARCHAR(100) NULL;
 
 CREATE TABLE IF NOT EXISTS property_location_categories (
   id VARCHAR(64) PRIMARY KEY,
