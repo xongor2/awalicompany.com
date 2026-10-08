@@ -87,21 +87,21 @@ export const Sidebar: React.FC<SidebarProps> = ({
           if (isPropertiesItem) {
             return (
               <div key={item.id}>
-                <div className={`flex items-center rounded-lg transition-all ${isActive ? 'bg-[#FF7817] shadow-md' : 'hover:bg-[#252B5C]/50'}`}>
+                <div className={`flex items-center rounded-lg transition-all ${isActive ? 'bg-[#FF7817] shadow-md' : 'hover:bg-[#FFF1E6] dark:hover:bg-[#252B5C]/50'}`}>
                   <button
                     onClick={() => {
                       setIsPropertiesExpanded(true);
                       handleNavClick('properties');
                     }}
-                    className={`flex min-w-0 flex-1 items-center gap-3.5 px-3.5 py-3 text-sm font-medium cursor-pointer ${isActive ? 'text-white font-semibold' : 'text-[#D9DDE8] hover:text-white'}`}
+                    className={`flex min-w-0 flex-1 items-center gap-3.5 px-3.5 py-3 text-sm font-medium cursor-pointer ${isActive ? 'text-white font-semibold' : 'text-[#171A2B] hover:text-[#E66606] dark:text-[#D9DDE8] dark:hover:text-white'}`}
                   >
-                    <Icon className={`h-5 w-5 ${isActive ? 'text-white' : 'text-[#8A90A2]'}`} />
+                    <Icon className={`h-5 w-5 ${isActive ? 'text-white' : 'text-[#5F667A] dark:text-[#8A90A2]'}`} />
                     <span>{item.label}</span>
                   </button>
                   <button
                     type="button"
                     onClick={() => setIsPropertiesExpanded(open => !open)}
-                    className={`mr-1 rounded-md p-2 transition-colors cursor-pointer ${isActive ? 'text-white hover:bg-white/15' : 'text-[#8A90A2] hover:text-white'}`}
+                    className={`mr-1 rounded-md p-2 transition-colors cursor-pointer ${isActive ? 'text-white hover:bg-white/15' : 'text-[#5F667A] hover:text-[#E66606] dark:text-[#8A90A2] dark:hover:text-white'}`}
                     aria-label={`${isPropertiesExpanded ? 'Collapse' : 'Expand'} property pages`}
                     aria-expanded={isPropertiesExpanded}
                   >
@@ -121,7 +121,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         <button
                           key={child.id}
                           onClick={() => handleNavClick(child.id)}
-                          className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors cursor-pointer ${isChildActive ? 'bg-[#FF7817]/15 font-semibold text-[#FF9A52]' : 'text-[#AEB4C7] hover:bg-[#252B5C]/50 hover:text-white'}`}
+                          className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors cursor-pointer ${isChildActive ? 'bg-[#FF7817]/15 font-semibold text-[#E66606] dark:text-[#FF9A52]' : 'text-[#171A2B] hover:bg-[#FFF1E6] hover:text-[#E66606] dark:text-[#AEB4C7] dark:hover:bg-[#252B5C]/50 dark:hover:text-white'}`}
                         >
                           <ChildIcon className="h-4 w-4" />
                           <span>{child.label}</span>
@@ -141,10 +141,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
               className={`w-full flex items-center gap-3.5 px-3.5 py-3 rounded-lg text-sm font-medium transition-all cursor-pointer ${
                 isActive
                   ? 'bg-[#FF7817] text-white font-semibold shadow-md'
-                  : 'text-[#D9DDE8] hover:text-white hover:bg-[#252B5C]/50'
+                  : 'text-[#171A2B] hover:bg-[#FFF1E6] hover:text-[#E66606] dark:text-[#D9DDE8] dark:hover:bg-[#252B5C]/50 dark:hover:text-white'
               }`}
             >
-              <Icon className={`w-5 h-5 ${isActive ? 'text-white' : 'text-[#8A90A2]'}`} />
+              <Icon className={`w-5 h-5 ${isActive ? 'text-white' : 'text-[#5F667A] dark:text-[#8A90A2]'}`} />
               <span>{item.label}</span>
             </button>
           );
@@ -153,20 +153,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
       {/* Footer Branding & Current User */}
       <div className="p-4 border-t border-[#252B5C]/60 space-y-4">
-        <div className="px-2 py-1.5 bg-[#0B1030]/50 dark:bg-[#151A46]/40 rounded-lg text-center">
-          <p className="text-[11px] font-medium text-[#D9DDE8] tracking-wide">
-            Building Better Communities Together
-          </p>
-        </div>
-
         {/* User Card */}
-        <div className="flex items-center gap-3 p-2 rounded-lg bg-[#252B5C]/40 border border-[#252B5C]/50">
+        <div className="flex items-center gap-3 p-2 rounded-lg bg-white border border-[#D9DDE8] dark:bg-[#252B5C]/40 dark:border-[#252B5C]/50">
           <Avatar src={user?.profile_image} name={user?.name || 'Ahmed Ali'} size="md" />
           <div className="flex-1 min-w-0">
-            <p className="text-xs font-semibold text-white truncate">
+            <p className="text-xs font-semibold text-[#171A2B] dark:text-white truncate">
               {user?.name || 'Ahmed Ali'}
             </p>
-            <p className="text-[10px] text-[#8A90A2] truncate">
+            <p className="text-[10px] text-[#5F667A] dark:text-[#8A90A2] truncate">
               {user?.role || 'Administrator'}
             </p>
           </div>
