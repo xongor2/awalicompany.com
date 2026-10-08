@@ -50,7 +50,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'health' as NavSection, label: 'Health', icon: HeartPulse },
     { id: 'education' as NavSection, label: 'Education', icon: GraduationCap },
     { id: 'properties' as NavSection, label: 'Properties', icon: Building2 },
-    { id: 'services' as NavSection, label: 'Services', icon: BriefcaseBusiness },
+    { id: 'services' as NavSection, label: 'Consulting', icon: BriefcaseBusiness },
     { id: 'agencies' as NavSection, label: 'Agencies', icon: ShieldCheck },
     { id: 'blogs' as NavSection, label: 'Blogs', icon: Newspaper },
     { id: 'users' as NavSection, label: 'Users', icon: Users },

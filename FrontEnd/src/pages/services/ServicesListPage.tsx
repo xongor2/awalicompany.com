@@ -121,8 +121,8 @@ export const ServicesListPage: React.FC<ServicesListPageProps> = ({
     <div className="space-y-6">
       {/* Header */}
       <PageHeader
-        title="Company Services"
-        subtitle="Catalog of AW Ali Company multi-sector capabilities and engagements"
+        title="Consulting"
+        subtitle="Manage AW Ali Company consulting services and engagements"
         action={
           <Button
             variant="accent"

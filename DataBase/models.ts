@@ -70,6 +70,7 @@ export interface EducationOpportunity {
   id: string;
   title: string;
   description: string;
+  thumbnail: string;
   availableDegrees: EducationDegree[];
   universityUrl: string;
   createdAt: string;

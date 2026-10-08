@@ -52,7 +52,7 @@ export const Navbar: React.FC<NavbarProps> = ({
     'property-form': 'Property Form',
     countries: 'Countries',
     cities: 'Cities',
-    services: 'Services',
+    services: 'Consulting',
     agencies: 'Agencies',
     blogs: 'Blogs',
     users: 'Users',
@@ -79,7 +79,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           <div className="flex items-center gap-1.5 text-xs text-[#8A90A2]">
             <span>Home</span>
             <span>&gt;</span>
-            <span className="capitalize">{currentSection}</span>
+            <span className="capitalize">{sectionTitles[currentSection]}</span>
           </div>
         </div>
       </div>

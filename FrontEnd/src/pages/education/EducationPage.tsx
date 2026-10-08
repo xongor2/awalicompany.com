@@ -4,10 +4,13 @@ import {
   Edit3,
   ExternalLink,
   GraduationCap,
+  Image as ImageIcon,
   Link2,
   Plus,
   Search,
   Trash2,
+  Upload,
+  X,
 } from 'lucide-react';
 import { PageHeader } from '../../components/layout/PageHeader';
 import { Button } from '../../components/ui/Button';
@@ -23,7 +26,7 @@ import type { EducationDegree, EducationOpportunity } from '../../types';
 
 const DEGREE_OPTIONS: EducationDegree[] = ['Certificate', 'Bachelor', 'Master', 'PHD'];
 
-type FormErrors = Partial<Record<'title' | 'description' | 'availableDegrees' | 'universityUrl', string>>;
+type FormErrors = Partial<Record<'title' | 'description' | 'thumbnail' | 'availableDegrees' | 'universityUrl', string>>;
 
 const normalizeUniversityUrl = (value: string): string | null => {
   const trimmed = value.trim();
@@ -47,6 +50,7 @@ export const EducationPage: React.FC = () => {
   const [deleting, setDeleting] = useState<EducationOpportunity | null>(null);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
+  const [thumbnail, setThumbnail] = useState('');
   const [availableDegrees, setAvailableDegrees] = useState<EducationDegree[]>([]);
   const [universityUrl, setUniversityUrl] = useState('');
   const [errors, setErrors] = useState<FormErrors>({});
@@ -80,6 +84,7 @@ export const EducationPage: React.FC = () => {
   const resetForm = () => {
     setTitle('');
     setDescription('');
+    setThumbnail('');
     setAvailableDegrees([]);
     setUniversityUrl('');
     setErrors({});
@@ -95,6 +100,7 @@ export const EducationPage: React.FC = () => {
     setEditing(item);
     setTitle(item.title);
     setDescription(item.description);
+    setThumbnail(item.thumbnail);
     setAvailableDegrees(item.availableDegrees);
     setUniversityUrl(item.universityUrl);
     setErrors({});
@@ -114,6 +120,32 @@ export const EducationPage: React.FC = () => {
     setErrors(current => ({ ...current, availableDegrees: undefined }));
   };
 
+  const handleThumbnailUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      setErrors(current => ({ ...current, thumbnail: 'Select a valid image file.' }));
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setErrors(current => ({ ...current, thumbnail: 'Thumbnail must be smaller than 5 MB.' }));
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === 'string') {
+        setThumbnail(reader.result);
+        setErrors(current => ({ ...current, thumbnail: undefined }));
+      }
+    };
+    reader.onerror = () => {
+      setErrors(current => ({ ...current, thumbnail: 'Unable to read the selected image.' }));
+    };
+    reader.readAsDataURL(file);
+  };
+
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
     const nextErrors: FormErrors = {};
@@ -123,6 +155,7 @@ export const EducationPage: React.FC = () => {
 
     if (!trimmedTitle) nextErrors.title = 'University title is required.';
     if (!trimmedDescription) nextErrors.description = 'Description is required.';
+    if (!thumbnail) nextErrors.thumbnail = 'Thumbnail image is required.';
     if (availableDegrees.length === 0) nextErrors.availableDegrees = 'Select at least one available degree.';
     if (!normalizedUrl) nextErrors.universityUrl = 'Enter a valid university website link.';
 
@@ -134,6 +167,7 @@ export const EducationPage: React.FC = () => {
     const payload = {
       title: trimmedTitle,
       description: trimmedDescription,
+      thumbnail,
       availableDegrees,
       universityUrl: normalizedUrl!,
     };
@@ -234,8 +268,14 @@ export const EducationPage: React.FC = () => {
                   <tr key={item.id} className="transition-colors hover:bg-[#FFF8F2] dark:hover:bg-[#1A2053]">
                     <td className="px-6 py-5">
                       <div className="flex items-center gap-3">
-                        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#FFF0E4] text-[#FF7817] dark:bg-[#252B5C]">
-                          <GraduationCap className="h-5 w-5" />
+                        <span className="h-12 w-16 shrink-0 overflow-hidden rounded-xl border border-[#D9DDE8] bg-[#EEF0F5] dark:border-[#252B5C] dark:bg-[#252B5C]">
+                          {item.thumbnail ? (
+                            <img src={item.thumbnail} alt="" className="h-full w-full object-cover" />
+                          ) : (
+                            <span className="flex h-full w-full items-center justify-center text-[#FF7817]">
+                              <GraduationCap className="h-5 w-5" />
+                            </span>
+                          )}
                         </span>
                         <span className="font-semibold text-[#171A2B] dark:text-white">{item.title}</span>
                       </div>
@@ -315,6 +355,50 @@ export const EducationPage: React.FC = () => {
             error={errors.description}
             className="min-h-[150px]"
           />
+
+          <div>
+            <label className="mb-1.5 block text-sm font-medium text-[#171A2B] dark:text-[#D9DDE8]">
+              Thumbnail *
+            </label>
+            {thumbnail ? (
+              <div className="relative overflow-hidden rounded-xl border border-[#D9DDE8] bg-[#F8F9FC] dark:border-[#252B5C] dark:bg-[#0B1030]">
+                <img
+                  src={thumbnail}
+                  alt="University thumbnail preview"
+                  className="h-52 w-full object-cover"
+                />
+                <button
+                  type="button"
+                  onClick={() => setThumbnail('')}
+                  className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-[#0B1030]/75 text-white shadow-lg transition hover:bg-rose-600"
+                  aria-label="Remove thumbnail"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+                <label className="absolute bottom-3 right-3 inline-flex cursor-pointer items-center gap-2 rounded-lg bg-white/95 px-3 py-2 text-xs font-bold text-[#151A46] shadow-lg hover:bg-white">
+                  <Upload className="h-4 w-4 text-[#FF7817]" />
+                  Change Thumbnail
+                  <input type="file" accept="image/*" onChange={handleThumbnailUpload} className="sr-only" />
+                </label>
+              </div>
+            ) : (
+              <label className={`flex min-h-40 cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed px-6 py-8 text-center transition-colors ${
+                errors.thumbnail
+                  ? 'border-rose-500 bg-rose-50/40 dark:bg-rose-950/10'
+                  : 'border-[#C5CBE0] bg-[#F8F9FC] hover:border-[#FF7817] hover:bg-[#FFF8F2] dark:border-[#3A4070] dark:bg-[#0B1030] dark:hover:border-[#FF7817]'
+              }`}>
+                <span className="mb-3 flex h-11 w-11 items-center justify-center rounded-full bg-[#FFF0E4] text-[#FF7817] dark:bg-[#252B5C]">
+                  <ImageIcon className="h-5 w-5" />
+                </span>
+                <span className="text-sm font-bold text-[#151A46] dark:text-white">Upload University Thumbnail</span>
+                <span className="mt-1 text-xs text-[#8A90A2]">PNG, JPG or WebP · maximum 5 MB</span>
+                <input type="file" accept="image/*" onChange={handleThumbnailUpload} className="sr-only" />
+              </label>
+            )}
+            {errors.thumbnail ? (
+              <p className="mt-2 text-xs font-medium text-rose-500">{errors.thumbnail}</p>
+            ) : null}
+          </div>
 
           <fieldset>
             <legend className="mb-1.5 block text-sm font-medium text-[#171A2B] dark:text-[#D9DDE8]">

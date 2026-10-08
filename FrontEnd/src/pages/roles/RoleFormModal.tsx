@@ -10,7 +10,7 @@ export const ROLE_PAGES = [
   { id: 'health', label: 'Health', description: 'Health services and records', icon: HeartPulse },
   { id: 'education', label: 'Education', description: 'Education programs and student records', icon: GraduationCap },
   { id: 'properties', label: 'Properties', description: 'Property listings and details', icon: Building2 },
-  { id: 'services', label: 'Services', description: 'Company service management', icon: BriefcaseBusiness },
+  { id: 'services', label: 'Consulting', description: 'Consulting service management', icon: BriefcaseBusiness },
   { id: 'agencies', label: 'Agencies', description: 'Partner agency directory', icon: ShieldCheck },
   { id: 'blogs', label: 'Blogs', description: 'Articles and categories', icon: Newspaper },
   { id: 'users', label: 'Users', description: 'User account management', icon: Users },

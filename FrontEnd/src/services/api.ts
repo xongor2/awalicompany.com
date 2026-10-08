@@ -246,7 +246,7 @@ export const api = {
   },
 
   async createEducationOpportunity(
-    data: Pick<EducationOpportunity, 'title' | 'description' | 'availableDegrees' | 'universityUrl'>,
+    data: Pick<EducationOpportunity, 'title' | 'description' | 'thumbnail' | 'availableDegrees' | 'universityUrl'>,
   ): Promise<EducationOpportunity> {
     const res = await fetch(`${API_BASE}/education`, {
       method: 'POST',
@@ -258,7 +258,7 @@ export const api = {
 
   async updateEducationOpportunity(
     id: string,
-    data: Pick<EducationOpportunity, 'title' | 'description' | 'availableDegrees' | 'universityUrl'>,
+    data: Pick<EducationOpportunity, 'title' | 'description' | 'thumbnail' | 'availableDegrees' | 'universityUrl'>,
   ): Promise<EducationOpportunity> {
     const res = await fetch(`${API_BASE}/education/${id}`, {
       method: 'PUT',

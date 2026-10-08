@@ -25,6 +25,14 @@ const normalizeUrl = (value: unknown): string | null => {
   }
 };
 
+const normalizeThumbnail = (value: unknown): string | null => {
+  if (typeof value !== 'string') return null;
+  const thumbnail = value.trim();
+  if (!thumbnail || thumbnail.length > 8_000_000) return null;
+  if (/^data:image\/(png|jpe?g|webp|gif);base64,/i.test(thumbnail)) return thumbnail;
+  return normalizeUrl(thumbnail);
+};
+
 educationRouter.get('/', asyncHandler(async (req: Request, res: Response) => {
   const search = typeof req.query.search === 'string' ? req.query.search.trim().toLowerCase() : '';
   let opportunities = await db.getEducationOpportunities();
@@ -45,18 +53,20 @@ educationRouter.post('/', authMiddleware, asyncHandler(async (req: Authenticated
 
   const title = typeof req.body.title === 'string' ? req.body.title.trim() : '';
   const description = typeof req.body.description === 'string' ? req.body.description.trim() : '';
+  const thumbnail = normalizeThumbnail(req.body.thumbnail);
   const availableDegrees = normalizeDegrees(req.body.availableDegrees);
   const universityUrl = normalizeUrl(req.body.universityUrl);
 
-  if (!title || !description || availableDegrees.length === 0 || !universityUrl) {
+  if (!title || !description || !thumbnail || availableDegrees.length === 0 || !universityUrl) {
     return res.status(400).json({
-      error: 'Title, description, at least one available degree, and a valid university link are required.',
+      error: 'Title, description, thumbnail, at least one available degree, and a valid university link are required.',
     });
   }
 
   return res.status(201).json(await db.createEducationOpportunity({
     title,
     description,
+    thumbnail,
     availableDegrees,
     universityUrl,
   }));
@@ -72,6 +82,7 @@ educationRouter.put('/:id', authMiddleware, asyncHandler(async (req: Authenticat
 
   const title = typeof req.body.title === 'string' ? req.body.title.trim() : current.title;
   const description = typeof req.body.description === 'string' ? req.body.description.trim() : current.description;
+  const thumbnail = req.body.thumbnail === undefined ? current.thumbnail : normalizeThumbnail(req.body.thumbnail);
   const availableDegrees = req.body.availableDegrees === undefined
     ? current.availableDegrees
     : normalizeDegrees(req.body.availableDegrees);
@@ -79,15 +90,16 @@ educationRouter.put('/:id', authMiddleware, asyncHandler(async (req: Authenticat
     ? current.universityUrl
     : normalizeUrl(req.body.universityUrl);
 
-  if (!title || !description || availableDegrees.length === 0 || !universityUrl) {
+  if (!title || !description || !thumbnail || availableDegrees.length === 0 || !universityUrl) {
     return res.status(400).json({
-      error: 'Title, description, at least one available degree, and a valid university link are required.',
+      error: 'Title, description, thumbnail, at least one available degree, and a valid university link are required.',
     });
   }
 
   return res.json(await db.updateEducationOpportunity(req.params.id, {
     title,
     description,
+    thumbnail,
     availableDegrees,
     universityUrl,
   }));

@@ -74,6 +74,7 @@ const toEducationOpportunity = (row: any): EducationOpportunity => ({
   id: row.id,
   title: row.title,
   description: row.description,
+  thumbnail: row.thumbnail || '',
   availableDegrees: jsonArray(row.available_degrees) as EducationOpportunity['availableDegrees'],
   universityUrl: row.university_url,
   createdAt: iso(row.created_at),
@@ -377,8 +378,8 @@ class MySQLRepository {
   ): Promise<EducationOpportunity> {
     const id = `edu-${Date.now()}-${crypto.randomBytes(3).toString('hex')}`;
     await query(
-      'INSERT INTO education_opportunities (id, title, description, available_degrees, university_url) VALUES (?, ?, ?, ?, ?)',
-      [id, data.title, data.description, JSON.stringify(data.availableDegrees), data.universityUrl],
+      'INSERT INTO education_opportunities (id, title, description, thumbnail, available_degrees, university_url) VALUES (?, ?, ?, ?, ?, ?)',
+      [id, data.title, data.description, data.thumbnail, JSON.stringify(data.availableDegrees), data.universityUrl],
     );
     return (await this.getEducationOpportunityById(id))!;
   }
@@ -395,6 +396,7 @@ class MySQLRepository {
       {
         title: 'title',
         description: 'description',
+        thumbnail: 'thumbnail',
         availableDegrees: 'available_degrees',
         universityUrl: 'university_url',
       },

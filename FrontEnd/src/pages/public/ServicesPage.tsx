@@ -26,6 +26,8 @@ import {
 import { Service } from '../../types';
 import { api } from '../../services/api';
 
+type PublicServiceCard = Service & { universityUrl?: string };
+
 const universityLogos = [
   { src: '/images/UN-slide-emage/شعار-الجامعات-بالصفحة-الرئيسية.jpg', alt: 'Partner university logo 1' },
   { src: '/images/UN-slide-emage/شعار-الجامعات-بالصفحة-الرئيسية-3.jpg', alt: 'Partner university logo 2' },
@@ -145,7 +147,7 @@ export const ServicesPage: React.FC<ServicesPageProps> = ({
   onNavigateHome,
   onNavigate,
 }) => {
-  const [services, setServices] = useState<Service[]>([]);
+  const [services, setServices] = useState<PublicServiceCard[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -163,7 +165,7 @@ export const ServicesPage: React.FC<ServicesPageProps> = ({
   );
 
   // Modal inspection state
-  const [activeModalService, setActiveModalService] = useState<Service | null>(null);
+  const [activeModalService, setActiveModalService] = useState<PublicServiceCard | null>(null);
   const [isInquiryModalOpen, setIsInquiryModalOpen] = useState(false);
   const [inquiryForm, setInquiryForm] = useState({
     fullName: '',
@@ -181,16 +183,32 @@ export const ServicesPage: React.FC<ServicesPageProps> = ({
     }
   }, [initialCategory]);
 
-  // Fetch all services from database
+  // Fetch the matching public catalog from MySQL.
   const loadServices = async () => {
     try {
       setIsLoading(true);
       setError(null);
-      const data = await api.getServices();
-      setServices(data || []);
+      if (isEducation) {
+        const data = await api.getEducationOpportunities();
+        setServices((data || []).map(item => ({
+          id: item.id,
+          name: item.title,
+          category: 'Education',
+          description: item.description,
+          image: item.thumbnail,
+          status: 'Active',
+          features: item.availableDegrees,
+          created_at: item.createdAt,
+          updated_at: item.updatedAt,
+          universityUrl: item.universityUrl,
+        })));
+      } else {
+        const data = await api.getServices();
+        setServices(data || []);
+      }
     } catch (err: any) {
-      console.error('Failed to load services:', err);
-      setError(err?.message || 'Failed to load services. Please try again.');
+      console.error('Failed to load public catalog:', err);
+      setError(err?.message || 'Failed to load this catalog. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -198,7 +216,7 @@ export const ServicesPage: React.FC<ServicesPageProps> = ({
 
   useEffect(() => {
     loadServices();
-  }, []);
+  }, [isEducation]);
 
   // Filtered and sorted services for Education or Consulting
   const filteredServices = useMemo(() => {
@@ -661,13 +679,24 @@ export const ServicesPage: React.FC<ServicesPageProps> = ({
 
                     {/* Card Footer Actions */}
                     <div className="pt-4 flex items-center gap-2 border-t border-[#E2E6EF] dark:border-[#202754]">
-                      <button
-                        type="button"
-                        onClick={() => setActiveModalService(service)}
-                        className="flex-1 py-2.5 px-3 text-xs font-bold text-[#151A46] dark:text-white bg-[#F8F9FC] dark:bg-[#151A46] hover:bg-[#FF7817] hover:text-white dark:hover:bg-[#FF7817] rounded-xl transition-all text-center cursor-pointer border border-[#D9DDE8] dark:border-[#252B5C] hover:border-transparent"
-                      >
-                        Learn More
-                      </button>
+                      {isEducation && service.universityUrl ? (
+                        <a
+                          href={service.universityUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex-1 py-2.5 px-3 text-xs font-bold text-[#151A46] dark:text-white bg-[#F8F9FC] dark:bg-[#151A46] hover:bg-[#FF7817] hover:text-white dark:hover:bg-[#FF7817] rounded-xl transition-all text-center cursor-pointer border border-[#D9DDE8] dark:border-[#252B5C] hover:border-transparent"
+                        >
+                          Learn More
+                        </a>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => setActiveModalService(service)}
+                          className="flex-1 py-2.5 px-3 text-xs font-bold text-[#151A46] dark:text-white bg-[#F8F9FC] dark:bg-[#151A46] hover:bg-[#FF7817] hover:text-white dark:hover:bg-[#FF7817] rounded-xl transition-all text-center cursor-pointer border border-[#D9DDE8] dark:border-[#252B5C] hover:border-transparent"
+                        >
+                          Learn More
+                        </button>
+                      )}
 
                       <a
                         href={`https://wa.me/252613295050?text=${encodeURIComponent(
