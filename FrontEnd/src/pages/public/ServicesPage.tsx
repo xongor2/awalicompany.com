@@ -25,7 +25,6 @@ import {
 } from 'lucide-react';
 import { Service } from '../../types';
 import { api } from '../../services/api';
-import educationAdvisoryImage from '../../assets/images/hero_guidance_education_business_1790222125018.jpg';
 
 const universityLogos = [
   { src: '/images/UN-slide-emage/شعار-الجامعات-بالصفحة-الرئيسية.jpg', alt: 'Partner university logo 1' },
@@ -123,8 +122,8 @@ const EducationMajorCTA: React.FC = () => (
 
       <div className="relative min-h-[280px] sm:min-h-[360px] lg:min-h-[440px]">
         <img
-          src={educationAdvisoryImage}
-          alt="Students receiving university program guidance on a modern campus"
+          src="/images/UN-slide-emage/university-image.png"
+          alt="Illustration of a university campus building"
           className="absolute inset-0 h-full w-full object-cover"
           loading="lazy"
         />
