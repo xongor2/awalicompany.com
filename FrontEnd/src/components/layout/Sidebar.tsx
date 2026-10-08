@@ -38,11 +38,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   const { user, logout } = useAuth();
   const isPropertySection = currentSection === 'properties' || currentSection === 'property-form' || currentSection === 'countries' || currentSection === 'cities';
+  const isSettingsSection = currentSection === 'settings' || currentSection === 'blogs' || currentSection === 'users' || currentSection === 'roles' || currentSection === 'profile';
   const [isPropertiesExpanded, setIsPropertiesExpanded] = useState(isPropertySection);
+  const [isSettingsExpanded, setIsSettingsExpanded] = useState(isSettingsSection);
 
   useEffect(() => {
     if (isPropertySection) setIsPropertiesExpanded(true);
   }, [isPropertySection]);
+
+  useEffect(() => {
+    if (isSettingsSection) setIsSettingsExpanded(true);
+  }, [isSettingsSection]);
 
   const navItems = [
     { id: 'dashboard' as NavSection, label: 'Dashboard', icon: LayoutDashboard },
@@ -52,12 +58,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'services' as NavSection, label: 'Consulting', icon: Handshake },
     { id: 'agencies' as NavSection, label: 'Agencies', icon: ShieldCheck },
     { id: 'settings' as NavSection, label: 'Settings', icon: Settings },
-    { id: 'blogs' as NavSection, label: 'Blogs', icon: Newspaper },
-    { id: 'users' as NavSection, label: 'Users', icon: Users },
-    ...(user?.role === 'Admin'
-      ? [{ id: 'roles' as NavSection, label: 'Roles', icon: KeyRound }]
-      : []),
-    { id: 'profile' as NavSection, label: 'Profile', icon: User },
   ];
 
   const handleNavClick = (id: NavSection) => {
@@ -84,7 +84,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
         {navItems.map((item) => {
           const Icon = item.icon;
           const isPropertiesItem = item.id === 'properties';
-          const isActive = isPropertiesItem ? isPropertySection : currentSection === item.id;
+          const isSettingsItem = item.id === 'settings';
+          const isActive = isPropertiesItem
+            ? isPropertySection
+            : isSettingsItem
+              ? isSettingsSection
+              : currentSection === item.id;
 
           if (isPropertiesItem) {
             return (
@@ -117,6 +122,62 @@ export const Sidebar: React.FC<SidebarProps> = ({
                       { id: 'countries' as NavSection, label: 'Countries', icon: Globe2 },
                       { id: 'cities' as NavSection, label: 'Cities', icon: MapPin },
                     ].map(child => {
+                      const ChildIcon = child.icon;
+                      const isChildActive = currentSection === child.id;
+                      return (
+                        <button
+                          key={child.id}
+                          onClick={() => handleNavClick(child.id)}
+                          className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors cursor-pointer ${isChildActive ? 'bg-[#FF7817]/15 font-semibold text-[#E66606] dark:text-[#FF9A52]' : 'text-[#171A2B] hover:bg-[#FFF1E6] hover:text-[#E66606] dark:text-[#AEB4C7] dark:hover:bg-[#252B5C]/50 dark:hover:text-white'}`}
+                        >
+                          <ChildIcon className="h-4 w-4" />
+                          <span>{child.label}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            );
+          }
+
+          if (isSettingsItem) {
+            const settingsChildren = [
+              { id: 'blogs' as NavSection, label: 'Blogs', icon: Newspaper },
+              { id: 'users' as NavSection, label: 'Users', icon: Users },
+              ...(user?.role === 'Admin'
+                ? [{ id: 'roles' as NavSection, label: 'Roles', icon: KeyRound }]
+                : []),
+              { id: 'profile' as NavSection, label: 'Profile', icon: User },
+            ];
+
+            return (
+              <div key={item.id}>
+                <div className={`flex items-center rounded-lg transition-all ${isActive ? 'bg-[#FF7817] shadow-md' : 'hover:bg-[#FFF1E6] dark:hover:bg-[#252B5C]/50'}`}>
+                  <button
+                    onClick={() => {
+                      setIsSettingsExpanded(true);
+                      handleNavClick('settings');
+                    }}
+                    className={`flex min-w-0 flex-1 items-center gap-3.5 px-3.5 py-3 text-sm font-medium cursor-pointer ${isActive ? 'text-white font-semibold' : 'text-[#171A2B] hover:text-[#E66606] dark:text-[#D9DDE8] dark:hover:text-white'}`}
+                  >
+                    <Icon className={`h-5 w-5 ${isActive ? 'text-white' : 'text-[#5F667A] dark:text-[#8A90A2]'}`} />
+                    <span>{item.label}</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsSettingsExpanded(open => !open)}
+                    className={`mr-1 rounded-md p-2 transition-colors cursor-pointer ${isActive ? 'text-white hover:bg-white/15' : 'text-[#5F667A] hover:text-[#E66606] dark:text-[#8A90A2] dark:hover:text-white'}`}
+                    aria-label={`${isSettingsExpanded ? 'Collapse' : 'Expand'} settings pages`}
+                    aria-expanded={isSettingsExpanded}
+                  >
+                    <ChevronDown className={`h-4 w-4 transition-transform ${isSettingsExpanded ? 'rotate-180' : ''}`} />
+                  </button>
+                </div>
+
+                {isSettingsExpanded && (
+                  <div className="ml-5 mt-1.5 space-y-1 border-l border-[#3A4070] pl-3">
+                    {settingsChildren.map(child => {
                       const ChildIcon = child.icon;
                       const isChildActive = currentSection === child.id;
                       return (
@@ -171,7 +232,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         {/* Logout */}
         <button
           onClick={() => logout()}
-          className="w-full flex items-center justify-center gap-2 px-3 py-2 text-xs font-medium text-[#D9DDE8] hover:text-rose-300 hover:bg-rose-950/20 rounded-lg transition-colors cursor-pointer"
+          className="w-full flex items-center justify-center gap-2 px-3 py-2 text-xs font-medium text-[#171A2B] hover:text-rose-600 hover:bg-rose-50 dark:text-[#D9DDE8] dark:hover:text-rose-300 dark:hover:bg-rose-950/20 rounded-lg transition-colors cursor-pointer"
         >
           <LogOut className="w-4 h-4" />
           <span>Logout</span>
