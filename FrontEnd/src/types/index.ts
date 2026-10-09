@@ -106,6 +106,35 @@ export interface HealthSpecialty {
   updatedAt: string;
 }
 
+export type QuickPopupType = 'Right Sidebar' | 'Screen Modal';
+export type QuickPopupDesign = 'Image' | 'Custom Content';
+export type QuickPopupDisplayPage = 'Home' | 'Academic' | 'Courses' | 'Admissions' | 'News' | 'About Us' | 'Contact';
+export type QuickPopupDelayUnit = 'Seconds' | 'Minutes';
+export type QuickPopupRepeatUnit = 'Hours' | 'Days';
+export type QuickPopupStatus = 'Active' | 'Inactive';
+
+export interface QuickPopup {
+  id: string;
+  name: string;
+  popupType: QuickPopupType;
+  designType: QuickPopupDesign;
+  image: string | null;
+  destinationLink: string | null;
+  title: string | null;
+  body: string | null;
+  footer: string | null;
+  displayPage: QuickPopupDisplayPage;
+  showAfterValue: number | null;
+  showAfterUnit: QuickPopupDelayUnit | null;
+  showAfterScroll: number | null;
+  maximumDisplays: number;
+  repeatEveryValue: number;
+  repeatEveryUnit: QuickPopupRepeatUnit;
+  status: QuickPopupStatus;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface BlogPost {
   id: string;
   title: string;

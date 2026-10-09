@@ -15,13 +15,14 @@ import {
   Globe2,
   MapPin,
   Settings,
+  Megaphone,
   X
 } from 'lucide-react';
 import { BrandLogo } from '../common/BrandLogo';
 import { Avatar } from '../ui/Avatar';
 import { useAuth } from '../../context/AuthContext';
 
-export type NavSection = 'dashboard' | 'health' | 'education' | 'properties' | 'property-form' | 'countries' | 'cities' | 'services' | 'agencies' | 'settings' | 'blogs' | 'users' | 'roles' | 'profile';
+export type NavSection = 'dashboard' | 'health' | 'education' | 'properties' | 'property-form' | 'countries' | 'cities' | 'services' | 'agencies' | 'settings' | 'blogs' | 'quick-popup' | 'users' | 'roles' | 'profile';
 
 interface SidebarProps {
   currentSection: NavSection;
@@ -38,7 +39,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   const { user, logout } = useAuth();
   const isPropertySection = currentSection === 'properties' || currentSection === 'property-form' || currentSection === 'countries' || currentSection === 'cities';
-  const isSettingsSection = currentSection === 'settings' || currentSection === 'blogs' || currentSection === 'users' || currentSection === 'roles' || currentSection === 'profile';
+  const isSettingsSection = currentSection === 'settings' || currentSection === 'blogs' || currentSection === 'quick-popup' || currentSection === 'users' || currentSection === 'roles' || currentSection === 'profile';
   const [isPropertiesExpanded, setIsPropertiesExpanded] = useState(isPropertySection);
   const [isSettingsExpanded, setIsSettingsExpanded] = useState(isSettingsSection);
 
@@ -144,6 +145,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
           if (isSettingsItem) {
             const settingsChildren = [
               { id: 'blogs' as NavSection, label: 'Blogs', icon: Newspaper },
+              ...(user?.role === 'Admin'
+                ? [{ id: 'quick-popup' as NavSection, label: 'Quick Pop Up', icon: Megaphone }]
+                : []),
               { id: 'users' as NavSection, label: 'Users', icon: Users },
               ...(user?.role === 'Admin'
                 ? [{ id: 'roles' as NavSection, label: 'Roles', icon: KeyRound }]
