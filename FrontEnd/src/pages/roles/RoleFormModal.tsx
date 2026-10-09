@@ -1,5 +1,5 @@
 import React, { FormEvent, useEffect, useState } from 'react';
-import { Check, LayoutDashboard, Building2, ShieldCheck, Newspaper, Users, KeyRound, User, HeartPulse, Handshake, GraduationCap, Settings } from 'lucide-react';
+import { Check, LayoutDashboard, Building2, ShieldCheck, Newspaper, Users, KeyRound, User, HeartPulse, Handshake, GraduationCap, Settings, Megaphone } from 'lucide-react';
 import { Modal } from '../../components/ui/Modal';
 import { Button } from '../../components/ui/Button';
 import { RoleDefinition } from '../../types';
@@ -13,6 +13,7 @@ export const ROLE_PAGES = [
   { id: 'agencies', label: 'Agencies', description: 'Partner agency directory', icon: ShieldCheck },
   { id: 'settings', label: 'Settings', description: 'System preferences and configuration', icon: Settings },
   { id: 'blogs', label: 'Blogs', description: 'Articles and categories', icon: Newspaper },
+  { id: 'quick-popup', label: 'Quick Pop Up', description: 'Website popup campaigns and display rules', icon: Megaphone },
   { id: 'users', label: 'Users', description: 'User account management', icon: Users },
   { id: 'roles', label: 'Roles', description: 'Roles and page permissions', icon: KeyRound },
   { id: 'profile', label: 'Profile', description: 'Personal account settings', icon: User },

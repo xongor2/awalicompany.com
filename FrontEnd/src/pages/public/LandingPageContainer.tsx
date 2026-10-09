@@ -15,7 +15,8 @@ import { OurStoryPage } from './OurStoryPage';
 import { AgenciesPage } from './AgenciesPage';
 import { PlaceholderPage } from '../../components/public/PlaceholderPage';
 import { PublicFooter } from '../../components/public/PublicFooter';
-import { Property } from '../../types';
+import { PublicQuickPopup } from '../../components/public/PublicQuickPopup';
+import { Property, QuickPopupDisplayPage } from '../../types';
 
 export interface LandingPageContainerProps {
   onOpenPortal: () => void;
@@ -33,6 +34,20 @@ export type PublicPageKey =
   | 'our-story'
   | 'blog'
   | 'contact';
+
+const popupPageCategory = (page: PublicPageKey): QuickPopupDisplayPage | null => {
+  switch (page) {
+    case 'home': return 'Home';
+    case 'education': return 'Academic';
+    case 'consulting':
+    case 'service': return 'Courses';
+    case 'health': return 'Admissions';
+    case 'blog': return 'News';
+    case 'our-story': return 'About Us';
+    case 'contact': return 'Contact';
+    default: return null;
+  }
+};
 
 export const LandingPageContainer: React.FC<LandingPageContainerProps> = ({
   onOpenPortal,
@@ -136,6 +151,8 @@ export const LandingPageContainer: React.FC<LandingPageContainerProps> = ({
           />
         )}
       </main>
+
+      <PublicQuickPopup displayPage={popupPageCategory(currentPage)} />
 
       {/* Public Footer matching image.png exactly */}
       <PublicFooter onNavigate={handleNavigate} />

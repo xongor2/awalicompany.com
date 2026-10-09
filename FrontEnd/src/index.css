@@ -60,6 +60,24 @@
   }
 }
 
+@keyframes quick-popup-slide-in {
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes quick-popup-modal-in {
+  from { transform: translateY(14px) scale(0.97); opacity: 0; }
+  to { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+.quick-popup-slide-in { animation: quick-popup-slide-in 280ms ease-out both; }
+.quick-popup-modal-in { animation: quick-popup-modal-in 220ms ease-out both; }
+
+@media (prefers-reduced-motion: reduce) {
+  .quick-popup-slide-in,
+  .quick-popup-modal-in { animation: none; }
+}
+
 /* ─────────────────────────────────────────────────────────────
    Google Website Translator Silent Integration
 ───────────────────────────────────────────────────────────── */

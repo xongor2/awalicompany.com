@@ -55,6 +55,7 @@ export const Navbar: React.FC<NavbarProps> = ({
     agencies: 'Agencies',
     settings: 'Settings',
     blogs: 'Blogs',
+    'quick-popup': 'Quick Pop Up',
     users: 'Users',
     roles: 'Roles',
     profile: 'User Profile'

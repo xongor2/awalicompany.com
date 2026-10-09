@@ -5,7 +5,7 @@ import type { ResultSetHeader } from 'mysql2';
 import { query } from './mysql.ts';
 import { runMigrations } from './migrate.ts';
 import { hashPassword } from './security.ts';
-import type { Agency, BlogPost, EducationOpportunity, HealthSpecialty, Inquiry, Property, PropertyLocationCategory, PropertyLocationKind, RoleDefinition, Service, User } from './models.ts';
+import type { Agency, BlogPost, EducationOpportunity, HealthSpecialty, Inquiry, Property, PropertyLocationCategory, PropertyLocationKind, QuickPopup, QuickPopupDisplayPage, RoleDefinition, Service, User } from './models.ts';
 
 const PROTECTED_EMAILS = new Set(['awalicompany2020@gmail.com', 'halsan252@gmail.com']);
 const DEFAULT_AVATAR = '/images/avatars/nature-tree.png';
@@ -92,6 +92,28 @@ const toHealthSpecialty = (row: any): HealthSpecialty => ({
   keyProcedures: jsonArray(row.key_procedures),
   destinations: jsonArray(row.destinations),
   image: row.image,
+  status: row.status,
+  createdAt: iso(row.created_at),
+  updatedAt: iso(row.updated_at),
+});
+
+const toQuickPopup = (row: any): QuickPopup => ({
+  id: row.id,
+  name: row.name,
+  popupType: row.popup_type,
+  designType: row.design_type,
+  image: row.image || null,
+  destinationLink: row.destination_link || null,
+  title: row.title || null,
+  body: row.body || null,
+  footer: row.footer || null,
+  displayPage: row.display_page,
+  showAfterValue: row.show_after_value == null ? null : Number(row.show_after_value),
+  showAfterUnit: row.show_after_unit || null,
+  showAfterScroll: row.show_after_scroll == null ? null : Number(row.show_after_scroll),
+  maximumDisplays: Number(row.maximum_displays),
+  repeatEveryValue: Number(row.repeat_every_value),
+  repeatEveryUnit: row.repeat_every_unit,
   status: row.status,
   createdAt: iso(row.created_at),
   updatedAt: iso(row.updated_at),
@@ -467,6 +489,67 @@ class MySQLRepository {
     return (await query<ResultSetHeader>('DELETE FROM health_specialties WHERE id = ?', [id])).affectedRows > 0;
   }
 
+  async getQuickPopups(): Promise<QuickPopup[]> {
+    return (await query<any[]>('SELECT * FROM quick_popups ORDER BY created_at DESC')).map(toQuickPopup);
+  }
+
+  async getQuickPopupById(id: string): Promise<QuickPopup | null> {
+    const rows = await query<any[]>('SELECT * FROM quick_popups WHERE id = ? LIMIT 1', [id]);
+    return rows[0] ? toQuickPopup(rows[0]) : null;
+  }
+
+  async getActiveQuickPopup(displayPage: QuickPopupDisplayPage): Promise<QuickPopup | null> {
+    const rows = await query<any[]>(
+      "SELECT * FROM quick_popups WHERE display_page = ? AND status = 'Active' ORDER BY updated_at DESC LIMIT 1",
+      [displayPage],
+    );
+    return rows[0] ? toQuickPopup(rows[0]) : null;
+  }
+
+  async createQuickPopup(data: Omit<QuickPopup, 'id' | 'createdAt' | 'updatedAt'>): Promise<QuickPopup> {
+    const id = `popup-${Date.now()}-${crypto.randomBytes(3).toString('hex')}`;
+    await query(
+      `INSERT INTO quick_popups
+       (id, name, popup_type, design_type, image, destination_link, title, body, footer, display_page,
+        show_after_value, show_after_unit, show_after_scroll, maximum_displays, repeat_every_value,
+        repeat_every_unit, status)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        id, data.name, data.popupType, data.designType, data.image, data.destinationLink, data.title,
+        data.body, data.footer, data.displayPage, data.showAfterValue, data.showAfterUnit,
+        data.showAfterScroll, data.maximumDisplays, data.repeatEveryValue, data.repeatEveryUnit, data.status,
+      ],
+    );
+    return (await this.getQuickPopupById(id))!;
+  }
+
+  async updateQuickPopup(
+    id: string,
+    updates: Partial<Omit<QuickPopup, 'id' | 'createdAt' | 'updatedAt'>>,
+  ): Promise<QuickPopup | null> {
+    if (!await this.getQuickPopupById(id)) return null;
+    await updateColumns('quick_popups', id, updates, {
+      name: 'name', popupType: 'popup_type', designType: 'design_type', image: 'image',
+      destinationLink: 'destination_link', title: 'title', body: 'body', footer: 'footer',
+      displayPage: 'display_page', showAfterValue: 'show_after_value', showAfterUnit: 'show_after_unit',
+      showAfterScroll: 'show_after_scroll', maximumDisplays: 'maximum_displays',
+      repeatEveryValue: 'repeat_every_value', repeatEveryUnit: 'repeat_every_unit', status: 'status',
+    });
+    await query('UPDATE quick_popups SET updated_at = CURRENT_TIMESTAMP(3) WHERE id = ?', [id]);
+    return this.getQuickPopupById(id);
+  }
+
+  async duplicateQuickPopup(id: string): Promise<QuickPopup | null> {
+    const current = await this.getQuickPopupById(id);
+    if (!current) return null;
+    const { id: _id, createdAt: _createdAt, updatedAt: _updatedAt, ...copy } = current;
+    return this.createQuickPopup({ ...copy, name: `${copy.name} Copy`.slice(0, 180), status: 'Inactive' });
+  }
+
+  async deleteQuickPopup(id: string): Promise<boolean> {
+    return (await query<ResultSetHeader>('DELETE FROM quick_popups WHERE id = ?', [id])).affectedRows > 0;
+  }
+
   async getBlogs(filter?: { search?: string; category?: string; status?: string }): Promise<BlogPost[]> {
     let blogs = (await query<any[]>('SELECT * FROM blogs ORDER BY created_at DESC')).map(toBlog);
     if (filter?.search) {
@@ -657,5 +740,5 @@ export async function initializeDatabase():Promise<void>{
   console.log('[DataBase] MySQL schema and production data are ready.');
 }
 
-export type { User, Property, PropertyLocationCategory, PropertyLocationKind, Service, EducationOpportunity, HealthSpecialty, BlogPost, Agency, RoleDefinition, Inquiry } from './models.ts';
+export type { User, Property, PropertyLocationCategory, PropertyLocationKind, Service, EducationOpportunity, HealthSpecialty, QuickPopup, BlogPost, Agency, RoleDefinition, Inquiry } from './models.ts';
 export { verifyPassword } from './security.ts';

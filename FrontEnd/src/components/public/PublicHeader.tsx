@@ -193,7 +193,7 @@ export const PublicHeader: React.FC<PublicHeaderProps> = ({
                 <Facebook className="w-3.5 h-3.5" />
               </a>
               <a
-                href="https://www.instagram.com/awalicompany2020/"
+                href="https://www.instagram.com/awalicompany?utm_source=qr"
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="Instagram"

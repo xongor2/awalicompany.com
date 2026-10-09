@@ -1,4 +1,4 @@
-import { User, Property, PropertyLocationCategory, PropertyLocationKind, Service, EducationOpportunity, HealthSpecialty, BlogPost, DashboardStats, Agency, RoleDefinition } from '../types';
+import { User, Property, PropertyLocationCategory, PropertyLocationKind, Service, EducationOpportunity, HealthSpecialty, QuickPopup, QuickPopupDisplayPage, QuickPopupStatus, BlogPost, DashboardStats, Agency, RoleDefinition } from '../types';
 import { SAMPLE_AGENCIES } from '../data/sampleAgencies';
 
 const API_BASE = '/api';
@@ -307,6 +307,53 @@ export const api = {
 
   async deleteHealthSpecialty(id: string): Promise<{ message: string }> {
     const res = await fetch(`${API_BASE}/health-specialties/${id}`, {
+      method: 'DELETE', headers: getAuthHeaders()
+    });
+    return handleResponse(res);
+  },
+
+  // Quick Pop Ups
+  async getQuickPopups(): Promise<QuickPopup[]> {
+    const res = await fetch(`${API_BASE}/popups`, { headers: getAuthHeaders() });
+    return handleResponse(res);
+  },
+
+  async getActiveQuickPopup(displayPage: QuickPopupDisplayPage): Promise<QuickPopup | null> {
+    const query = new URLSearchParams({ displayPage });
+    const res = await fetch(`${API_BASE}/popups/active?${query.toString()}`);
+    return handleResponse(res);
+  },
+
+  async createQuickPopup(data: Omit<QuickPopup, 'id' | 'createdAt' | 'updatedAt'>): Promise<QuickPopup> {
+    const res = await fetch(`${API_BASE}/popups`, {
+      method: 'POST', headers: getAuthHeaders(), body: JSON.stringify(data)
+    });
+    return handleResponse(res);
+  },
+
+  async updateQuickPopup(id: string, data: Omit<QuickPopup, 'id' | 'createdAt' | 'updatedAt'>): Promise<QuickPopup> {
+    const res = await fetch(`${API_BASE}/popups/${id}`, {
+      method: 'PUT', headers: getAuthHeaders(), body: JSON.stringify(data)
+    });
+    return handleResponse(res);
+  },
+
+  async updateQuickPopupStatus(id: string, status: QuickPopupStatus): Promise<QuickPopup> {
+    const res = await fetch(`${API_BASE}/popups/${id}/status`, {
+      method: 'PUT', headers: getAuthHeaders(), body: JSON.stringify({ status })
+    });
+    return handleResponse(res);
+  },
+
+  async duplicateQuickPopup(id: string): Promise<QuickPopup> {
+    const res = await fetch(`${API_BASE}/popups/${id}/duplicate`, {
+      method: 'POST', headers: getAuthHeaders()
+    });
+    return handleResponse(res);
+  },
+
+  async deleteQuickPopup(id: string): Promise<{ message: string }> {
+    const res = await fetch(`${API_BASE}/popups/${id}`, {
       method: 'DELETE', headers: getAuthHeaders()
     });
     return handleResponse(res);

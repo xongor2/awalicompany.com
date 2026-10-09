@@ -20,6 +20,7 @@ import { RolesPage } from './pages/roles/RolesPage';
 import { HealthPage } from './pages/health/HealthPage';
 import { EducationPage } from './pages/education/EducationPage';
 import { SettingsPage } from './pages/settings/SettingsPage';
+import { QuickPopupPage } from './pages/settings/QuickPopupPage';
 import { Property, User } from './types';
 import { BrandLogo } from './components/common/BrandLogo';
 import { LandingPageContainer } from './pages/public/LandingPageContainer';
@@ -214,6 +215,8 @@ const MainApplication: React.FC = () => {
       {activeSection === 'agencies' && <AgenciesAdminPage />}
 
       {activeSection === 'settings' && <SettingsPage />}
+
+      {activeSection === 'quick-popup' && <QuickPopupPage />}
 
       {activeSection === 'blogs' && (
         <BlogsListPage

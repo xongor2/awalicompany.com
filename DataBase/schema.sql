@@ -145,6 +145,30 @@ PREPARE health_city_statement FROM @health_city_sql;
 EXECUTE health_city_statement;
 DEALLOCATE PREPARE health_city_statement;
 
+CREATE TABLE IF NOT EXISTS quick_popups (
+  id VARCHAR(64) PRIMARY KEY,
+  name VARCHAR(180) NOT NULL,
+  popup_type ENUM('Right Sidebar', 'Screen Modal') NOT NULL DEFAULT 'Right Sidebar',
+  design_type ENUM('Image', 'Custom Content') NOT NULL DEFAULT 'Custom Content',
+  image MEDIUMTEXT NULL,
+  destination_link VARCHAR(2048) NULL,
+  title VARCHAR(220) NULL,
+  body TEXT NULL,
+  footer VARCHAR(500) NULL,
+  display_page ENUM('Home', 'Academic', 'Courses', 'Admissions', 'News', 'About Us', 'Contact') NOT NULL DEFAULT 'Home',
+  show_after_value INT UNSIGNED NULL,
+  show_after_unit ENUM('Seconds', 'Minutes') NULL,
+  show_after_scroll TINYINT UNSIGNED NULL,
+  maximum_displays SMALLINT UNSIGNED NOT NULL DEFAULT 1,
+  repeat_every_value SMALLINT UNSIGNED NOT NULL DEFAULT 1,
+  repeat_every_unit ENUM('Hours', 'Days') NOT NULL DEFAULT 'Days',
+  status ENUM('Active', 'Inactive') NOT NULL DEFAULT 'Inactive',
+  created_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  updated_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
+  INDEX idx_quick_popups_page_status_updated (display_page, status, updated_at),
+  INDEX idx_quick_popups_created (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE IF NOT EXISTS blogs (
   id VARCHAR(64) PRIMARY KEY, title VARCHAR(255) NOT NULL, content LONGTEXT NOT NULL,
   thumbnail MEDIUMTEXT NOT NULL, categories JSON NOT NULL,
