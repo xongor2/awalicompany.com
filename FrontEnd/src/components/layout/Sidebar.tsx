@@ -16,13 +16,16 @@ import {
   MapPin,
   Settings,
   Megaphone,
+  ContactRound,
+  ReceiptText,
+  ScrollText,
   X
 } from 'lucide-react';
 import { BrandLogo } from '../common/BrandLogo';
 import { Avatar } from '../ui/Avatar';
 import { useAuth } from '../../context/AuthContext';
 
-export type NavSection = 'dashboard' | 'health' | 'education' | 'properties' | 'property-form' | 'countries' | 'cities' | 'services' | 'agencies' | 'settings' | 'blogs' | 'quick-popup' | 'users' | 'roles' | 'profile';
+export type NavSection = 'dashboard' | 'health' | 'education' | 'properties' | 'property-form' | 'countries' | 'cities' | 'services' | 'quotations' | 'agencies' | 'customers' | 'invoices' | 'settings' | 'blogs' | 'quick-popup' | 'users' | 'roles' | 'profile';
 
 interface SidebarProps {
   currentSection: NavSection;
@@ -39,17 +42,29 @@ export const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   const { user, logout } = useAuth();
   const isPropertySection = currentSection === 'properties' || currentSection === 'property-form' || currentSection === 'countries' || currentSection === 'cities';
+  const isAgenciesSection = currentSection === 'agencies' || currentSection === 'customers' || currentSection === 'invoices';
   const isSettingsSection = currentSection === 'settings' || currentSection === 'blogs' || currentSection === 'quick-popup' || currentSection === 'users' || currentSection === 'roles' || currentSection === 'profile';
-  const [isPropertiesExpanded, setIsPropertiesExpanded] = useState(isPropertySection);
-  const [isSettingsExpanded, setIsSettingsExpanded] = useState(isSettingsSection);
+  const [expandedSection, setExpandedSection] = useState<'properties' | 'agencies' | 'settings' | null>(() => {
+    if (isPropertySection) return 'properties';
+    if (isAgenciesSection) return 'agencies';
+    if (isSettingsSection) return 'settings';
+    return null;
+  });
+  const isPropertiesExpanded = expandedSection === 'properties';
+  const isAgenciesExpanded = expandedSection === 'agencies';
+  const isSettingsExpanded = expandedSection === 'settings';
 
   useEffect(() => {
-    if (isPropertySection) setIsPropertiesExpanded(true);
-  }, [isPropertySection]);
-
-  useEffect(() => {
-    if (isSettingsSection) setIsSettingsExpanded(true);
-  }, [isSettingsSection]);
+    if (isPropertySection) {
+      setExpandedSection('properties');
+    } else if (isAgenciesSection) {
+      setExpandedSection('agencies');
+    } else if (isSettingsSection) {
+      setExpandedSection('settings');
+    } else {
+      setExpandedSection(null);
+    }
+  }, [isPropertySection, isAgenciesSection, isSettingsSection]);
 
   const navItems = [
     { id: 'dashboard' as NavSection, label: 'Dashboard', icon: LayoutDashboard },
@@ -57,6 +72,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'education' as NavSection, label: 'Education', icon: GraduationCap },
     { id: 'properties' as NavSection, label: 'Properties', icon: Building2 },
     { id: 'services' as NavSection, label: 'Consulting', icon: Handshake },
+    { id: 'quotations' as NavSection, label: 'Quotations', icon: ScrollText },
     { id: 'agencies' as NavSection, label: 'Agencies', icon: ShieldCheck },
     { id: 'settings' as NavSection, label: 'Settings', icon: Settings },
   ];
@@ -85,9 +101,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
         {navItems.map((item) => {
           const Icon = item.icon;
           const isPropertiesItem = item.id === 'properties';
+          const isAgenciesItem = item.id === 'agencies';
           const isSettingsItem = item.id === 'settings';
           const isActive = isPropertiesItem
             ? isPropertySection
+            : isAgenciesItem
+              ? isAgenciesSection
             : isSettingsItem
               ? isSettingsSection
               : currentSection === item.id;
@@ -98,7 +117,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 <div className={`flex items-center rounded-lg transition-all ${isActive ? 'bg-[#FF7817] shadow-md' : 'hover:bg-[#FFF1E6] dark:hover:bg-[#252B5C]/50'}`}>
                   <button
                     onClick={() => {
-                      setIsPropertiesExpanded(true);
+                      setExpandedSection('properties');
                       handleNavClick('properties');
                     }}
                     className={`flex min-w-0 flex-1 items-center gap-3.5 px-3.5 py-3 text-sm font-medium cursor-pointer ${isActive ? 'text-white font-semibold' : 'text-[#171A2B] hover:text-[#E66606] dark:text-[#D9DDE8] dark:hover:text-white'}`}
@@ -108,7 +127,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   </button>
                   <button
                     type="button"
-                    onClick={() => setIsPropertiesExpanded(open => !open)}
+                    onClick={() => setExpandedSection(open => open === 'properties' ? null : 'properties')}
                     className={`mr-1 rounded-md p-2 transition-colors cursor-pointer ${isActive ? 'text-white hover:bg-white/15' : 'text-[#5F667A] hover:text-[#E66606] dark:text-[#8A90A2] dark:hover:text-white'}`}
                     aria-label={`${isPropertiesExpanded ? 'Collapse' : 'Expand'} property pages`}
                     aria-expanded={isPropertiesExpanded}
@@ -123,6 +142,58 @@ export const Sidebar: React.FC<SidebarProps> = ({
                       { id: 'countries' as NavSection, label: 'Countries', icon: Globe2 },
                       { id: 'cities' as NavSection, label: 'Cities', icon: MapPin },
                     ].map(child => {
+                      const ChildIcon = child.icon;
+                      const isChildActive = currentSection === child.id;
+                      return (
+                        <button
+                          key={child.id}
+                          onClick={() => handleNavClick(child.id)}
+                          className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors cursor-pointer ${isChildActive ? 'bg-[#FF7817]/15 font-semibold text-[#E66606] dark:text-[#FF9A52]' : 'text-[#171A2B] hover:bg-[#FFF1E6] hover:text-[#E66606] dark:text-[#AEB4C7] dark:hover:bg-[#252B5C]/50 dark:hover:text-white'}`}
+                        >
+                          <ChildIcon className="h-4 w-4" />
+                          <span>{child.label}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            );
+          }
+
+          if (isAgenciesItem) {
+            const agencyChildren = [
+              { id: 'customers' as NavSection, label: 'Customers', icon: ContactRound },
+              { id: 'invoices' as NavSection, label: 'Invoices', icon: ReceiptText },
+            ];
+
+            return (
+              <div key={item.id}>
+                <div className={`flex items-center rounded-lg transition-all ${isActive ? 'bg-[#FF7817] shadow-md' : 'hover:bg-[#FFF1E6] dark:hover:bg-[#252B5C]/50'}`}>
+                  <button
+                    onClick={() => {
+                      setExpandedSection('agencies');
+                      handleNavClick('agencies');
+                    }}
+                    className={`flex min-w-0 flex-1 items-center gap-3.5 px-3.5 py-3 text-sm font-medium cursor-pointer ${isActive ? 'text-white font-semibold' : 'text-[#171A2B] hover:text-[#E66606] dark:text-[#D9DDE8] dark:hover:text-white'}`}
+                  >
+                    <Icon className={`h-5 w-5 ${isActive ? 'text-white' : 'text-[#5F667A] dark:text-[#8A90A2]'}`} />
+                    <span>{item.label}</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setExpandedSection(open => open === 'agencies' ? null : 'agencies')}
+                    className={`mr-1 rounded-md p-2 transition-colors cursor-pointer ${isActive ? 'text-white hover:bg-white/15' : 'text-[#5F667A] hover:text-[#E66606] dark:text-[#8A90A2] dark:hover:text-white'}`}
+                    aria-label={`${isAgenciesExpanded ? 'Collapse' : 'Expand'} agency pages`}
+                    aria-expanded={isAgenciesExpanded}
+                  >
+                    <ChevronDown className={`h-4 w-4 transition-transform ${isAgenciesExpanded ? 'rotate-180' : ''}`} />
+                  </button>
+                </div>
+
+                {isAgenciesExpanded && (
+                  <div className="ml-5 mt-1.5 space-y-1 border-l border-[#3A4070] pl-3">
+                    {agencyChildren.map(child => {
                       const ChildIcon = child.icon;
                       const isChildActive = currentSection === child.id;
                       return (
@@ -160,7 +231,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 <div className={`flex items-center rounded-lg transition-all ${isActive ? 'bg-[#FF7817] shadow-md' : 'hover:bg-[#FFF1E6] dark:hover:bg-[#252B5C]/50'}`}>
                   <button
                     onClick={() => {
-                      setIsSettingsExpanded(true);
+                      setExpandedSection('settings');
                       handleNavClick('settings');
                     }}
                     className={`flex min-w-0 flex-1 items-center gap-3.5 px-3.5 py-3 text-sm font-medium cursor-pointer ${isActive ? 'text-white font-semibold' : 'text-[#171A2B] hover:text-[#E66606] dark:text-[#D9DDE8] dark:hover:text-white'}`}
@@ -170,7 +241,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   </button>
                   <button
                     type="button"
-                    onClick={() => setIsSettingsExpanded(open => !open)}
+                    onClick={() => setExpandedSection(open => open === 'settings' ? null : 'settings')}
                     className={`mr-1 rounded-md p-2 transition-colors cursor-pointer ${isActive ? 'text-white hover:bg-white/15' : 'text-[#5F667A] hover:text-[#E66606] dark:text-[#8A90A2] dark:hover:text-white'}`}
                     aria-label={`${isSettingsExpanded ? 'Collapse' : 'Expand'} settings pages`}
                     aria-expanded={isSettingsExpanded}
