@@ -12,10 +12,13 @@ import { PropertiesListPage } from './pages/properties/PropertiesListPage';
 import { LocationCategoriesPage } from './pages/properties/LocationCategoriesPage';
 import { PropertyFormPage } from './pages/properties/PropertyFormModal';
 import { ServicesListPage } from './pages/services/ServicesListPage';
+import { QuotationsPage } from './pages/quotations/QuotationsPage';
 import { BlogsListPage } from './pages/blogs/BlogsListPage';
 import { UsersListPage } from './pages/users/UsersListPage';
 import { ProfilePage } from './pages/profile/ProfilePage';
 import { AgenciesAdminPage } from './pages/agencies/AgenciesAdminPage';
+import { CustomersPage } from './pages/agencies/CustomersPage';
+import { InvoicesPage } from './pages/agencies/InvoicesPage';
 import { RolesPage } from './pages/roles/RolesPage';
 import { HealthPage } from './pages/health/HealthPage';
 import { EducationPage } from './pages/education/EducationPage';
@@ -212,7 +215,13 @@ const MainApplication: React.FC = () => {
         />
       )}
 
+      {activeSection === 'quotations' && <QuotationsPage />}
+
       {activeSection === 'agencies' && <AgenciesAdminPage />}
+
+      {activeSection === 'customers' && <CustomersPage />}
+
+      {activeSection === 'invoices' && <InvoicesPage />}
 
       {activeSection === 'settings' && <SettingsPage />}
 

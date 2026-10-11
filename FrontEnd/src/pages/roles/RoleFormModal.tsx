@@ -1,5 +1,5 @@
 import React, { FormEvent, useEffect, useState } from 'react';
-import { Check, LayoutDashboard, Building2, ShieldCheck, Newspaper, Users, KeyRound, User, HeartPulse, Handshake, GraduationCap, Settings, Megaphone } from 'lucide-react';
+import { Check, LayoutDashboard, Building2, ShieldCheck, Newspaper, Users, KeyRound, User, HeartPulse, Handshake, GraduationCap, Settings, Megaphone, ContactRound, ReceiptText, ScrollText } from 'lucide-react';
 import { Modal } from '../../components/ui/Modal';
 import { Button } from '../../components/ui/Button';
 import { RoleDefinition } from '../../types';
@@ -10,7 +10,10 @@ export const ROLE_PAGES = [
   { id: 'education', label: 'Education', description: 'Education programs and student records', icon: GraduationCap },
   { id: 'properties', label: 'Properties', description: 'Property listings and details', icon: Building2 },
   { id: 'services', label: 'Consulting', description: 'Consulting service management', icon: Handshake },
+  { id: 'quotations', label: 'Quotations', description: 'Customer quotation management', icon: ScrollText },
   { id: 'agencies', label: 'Agencies', description: 'Partner agency directory', icon: ShieldCheck },
+  { id: 'customers', label: 'Customers', description: 'Agency customer records', icon: ContactRound },
+  { id: 'invoices', label: 'Invoices', description: 'Agency billing and invoices', icon: ReceiptText },
   { id: 'settings', label: 'Settings', description: 'System preferences and configuration', icon: Settings },
   { id: 'blogs', label: 'Blogs', description: 'Articles and categories', icon: Newspaper },
   { id: 'quick-popup', label: 'Quick Pop Up', description: 'Website popup campaigns and display rules', icon: Megaphone },
