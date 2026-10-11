@@ -5,7 +5,7 @@ import type { ResultSetHeader } from 'mysql2';
 import { query } from './mysql.ts';
 import { runMigrations } from './migrate.ts';
 import { hashPassword } from './security.ts';
-import type { Agency, BlogPost, EducationOpportunity, HealthSpecialty, Inquiry, Property, PropertyLocationCategory, PropertyLocationKind, QuickPopup, QuickPopupDisplayPage, RoleDefinition, Service, User } from './models.ts';
+import type { Agency, BlogPost, EducationOpportunity, HealthSpecialty, Inquiry, Property, PropertyLocationCategory, PropertyLocationKind, Quotation, QuickPopup, QuickPopupDisplayPage, RoleDefinition, Service, User } from './models.ts';
 
 const PROTECTED_EMAILS = new Set(['awalicompany2020@gmail.com', 'halsan252@gmail.com']);
 const DEFAULT_AVATAR = '/images/avatars/nature-tree.png';
@@ -93,6 +93,33 @@ const toHealthSpecialty = (row: any): HealthSpecialty => ({
   destinations: jsonArray(row.destinations),
   image: row.image,
   status: row.status,
+  createdAt: iso(row.created_at),
+  updatedAt: iso(row.updated_at),
+});
+
+const toQuotation = (row: any): Quotation => ({
+  id: row.id,
+  quotationNumber: row.quotation_number,
+  customerName: row.customer_name,
+  customerEmail: row.customer_email || '',
+  customerPhone: row.customer_phone || '',
+  quotationDate: row.quotation_date instanceof Date
+    ? row.quotation_date.toISOString().slice(0, 10)
+    : String(row.quotation_date || '').slice(0, 10),
+  validityDays: Number(row.validity_days || 15),
+  currency: row.currency,
+  status: row.status,
+  items: (() => {
+    const items = jsonArray(row.items);
+    return Array.isArray(row.items)
+      ? row.items
+      : typeof row.items === 'string'
+        ? (() => { try { return JSON.parse(row.items); } catch { return []; } })()
+        : items;
+  })() as Quotation['items'],
+  terms: row.terms || '',
+  notes: row.notes || '',
+  preparedBy: row.prepared_by || 'AW ALI COMPANY',
   createdAt: iso(row.created_at),
   updatedAt: iso(row.updated_at),
 });
@@ -489,6 +516,62 @@ class MySQLRepository {
     return (await query<ResultSetHeader>('DELETE FROM health_specialties WHERE id = ?', [id])).affectedRows > 0;
   }
 
+  async getQuotations(): Promise<Quotation[]> {
+    return (await query<any[]>('SELECT * FROM quotations ORDER BY quotation_date DESC, created_at DESC')).map(toQuotation);
+  }
+
+  async getQuotationById(id: string): Promise<Quotation | null> {
+    const rows = await query<any[]>('SELECT * FROM quotations WHERE id = ? LIMIT 1', [id]);
+    return rows[0] ? toQuotation(rows[0]) : null;
+  }
+
+  async getQuotationByNumber(quotationNumber: string): Promise<Quotation | null> {
+    const rows = await query<any[]>('SELECT * FROM quotations WHERE LOWER(quotation_number) = LOWER(?) LIMIT 1', [quotationNumber]);
+    return rows[0] ? toQuotation(rows[0]) : null;
+  }
+
+  async createQuotation(
+    data: Omit<Quotation, 'id' | 'createdAt' | 'updatedAt'>,
+  ): Promise<Quotation> {
+    const id = `quotation-${Date.now()}-${crypto.randomBytes(3).toString('hex')}`;
+    await query(
+      `INSERT INTO quotations
+       (id, quotation_number, customer_name, customer_email, customer_phone, quotation_date,
+        validity_days, currency, status, items, terms, notes, prepared_by)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        id, data.quotationNumber, data.customerName, data.customerEmail, data.customerPhone,
+        data.quotationDate, data.validityDays, data.currency, data.status, JSON.stringify(data.items),
+        data.terms, data.notes, data.preparedBy,
+      ],
+    );
+    return (await this.getQuotationById(id))!;
+  }
+
+  async updateQuotation(
+    id: string,
+    updates: Partial<Omit<Quotation, 'id' | 'createdAt' | 'updatedAt'>>,
+  ): Promise<Quotation | null> {
+    if (!await this.getQuotationById(id)) return null;
+    await updateColumns(
+      'quotations',
+      id,
+      updates,
+      {
+        quotationNumber: 'quotation_number', customerName: 'customer_name', customerEmail: 'customer_email',
+        customerPhone: 'customer_phone', quotationDate: 'quotation_date', validityDays: 'validity_days',
+        currency: 'currency', status: 'status', items: 'items', terms: 'terms', notes: 'notes',
+        preparedBy: 'prepared_by',
+      },
+      new Set(['items']),
+    );
+    return this.getQuotationById(id);
+  }
+
+  async deleteQuotation(id: string): Promise<boolean> {
+    return (await query<ResultSetHeader>('DELETE FROM quotations WHERE id = ?', [id])).affectedRows > 0;
+  }
+
   async getQuickPopups(): Promise<QuickPopup[]> {
     return (await query<any[]>('SELECT * FROM quick_popups ORDER BY created_at DESC')).map(toQuickPopup);
   }
@@ -740,5 +823,5 @@ export async function initializeDatabase():Promise<void>{
   console.log('[DataBase] MySQL schema and production data are ready.');
 }
 
-export type { User, Property, PropertyLocationCategory, PropertyLocationKind, Service, EducationOpportunity, HealthSpecialty, QuickPopup, BlogPost, Agency, RoleDefinition, Inquiry } from './models.ts';
+export type { User, Property, PropertyLocationCategory, PropertyLocationKind, Service, EducationOpportunity, HealthSpecialty, Quotation, QuickPopup, BlogPost, Agency, RoleDefinition, Inquiry } from './models.ts';
 export { verifyPassword } from './security.ts';

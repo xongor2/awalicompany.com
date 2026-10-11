@@ -145,6 +145,27 @@ PREPARE health_city_statement FROM @health_city_sql;
 EXECUTE health_city_statement;
 DEALLOCATE PREPARE health_city_statement;
 
+CREATE TABLE IF NOT EXISTS quotations (
+  id VARCHAR(64) PRIMARY KEY,
+  quotation_number VARCHAR(100) NOT NULL UNIQUE,
+  customer_name VARCHAR(180) NOT NULL,
+  customer_email VARCHAR(191) NOT NULL DEFAULT '',
+  customer_phone VARCHAR(50) NOT NULL DEFAULT '',
+  quotation_date DATE NOT NULL,
+  validity_days SMALLINT UNSIGNED NOT NULL DEFAULT 15,
+  currency ENUM('USD', 'EUR', 'GBP', 'TRY') NOT NULL DEFAULT 'USD',
+  status ENUM('Draft', 'Sent', 'Accepted', 'Expired') NOT NULL DEFAULT 'Draft',
+  items JSON NOT NULL,
+  terms TEXT NOT NULL,
+  notes TEXT NOT NULL,
+  prepared_by VARCHAR(180) NOT NULL DEFAULT 'AW ALI COMPANY',
+  created_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  updated_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
+  INDEX idx_quotations_customer (customer_name),
+  INDEX idx_quotations_status (status),
+  INDEX idx_quotations_date (quotation_date)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE IF NOT EXISTS quick_popups (
   id VARCHAR(64) PRIMARY KEY,
   name VARCHAR(180) NOT NULL,

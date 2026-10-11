@@ -1,4 +1,4 @@
-import { User, Property, PropertyLocationCategory, PropertyLocationKind, Service, EducationOpportunity, HealthSpecialty, QuickPopup, QuickPopupDisplayPage, QuickPopupStatus, BlogPost, DashboardStats, Agency, RoleDefinition } from '../types';
+import { User, Property, PropertyLocationCategory, PropertyLocationKind, Service, EducationOpportunity, HealthSpecialty, Quotation, QuickPopup, QuickPopupDisplayPage, QuickPopupStatus, BlogPost, DashboardStats, Agency, RoleDefinition } from '../types';
 import { SAMPLE_AGENCIES } from '../data/sampleAgencies';
 
 const API_BASE = '/api';
@@ -307,6 +307,43 @@ export const api = {
 
   async deleteHealthSpecialty(id: string): Promise<{ message: string }> {
     const res = await fetch(`${API_BASE}/health-specialties/${id}`, {
+      method: 'DELETE', headers: getAuthHeaders()
+    });
+    return handleResponse(res);
+  },
+
+  // Quotations
+  async getQuotations(params?: { search?: string; status?: string }): Promise<Quotation[]> {
+    const query = new URLSearchParams();
+    if (params?.search) query.append('search', params.search);
+    if (params?.status && params.status !== 'All') query.append('status', params.status);
+    const res = await fetch(`${API_BASE}/quotations?${query.toString()}`, {
+      headers: getAuthHeaders()
+    });
+    return handleResponse(res);
+  },
+
+  async createQuotation(
+    data: Omit<Quotation, 'id' | 'createdAt' | 'updatedAt'>,
+  ): Promise<Quotation> {
+    const res = await fetch(`${API_BASE}/quotations`, {
+      method: 'POST', headers: getAuthHeaders(), body: JSON.stringify(data)
+    });
+    return handleResponse(res);
+  },
+
+  async updateQuotation(
+    id: string,
+    data: Omit<Quotation, 'id' | 'createdAt' | 'updatedAt'>,
+  ): Promise<Quotation> {
+    const res = await fetch(`${API_BASE}/quotations/${id}`, {
+      method: 'PUT', headers: getAuthHeaders(), body: JSON.stringify(data)
+    });
+    return handleResponse(res);
+  },
+
+  async deleteQuotation(id: string): Promise<{ message: string }> {
+    const res = await fetch(`${API_BASE}/quotations/${id}`, {
       method: 'DELETE', headers: getAuthHeaders()
     });
     return handleResponse(res);
