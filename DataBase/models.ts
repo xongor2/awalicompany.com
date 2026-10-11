@@ -95,6 +95,35 @@ export interface HealthSpecialty {
   updatedAt: string;
 }
 
+export type QuotationStatus = 'Draft' | 'Sent' | 'Accepted' | 'Expired';
+export type QuotationCurrency = 'USD' | 'EUR' | 'GBP' | 'TRY';
+
+export interface QuotationItem {
+  id: string;
+  service: string;
+  description: string;
+  quantity: number;
+  unitPrice: number;
+}
+
+export interface Quotation {
+  id: string;
+  quotationNumber: string;
+  customerName: string;
+  customerEmail: string;
+  customerPhone: string;
+  quotationDate: string;
+  validityDays: number;
+  currency: QuotationCurrency;
+  status: QuotationStatus;
+  items: QuotationItem[];
+  terms: string;
+  notes: string;
+  preparedBy: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export type QuickPopupType = 'Right Sidebar' | 'Screen Modal';
 export type QuickPopupDesign = 'Image' | 'Custom Content';
 export type QuickPopupDisplayPage = 'Home' | 'Academic' | 'Courses' | 'Admissions' | 'News' | 'About Us' | 'Contact';
