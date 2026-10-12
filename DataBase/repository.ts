@@ -5,7 +5,7 @@ import type { ResultSetHeader } from 'mysql2';
 import { query } from './mysql.ts';
 import { runMigrations } from './migrate.ts';
 import { hashPassword } from './security.ts';
-import type { Agency, BlogPost, EducationOpportunity, HealthSpecialty, Inquiry, Property, PropertyLocationCategory, PropertyLocationKind, Quotation, QuickPopup, QuickPopupDisplayPage, RoleDefinition, Service, User } from './models.ts';
+import type { Agency, BlogPost, Customer, EducationOpportunity, HealthSpecialty, Inquiry, Property, PropertyLocationCategory, PropertyLocationKind, Quotation, QuickPopup, QuickPopupDisplayPage, RoleDefinition, Service, User } from './models.ts';
 
 const PROTECTED_EMAILS = new Set(['awalicompany2020@gmail.com', 'halsan252@gmail.com']);
 const DEFAULT_AVATAR = '/images/avatars/nature-tree.png';
@@ -173,6 +173,21 @@ const toAgency = (row: any): Agency => ({
   address: row.address || '',
   verified: Boolean(row.verified),
   createdAt: iso(row.created_at),
+});
+
+const toCustomer = (row: any): Customer => ({
+  id: row.id,
+  fullName: row.full_name,
+  email: row.email || '',
+  phone: row.phone,
+  country: row.country || '',
+  city: row.city || '',
+  service: row.service,
+  serviceInfo: row.service_info || '',
+  amount: row.amount == null ? null : Number(row.amount),
+  receipt: row.receipt || '',
+  createdAt: iso(row.created_at),
+  updatedAt: iso(row.updated_at),
 });
 
 const toRole = (row: any): RoleDefinition => ({
@@ -739,6 +754,40 @@ class MySQLRepository {
 
   async deleteAgency(id:string):Promise<boolean>{return (await query<ResultSetHeader>('DELETE FROM agencies WHERE id=?',[id])).affectedRows>0;}
 
+  async getCustomers(): Promise<Customer[]> {
+    return (await query<any[]>('SELECT * FROM customers ORDER BY created_at DESC')).map(toCustomer);
+  }
+
+  async getCustomerById(id: string): Promise<Customer | null> {
+    const rows = await query<any[]>('SELECT * FROM customers WHERE id = ? LIMIT 1', [id]);
+    return rows[0] ? toCustomer(rows[0]) : null;
+  }
+
+  async createCustomer(data: Omit<Customer, 'id' | 'createdAt' | 'updatedAt'>): Promise<Customer> {
+    const id = `customer-${Date.now()}-${crypto.randomBytes(3).toString('hex')}`;
+    await query(
+      'INSERT INTO customers (id, full_name, email, phone, country, city, service, service_info, amount, receipt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [id, data.fullName, data.email, data.phone, data.country, data.city, data.service, data.serviceInfo, data.amount, data.receipt],
+    );
+    return (await this.getCustomerById(id))!;
+  }
+
+  async updateCustomer(
+    id: string,
+    data: Partial<Omit<Customer, 'id' | 'createdAt' | 'updatedAt'>>,
+  ): Promise<Customer | null> {
+    if (!await this.getCustomerById(id)) return null;
+    await updateColumns('customers', id, data, {
+      fullName: 'full_name', email: 'email', phone: 'phone', country: 'country', city: 'city',
+      service: 'service', serviceInfo: 'service_info', amount: 'amount', receipt: 'receipt',
+    });
+    return this.getCustomerById(id);
+  }
+
+  async deleteCustomer(id: string): Promise<boolean> {
+    return (await query<ResultSetHeader>('DELETE FROM customers WHERE id = ?', [id])).affectedRows > 0;
+  }
+
   async getRoles():Promise<RoleDefinition[]>{return (await query<any[]>('SELECT * FROM roles ORDER BY type DESC, name')).map(toRole);}
 
   async createRole(data:Pick<RoleDefinition,'name'|'description'|'pageAccess'>):Promise<RoleDefinition>{
@@ -823,5 +872,5 @@ export async function initializeDatabase():Promise<void>{
   console.log('[DataBase] MySQL schema and production data are ready.');
 }
 
-export type { User, Property, PropertyLocationCategory, PropertyLocationKind, Service, EducationOpportunity, HealthSpecialty, Quotation, QuickPopup, BlogPost, Agency, RoleDefinition, Inquiry } from './models.ts';
+export type { User, Property, PropertyLocationCategory, PropertyLocationKind, Service, EducationOpportunity, HealthSpecialty, Quotation, QuickPopup, BlogPost, Agency, Customer, RoleDefinition, Inquiry } from './models.ts';
 export { verifyPassword } from './security.ts';

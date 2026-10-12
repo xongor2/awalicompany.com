@@ -13,6 +13,7 @@ import { educationRouter } from './routes/educationRoutes.ts';
 import { healthSpecialtyRouter } from './routes/healthSpecialtyRoutes.ts';
 import { quickPopupRouter } from './routes/quickPopupRoutes.ts';
 import { quotationRouter } from './routes/quotationRoutes.ts';
+import { customerRouter } from './routes/customerRoutes.ts';
 import { testMySQLConnection } from '../DataBase/mysql.ts';
 
 export function createExpressApp() {
@@ -67,6 +68,7 @@ export function createExpressApp() {
   app.use('/api/education', educationRouter);
   app.use('/api/health-specialties', healthSpecialtyRouter);
   app.use('/api/quotations', quotationRouter);
+  app.use('/api/customers', customerRouter);
   app.use('/api/popups', quickPopupRouter);
   app.use('/api/agencies', agencyRouter);
   app.use('/api/blogs', blogRouter);

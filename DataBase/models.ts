@@ -182,6 +182,23 @@ export interface Agency {
   createdAt: string;
 }
 
+export type CustomerService = 'Health' | 'Education' | 'Real Estate' | 'Consulting';
+
+export interface Customer {
+  id: string;
+  fullName: string;
+  email: string;
+  phone: string;
+  country: string;
+  city: string;
+  service: CustomerService;
+  serviceInfo: string;
+  amount: number | null;
+  receipt: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface RoleDefinition {
   id: string;
   name: string;
