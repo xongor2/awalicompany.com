@@ -213,6 +213,24 @@ CREATE TABLE IF NOT EXISTS agencies (
   INDEX idx_agencies_country (country), INDEX idx_agencies_city (city), INDEX idx_agencies_verified (verified)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE IF NOT EXISTS customers (
+  id VARCHAR(64) PRIMARY KEY,
+  full_name VARCHAR(180) NOT NULL,
+  email VARCHAR(191) NOT NULL DEFAULT '',
+  phone VARCHAR(50) NOT NULL,
+  country VARCHAR(100) NOT NULL DEFAULT '',
+  city VARCHAR(100) NOT NULL DEFAULT '',
+  service ENUM('Health', 'Education', 'Real Estate', 'Consulting') NOT NULL,
+  service_info TEXT NOT NULL,
+  amount DECIMAL(15, 2) NULL,
+  receipt MEDIUMTEXT NULL,
+  created_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  updated_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
+  INDEX idx_customers_name (full_name),
+  INDEX idx_customers_service (service),
+  INDEX idx_customers_created (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE IF NOT EXISTS roles (
   id VARCHAR(64) PRIMARY KEY, name VARCHAR(100) NOT NULL UNIQUE, description TEXT NOT NULL,
   type ENUM('System', 'Custom') NOT NULL DEFAULT 'Custom', page_access JSON NOT NULL,

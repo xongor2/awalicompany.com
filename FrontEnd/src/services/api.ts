@@ -1,4 +1,4 @@
-import { User, Property, PropertyLocationCategory, PropertyLocationKind, Service, EducationOpportunity, HealthSpecialty, Quotation, QuickPopup, QuickPopupDisplayPage, QuickPopupStatus, BlogPost, DashboardStats, Agency, RoleDefinition } from '../types';
+import { User, Property, PropertyLocationCategory, PropertyLocationKind, Service, EducationOpportunity, HealthSpecialty, Quotation, QuickPopup, QuickPopupDisplayPage, QuickPopupStatus, BlogPost, DashboardStats, Agency, Customer, RoleDefinition } from '../types';
 import { SAMPLE_AGENCIES } from '../data/sampleAgencies';
 
 const API_BASE = '/api';
@@ -631,6 +631,33 @@ export const api = {
     const res = await fetch(`${API_BASE}/agencies/${id}`, {
       method: 'DELETE',
       headers: getAuthHeaders()
+    });
+    return handleResponse(res);
+  },
+
+  // Customers
+  async getCustomers(): Promise<Customer[]> {
+    const res = await fetch(`${API_BASE}/customers`, { headers: getAuthHeaders() });
+    return handleResponse(res);
+  },
+
+  async createCustomer(data: Omit<Customer, 'id' | 'createdAt' | 'updatedAt'>): Promise<Customer> {
+    const res = await fetch(`${API_BASE}/customers`, {
+      method: 'POST', headers: getAuthHeaders(), body: JSON.stringify(data)
+    });
+    return handleResponse(res);
+  },
+
+  async updateCustomer(id: string, data: Omit<Customer, 'id' | 'createdAt' | 'updatedAt'>): Promise<Customer> {
+    const res = await fetch(`${API_BASE}/customers/${id}`, {
+      method: 'PUT', headers: getAuthHeaders(), body: JSON.stringify(data)
+    });
+    return handleResponse(res);
+  },
+
+  async deleteCustomer(id: string): Promise<{ message: string }> {
+    const res = await fetch(`${API_BASE}/customers/${id}`, {
+      method: 'DELETE', headers: getAuthHeaders()
     });
     return handleResponse(res);
   }
