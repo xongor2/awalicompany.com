@@ -1,15 +1,16 @@
 import React, { FormEvent, useCallback, useEffect, useMemo, useState } from 'react';
-import { CheckCircle2, Edit3, Plus, Search, ScrollText, Trash2 } from 'lucide-react';
+import { CheckCircle2, Download, Eye, Plus, Search, Send, SquarePen, ScrollText, Trash2 } from 'lucide-react';
 import { PageHeader } from '../../components/layout/PageHeader';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { Select } from '../../components/ui/Select';
 import { Textarea } from '../../components/ui/Textarea';
-import { ActionMenu } from '../../components/ui/Dropdown';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { ConfirmModal } from '../../components/common/ConfirmModal';
+import { Modal } from '../../components/ui/Modal';
 import { useToast } from '../../components/ui/Toast';
 import { api } from '../../services/api';
+import { downloadQuotationPdf } from '../../utils/quotationPdf';
 import type { Quotation, QuotationCurrency, QuotationItem, QuotationStatus } from '../../types';
 
 type FormErrors = Partial<Record<
@@ -53,6 +54,8 @@ const statusStyles: Record<QuotationStatus, string> = {
   Expired: 'bg-rose-100 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300',
 };
 
+const actionIconClass = 'inline-flex h-9 w-9 items-center justify-center rounded-lg border border-transparent text-[#5F667A] transition-colors hover:border-[#D9DDE8] hover:bg-white hover:text-[#0F4C81] dark:text-[#AEB4C7] dark:hover:border-[#3A4070] dark:hover:bg-[#252B5C] dark:hover:text-white';
+
 export const QuotationsPage: React.FC = () => {
   const [quotations, setQuotations] = useState<Quotation[]>([]);
   const [search, setSearch] = useState('');
@@ -62,6 +65,7 @@ export const QuotationsPage: React.FC = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editing, setEditing] = useState<Quotation | null>(null);
   const [deleting, setDeleting] = useState<Quotation | null>(null);
+  const [previewing, setPreviewing] = useState<Quotation | null>(null);
 
   const [quotationNumber, setQuotationNumber] = useState(createQuotationNumber);
   const [customerName, setCustomerName] = useState('');
@@ -400,7 +404,7 @@ export const QuotationsPage: React.FC = () => {
           />
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[1120px] text-left">
+            <table className="w-full min-w-[1260px] text-left">
               <thead className="bg-[#F8F9FC] text-[11px] font-bold uppercase tracking-wider text-[#5F667A] dark:bg-[#0E1335] dark:text-[#8A90A2]">
                 <tr>
                   <th className="px-6 py-4">Quotation</th>
@@ -433,11 +437,24 @@ export const QuotationsPage: React.FC = () => {
                     </td>
                     <td className="whitespace-nowrap px-6 py-5 text-base font-black text-[#171A2B] dark:text-white">{formatMoney(calculateTotal(quotation.items), quotation.currency)}</td>
                     <td className="px-6 py-5"><span className={`rounded-full px-2.5 py-1 text-xs font-bold ${statusStyles[quotation.status]}`}>{quotation.status}</span></td>
-                    <td className="px-6 py-5 text-center">
-                      <ActionMenu actions={[
-                        { label: 'Edit Quotation', icon: <Edit3 className="h-4 w-4" />, onClick: () => openEditForm(quotation) },
-                        { label: 'Delete Quotation', icon: <Trash2 className="h-4 w-4" />, onClick: () => setDeleting(quotation), variant: 'danger' },
-                      ]} />
+                    <td className="relative z-20 px-4 py-5">
+                      <div className="flex items-center justify-center gap-1 whitespace-nowrap">
+                        <span className={actionIconClass} title="Send by email - coming soon" aria-label="Send by email - coming soon">
+                          <Send className="h-[18px] w-[18px]" />
+                        </span>
+                        <button type="button" onClick={() => { void downloadQuotationPdf(quotation); }} className={actionIconClass} title="Download PDF" aria-label={`Download ${quotation.quotationNumber} as PDF`}>
+                          <Download className="h-[18px] w-[18px]" />
+                        </button>
+                        <button type="button" onClick={() => setPreviewing(quotation)} className={actionIconClass} title="View quotation" aria-label={`View ${quotation.quotationNumber}`}>
+                          <Eye className="h-[18px] w-[18px]" />
+                        </button>
+                        <button type="button" onClick={() => openEditForm(quotation)} className={actionIconClass} title="Edit quotation" aria-label={`Edit ${quotation.quotationNumber}`}>
+                          <SquarePen className="h-[18px] w-[18px]" />
+                        </button>
+                        <button type="button" onClick={() => setDeleting(quotation)} className={`${actionIconClass} hover:border-rose-200 hover:bg-rose-50 hover:text-rose-600 dark:hover:border-rose-900 dark:hover:bg-rose-950/30 dark:hover:text-rose-300`} title="Delete quotation" aria-label={`Delete ${quotation.quotationNumber}`}>
+                          <Trash2 className="h-[18px] w-[18px]" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -446,6 +463,108 @@ export const QuotationsPage: React.FC = () => {
           </div>
         )}
       </section>
+
+      <Modal
+        isOpen={Boolean(previewing)}
+        onClose={() => setPreviewing(null)}
+        title={previewing ? `Quotation ${previewing.quotationNumber}` : 'Quotation Preview'}
+        maxWidth="4xl"
+      >
+        {previewing ? (
+          <div className="space-y-6">
+            <div className="flex justify-end">
+              <Button variant="accent" leftIcon={<Download className="h-4 w-4" />} onClick={() => { void downloadQuotationPdf(previewing); }}>
+                Download PDF
+              </Button>
+            </div>
+
+            <article className="overflow-hidden rounded-xl border border-[#C9D8E6] bg-white text-[#0F4C81] shadow-sm">
+              <div className="flex flex-col gap-5 p-6 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                  <h3 className="text-2xl font-black tracking-tight">AW ALI COMPANY</h3>
+                  <p className="mt-2 text-sm italic text-[#5F667A]">Consulting • Health • Education • Real Estate • Import & Export</p>
+                </div>
+                <div className="rounded-lg bg-[#EAF3FA] px-5 py-3 text-sm leading-6">
+                  <p>Mogadishu, Somalia</p>
+                  <p>+252 61 3295050</p>
+                  <p>info@awalicompany.com</p>
+                </div>
+              </div>
+
+              <div className="flex flex-col bg-[#0F4C81] px-6 py-4 text-white sm:flex-row sm:items-center sm:justify-between">
+                <h4 className="text-xl font-black">QUOTATION</h4>
+                <span className="mt-1 text-sm font-bold sm:mt-0">{previewing.quotationNumber}</span>
+              </div>
+
+              <div className="grid gap-px bg-[#C9D8E6] sm:grid-cols-3">
+                <div className="bg-[#F5F9FC] p-5 sm:col-span-1">
+                  <p className="text-xs font-bold uppercase tracking-wider">Client</p>
+                  <p className="mt-2 text-base font-black">{previewing.customerName}</p>
+                  <p className="mt-1 text-xs text-[#5F667A]">{[previewing.customerEmail, previewing.customerPhone].filter(Boolean).join(' • ') || 'No contact added'}</p>
+                </div>
+                <div className="bg-[#F5F9FC] p-5">
+                  <p className="text-xs font-bold uppercase tracking-wider">Date</p>
+                  <p className="mt-2 font-bold">{formatDate(previewing.quotationDate)}</p>
+                </div>
+                <div className="bg-[#F5F9FC] p-5">
+                  <p className="text-xs font-bold uppercase tracking-wider">Validity</p>
+                  <p className="mt-2 font-bold">{previewing.validityDays} Days</p>
+                </div>
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[700px] text-left text-sm">
+                  <thead className="bg-[#1660A6] text-white">
+                    <tr>
+                      <th className="px-4 py-3">No.</th>
+                      <th className="px-4 py-3">Service</th>
+                      <th className="px-4 py-3">Description</th>
+                      <th className="px-4 py-3 text-right">Qty</th>
+                      <th className="px-4 py-3 text-right">Unit Price</th>
+                      <th className="px-4 py-3 text-right">Amount</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[#D9E3EC]">
+                    {previewing.items.map((item, index) => (
+                      <tr key={item.id} className="even:bg-[#F5F9FC]">
+                        <td className="px-4 py-3 font-bold">{index + 1}</td>
+                        <td className="px-4 py-3 font-bold">{item.service}</td>
+                        <td className="px-4 py-3 text-[#5F667A]">{item.description || '—'}</td>
+                        <td className="px-4 py-3 text-right">{item.quantity}</td>
+                        <td className="px-4 py-3 text-right">{formatMoney(item.unitPrice, previewing.currency)}</td>
+                        <td className="px-4 py-3 text-right font-bold">{formatMoney(item.quantity * item.unitPrice, previewing.currency)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                  <tfoot>
+                    <tr>
+                      <td colSpan={4} />
+                      <td className="bg-[#EAF3FA] px-4 py-4 text-right font-black">GRAND TOTAL</td>
+                      <td className="bg-[#0F4C81] px-4 py-4 text-right text-lg font-black text-white">{formatMoney(calculateTotal(previewing.items), previewing.currency)}</td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+
+              <div className="grid gap-px bg-[#C9D8E6] sm:grid-cols-2">
+                <div className="bg-[#F8FAFC] p-5">
+                  <p className="text-xs font-black uppercase tracking-wider text-[#5F667A]">Terms & Conditions</p>
+                  <p className="mt-3 whitespace-pre-line text-sm leading-6 text-[#5F667A]">{previewing.terms || 'No additional terms.'}</p>
+                </div>
+                <div className="bg-[#F8FAFC] p-5 text-center">
+                  <p className="text-xs font-black uppercase tracking-wider text-[#5F667A]">Thank You</p>
+                  <p className="mt-3 whitespace-pre-line text-sm leading-6 text-[#5F667A]">{previewing.notes || 'Thank you for choosing AW Ali Company.'}</p>
+                </div>
+              </div>
+
+              <div className="flex items-end justify-between px-6 py-7 text-sm">
+                <div><p className="font-bold">Prepared by</p><p className="mt-3 text-[#5F667A]">{previewing.preparedBy}</p></div>
+                <div className="text-right"><p className="font-bold">Client</p><p className="mt-3 text-[#5F667A]">{previewing.customerName}</p></div>
+              </div>
+            </article>
+          </div>
+        ) : null}
+      </Modal>
 
       <ConfirmModal
         isOpen={Boolean(deleting)}
