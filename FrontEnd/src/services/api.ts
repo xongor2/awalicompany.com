@@ -2,6 +2,7 @@ import { User, Property, PropertyLocationCategory, PropertyLocationKind, Service
 import { SAMPLE_AGENCIES } from '../data/sampleAgencies';
 
 const API_BASE = '/api';
+type CustomerPayload = Omit<Customer, 'id' | 'createdAt' | 'updatedAt' | 'createdByUserId' | 'createdByName' | 'createdByEmail'>;
 
 function getAuthHeaders(): HeadersInit {
   const token = localStorage.getItem('aw_ali_token');
@@ -97,6 +98,7 @@ export const api = {
     location?: string;
     minPrice?: number;
     maxPrice?: number;
+    portal?: boolean;
   }): Promise<Property[]> {
     const query = new URLSearchParams();
     if (params?.search) query.append('search', params.search);
@@ -105,6 +107,7 @@ export const api = {
     if (params?.location && params.location !== 'All') query.append('location', params.location);
     if (params?.minPrice) query.append('minPrice', String(params.minPrice));
     if (params?.maxPrice) query.append('maxPrice', String(params.maxPrice));
+    if (params?.portal) query.append('portal', 'true');
 
     const res = await fetch(`${API_BASE}/properties?${query.toString()}`, {
       headers: getAuthHeaders()
@@ -277,9 +280,10 @@ export const api = {
   },
 
   // Health specialties
-  async getHealthSpecialties(search?: string): Promise<HealthSpecialty[]> {
+  async getHealthSpecialties(search?: string, portal = false): Promise<HealthSpecialty[]> {
     const query = new URLSearchParams();
     if (search) query.append('search', search);
+    if (portal) query.append('portal', 'true');
     const res = await fetch(`${API_BASE}/health-specialties?${query.toString()}`, {
       headers: getAuthHeaders()
     });
@@ -641,14 +645,14 @@ export const api = {
     return handleResponse(res);
   },
 
-  async createCustomer(data: Omit<Customer, 'id' | 'createdAt' | 'updatedAt'>): Promise<Customer> {
+  async createCustomer(data: CustomerPayload): Promise<Customer> {
     const res = await fetch(`${API_BASE}/customers`, {
       method: 'POST', headers: getAuthHeaders(), body: JSON.stringify(data)
     });
     return handleResponse(res);
   },
 
-  async updateCustomer(id: string, data: Omit<Customer, 'id' | 'createdAt' | 'updatedAt'>): Promise<Customer> {
+  async updateCustomer(id: string, data: CustomerPayload): Promise<Customer> {
     const res = await fetch(`${API_BASE}/customers/${id}`, {
       method: 'PUT', headers: getAuthHeaders(), body: JSON.stringify(data)
     });

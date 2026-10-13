@@ -25,6 +25,7 @@ import {
 import { BrandLogo } from '../common/BrandLogo';
 import { Avatar } from '../ui/Avatar';
 import { useAuth } from '../../context/AuthContext';
+import { canAccessSection } from '../../utils/pageAccess';
 
 export type NavSection = 'dashboard' | 'health' | 'education' | 'properties' | 'property-form' | 'countries' | 'cities' | 'services' | 'quotations' | 'agencies' | 'customers' | 'commissions' | 'invoices' | 'settings' | 'blogs' | 'quick-popup' | 'users' | 'roles' | 'profile';
 
@@ -54,6 +55,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const isPropertiesExpanded = expandedSection === 'properties';
   const isAgenciesExpanded = expandedSection === 'agencies';
   const isSettingsExpanded = expandedSection === 'settings';
+  const pageAccess = user?.pageAccess ?? [];
+  const canAccess = (section: NavSection) => canAccessSection(pageAccess, section);
 
   useEffect(() => {
     if (isPropertySection) {
@@ -67,6 +70,20 @@ export const Sidebar: React.FC<SidebarProps> = ({
     }
   }, [isPropertySection, isAgenciesSection, isSettingsSection]);
 
+  const agencyChildren = [
+    { id: 'customers' as NavSection, label: 'Customers', icon: ContactRound },
+    { id: 'commissions' as NavSection, label: 'Commissions', icon: BadgePercent },
+    { id: 'invoices' as NavSection, label: 'Invoices', icon: ReceiptText },
+  ].filter(child => canAccess(child.id));
+
+  const settingsChildren = [
+    { id: 'blogs' as NavSection, label: 'Blogs', icon: Newspaper },
+    { id: 'quick-popup' as NavSection, label: 'Quick Pop Up', icon: Megaphone },
+    { id: 'users' as NavSection, label: 'Users', icon: Users },
+    { id: 'roles' as NavSection, label: 'Roles', icon: KeyRound },
+    { id: 'profile' as NavSection, label: 'Profile', icon: User },
+  ].filter(child => canAccess(child.id));
+
   const navItems = [
     { id: 'dashboard' as NavSection, label: 'Dashboard', icon: LayoutDashboard },
     { id: 'health' as NavSection, label: 'Health', icon: HeartPulse },
@@ -76,7 +93,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'quotations' as NavSection, label: 'Quotations', icon: ScrollText },
     { id: 'agencies' as NavSection, label: 'Agencies', icon: ShieldCheck },
     { id: 'settings' as NavSection, label: 'Settings', icon: Settings },
-  ];
+  ].filter(item => {
+    if (item.id === 'agencies') return canAccess('agencies') || agencyChildren.length > 0;
+    if (item.id === 'settings') return canAccess('settings') || settingsChildren.length > 0;
+    return canAccess(item.id);
+  });
 
   const handleNavClick = (id: NavSection) => {
     onNavigate(id);
@@ -163,19 +184,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
           }
 
           if (isAgenciesItem) {
-            const agencyChildren = [
-              { id: 'customers' as NavSection, label: 'Customers', icon: ContactRound },
-              { id: 'commissions' as NavSection, label: 'Commissions', icon: BadgePercent },
-              { id: 'invoices' as NavSection, label: 'Invoices', icon: ReceiptText },
-            ];
-
             return (
               <div key={item.id}>
                 <div className={`flex items-center rounded-lg transition-all ${isActive ? 'bg-[#FF7817] shadow-md' : 'hover:bg-[#FFF1E6] dark:hover:bg-[#252B5C]/50'}`}>
                   <button
                     onClick={() => {
                       setExpandedSection('agencies');
-                      handleNavClick('agencies');
+                      handleNavClick(canAccess('agencies') ? 'agencies' : agencyChildren[0].id);
                     }}
                     className={`flex min-w-0 flex-1 items-center gap-3.5 px-3.5 py-3 text-sm font-medium cursor-pointer ${isActive ? 'text-white font-semibold' : 'text-[#171A2B] hover:text-[#E66606] dark:text-[#D9DDE8] dark:hover:text-white'}`}
                   >
@@ -216,25 +231,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
           }
 
           if (isSettingsItem) {
-            const settingsChildren = [
-              { id: 'blogs' as NavSection, label: 'Blogs', icon: Newspaper },
-              ...(user?.role === 'Admin'
-                ? [{ id: 'quick-popup' as NavSection, label: 'Quick Pop Up', icon: Megaphone }]
-                : []),
-              { id: 'users' as NavSection, label: 'Users', icon: Users },
-              ...(user?.role === 'Admin'
-                ? [{ id: 'roles' as NavSection, label: 'Roles', icon: KeyRound }]
-                : []),
-              { id: 'profile' as NavSection, label: 'Profile', icon: User },
-            ];
-
             return (
               <div key={item.id}>
                 <div className={`flex items-center rounded-lg transition-all ${isActive ? 'bg-[#FF7817] shadow-md' : 'hover:bg-[#FFF1E6] dark:hover:bg-[#252B5C]/50'}`}>
                   <button
                     onClick={() => {
                       setExpandedSection('settings');
-                      handleNavClick('settings');
+                      handleNavClick(canAccess('settings') ? 'settings' : settingsChildren[0].id);
                     }}
                     className={`flex min-w-0 flex-1 items-center gap-3.5 px-3.5 py-3 text-sm font-medium cursor-pointer ${isActive ? 'text-white font-semibold' : 'text-[#171A2B] hover:text-[#E66606] dark:text-[#D9DDE8] dark:hover:text-white'}`}
                   >

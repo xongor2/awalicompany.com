@@ -41,22 +41,36 @@ const validationError = (payload: ReturnType<typeof payloadFromRequest>): string
   return null;
 };
 
-customerRouter.get('/', authMiddleware, asyncHandler(async (_req: AuthenticatedRequest, res: Response) => {
-  return res.json(await db.getCustomers());
+customerRouter.get('/', authMiddleware, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+  if (!req.user || !['Admin', 'Agency'].includes(req.user.role)) {
+    return res.status(403).json({ error: 'Forbidden: This account cannot view customers.' });
+  }
+  return res.json(await db.getCustomers(req.user.role === 'Agency' ? { createdByUserId: req.user.id } : undefined));
 }));
 
 customerRouter.post('/', authMiddleware, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-  if (req.user?.role !== 'Admin') return res.status(403).json({ error: 'Forbidden: Admin access required.' });
+  if (!req.user || !['Admin', 'Agency'].includes(req.user.role)) {
+    return res.status(403).json({ error: 'Forbidden: This account cannot add customers.' });
+  }
   const payload = payloadFromRequest(req.body || {});
   const error = validationError(payload);
   if (error) return res.status(400).json({ error });
-  return res.status(201).json(await db.createCustomer({ ...payload, service: payload.service! }));
+  return res.status(201).json(await db.createCustomer({
+    ...payload,
+    service: payload.service!,
+    createdByUserId: req.user!.id,
+  }));
 }));
 
 customerRouter.put('/:id', authMiddleware, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-  if (req.user?.role !== 'Admin') return res.status(403).json({ error: 'Forbidden: Admin access required.' });
+  if (!req.user || !['Admin', 'Agency'].includes(req.user.role)) {
+    return res.status(403).json({ error: 'Forbidden: This account cannot update customers.' });
+  }
   const current = await db.getCustomerById(req.params.id);
   if (!current) return res.status(404).json({ error: 'Customer not found.' });
+  if (req.user.role === 'Agency' && current.createdByUserId !== req.user.id) {
+    return res.status(403).json({ error: 'Forbidden: You can only update customers you created.' });
+  }
   const payload = payloadFromRequest({ ...current, ...req.body });
   const error = validationError(payload);
   if (error) return res.status(400).json({ error });
@@ -64,7 +78,14 @@ customerRouter.put('/:id', authMiddleware, asyncHandler(async (req: Authenticate
 }));
 
 customerRouter.delete('/:id', authMiddleware, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-  if (req.user?.role !== 'Admin') return res.status(403).json({ error: 'Forbidden: Admin access required.' });
+  if (!req.user || !['Admin', 'Agency'].includes(req.user.role)) {
+    return res.status(403).json({ error: 'Forbidden: This account cannot delete customers.' });
+  }
+  const current = await db.getCustomerById(req.params.id);
+  if (!current) return res.status(404).json({ error: 'Customer not found.' });
+  if (req.user.role === 'Agency' && current.createdByUserId !== req.user.id) {
+    return res.status(403).json({ error: 'Forbidden: You can only delete customers you created.' });
+  }
   if (!await db.deleteCustomer(req.params.id)) return res.status(404).json({ error: 'Customer not found.' });
   return res.json({ message: 'Customer deleted successfully.', id: req.params.id });
 }));

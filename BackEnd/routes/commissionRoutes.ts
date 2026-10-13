@@ -9,12 +9,12 @@ export const commissionRouter = Router();
 const SERVICES: CommissionService[] = ['Health', 'Education', 'Real Estate', 'Consulting'];
 
 commissionRouter.use(authMiddleware);
-commissionRouter.use((req: AuthenticatedRequest, res: Response, next) => {
-  if (req.user?.role !== 'Admin') {
-    return res.status(403).json({ error: 'Forbidden: Admin access required.' });
-  }
-  next();
-});
+
+const requireAdmin = (req: AuthenticatedRequest, res: Response): boolean => {
+  if (req.user?.role === 'Admin') return true;
+  res.status(403).json({ error: 'Forbidden: Admin access required.' });
+  return false;
+};
 
 const parseCommission = (value: unknown): { service: CommissionService; percentage: number } | null => {
   if (!value || typeof value !== 'object') return null;
@@ -28,12 +28,20 @@ const parseCommission = (value: unknown): { service: CommissionService; percenta
 };
 
 commissionRouter.get('/', asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+  if (!req.user || !['Admin', 'Agency'].includes(req.user.role)) {
+    return res.status(403).json({ error: 'Forbidden: This account cannot view commissions.' });
+  }
   const search = typeof req.query.search === 'string' ? req.query.search.trim().slice(0, 191) : undefined;
   const service = typeof req.query.service === 'string' ? req.query.service : undefined;
-  return res.json(await db.getCommissions({ search, service }));
+  return res.json(await db.getCommissions({
+    search,
+    service,
+    userId: req.user.role === 'Agency' ? req.user.id : undefined,
+  }));
 }));
 
 commissionRouter.post('/', asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+  if (!requireAdmin(req, res)) return;
   const userId = typeof req.body?.userId === 'string' ? req.body.userId.trim() : '';
   const requested: unknown[] = Array.isArray(req.body?.commissions) ? req.body.commissions : [];
   if (!userId || requested.length === 0 || requested.length > SERVICES.length) {
@@ -58,6 +66,7 @@ commissionRouter.post('/', asyncHandler(async (req: AuthenticatedRequest, res: R
 }));
 
 commissionRouter.put('/:id', asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+  if (!requireAdmin(req, res)) return;
   const commission = parseCommission(req.body);
   if (!commission) {
     return res.status(400).json({ error: 'Select a valid service and enter a percentage from 0.01 to 100.' });
@@ -75,6 +84,7 @@ commissionRouter.put('/:id', asyncHandler(async (req: AuthenticatedRequest, res:
 }));
 
 commissionRouter.delete('/:id', asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+  if (!requireAdmin(req, res)) return;
   if (!await db.deleteCommission(req.params.id)) {
     return res.status(404).json({ error: 'Commission not found.' });
   }

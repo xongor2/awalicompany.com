@@ -7,6 +7,7 @@ import { Input } from '../../components/ui/Input';
 import { Select } from '../../components/ui/Select';
 import { ConfirmModal } from '../../components/common/ConfirmModal';
 import { useToast } from '../../components/ui/Toast';
+import { useAuth } from '../../context/AuthContext';
 import { api } from '../../services/api';
 import type { Commission, CommissionService, User } from '../../types';
 
@@ -32,6 +33,8 @@ const createDraft = (): CommissionDraft => ({
 
 export const CommissionsPage: React.FC = () => {
   const { showToast } = useToast();
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'Admin';
   const [commissions, setCommissions] = useState<Commission[]>([]);
   const [agencyUsers, setAgencyUsers] = useState<User[]>([]);
   const [search, setSearch] = useState('');
@@ -194,7 +197,7 @@ export const CommissionsPage: React.FC = () => {
     }
   };
 
-  if (isFormOpen) {
+  if (isFormOpen && isAdmin) {
     return (
       <div className="space-y-6">
         <PageHeader
@@ -346,7 +349,7 @@ export const CommissionsPage: React.FC = () => {
       <PageHeader
         title="Commissions"
         subtitle="Assign and manage service commission percentages for Agency users."
-        action={<Button variant="accent" leftIcon={<Plus className="h-4 w-4" />} onClick={openCreateForm}>Add Commission</Button>}
+        action={isAdmin ? <Button variant="accent" leftIcon={<Plus className="h-4 w-4" />} onClick={openCreateForm}>Add Commission</Button> : undefined}
       />
 
       <section className="overflow-hidden rounded-xl border border-[#D9DDE8] bg-white shadow-xs dark:border-[#252B5C] dark:bg-[#151A46]">
@@ -380,15 +383,17 @@ export const CommissionsPage: React.FC = () => {
           <EmptyState
             icon={<BadgePercent className="h-8 w-8" />}
             title={search || serviceFilter !== 'All' ? 'No matching commissions' : 'No commissions yet'}
-            description={search || serviceFilter !== 'All' ? 'Try adjusting your search or service filter.' : 'Assign the first service commission to an Agency user.'}
-            actionLabel={!search && serviceFilter === 'All' ? 'Add Commission' : undefined}
-            onAction={!search && serviceFilter === 'All' ? openCreateForm : undefined}
+            description={search || serviceFilter !== 'All'
+              ? 'Try adjusting your search or service filter.'
+              : isAdmin ? 'Assign the first service commission to an Agency user.' : 'No service commissions have been assigned to your account yet.'}
+            actionLabel={isAdmin && !search && serviceFilter === 'All' ? 'Add Commission' : undefined}
+            onAction={isAdmin && !search && serviceFilter === 'All' ? openCreateForm : undefined}
           />
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full min-w-[860px] text-left">
               <thead className="bg-[#F8F9FC] text-[11px] font-bold uppercase tracking-wider text-[#5F667A] dark:bg-[#0E1335] dark:text-[#8A90A2]">
-                <tr><th className="px-6 py-4">Agency User</th><th className="px-6 py-4">Email</th><th className="px-6 py-4">Service</th><th className="px-6 py-4">Commission</th><th className="px-6 py-4">Added</th><th className="px-6 py-4 text-center">Actions</th></tr>
+                <tr><th className="px-6 py-4">Agency User</th><th className="px-6 py-4">Email</th><th className="px-6 py-4">Service</th><th className="px-6 py-4">Commission</th><th className="px-6 py-4">Added</th>{isAdmin && <th className="px-6 py-4 text-center">Actions</th>}</tr>
               </thead>
               <tbody className="divide-y divide-[#E8EAF0] dark:divide-[#252B5C]">
                 {filteredCommissions.map(commission => (
@@ -398,12 +403,12 @@ export const CommissionsPage: React.FC = () => {
                     <td className="px-6 py-5"><span className="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-bold text-[#0F4C81] dark:bg-blue-500/15 dark:text-blue-300">{commission.service}</span></td>
                     <td className="px-6 py-5"><span className="text-lg font-bold text-[#FF7817]">{commission.percentage}%</span></td>
                     <td className="whitespace-nowrap px-6 py-5 text-sm text-[#5F667A] dark:text-[#AEB4C7]">{new Date(commission.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</td>
-                    <td className="px-6 py-5 text-center">
+                    {isAdmin && <td className="px-6 py-5 text-center">
                       <div className="inline-flex items-center gap-1">
                         <button type="button" onClick={() => openEditForm(commission)} className="grid h-9 w-9 place-items-center rounded-lg text-[#5F667A] hover:bg-[#FFF0E4] hover:text-[#FF7817] dark:text-[#AEB4C7] dark:hover:bg-[#252B5C]" aria-label={`Edit ${commission.service} commission for ${commission.userName}`} title="Edit Commission"><Edit3 className="h-4.5 w-4.5" /></button>
                         <button type="button" onClick={() => setDeleting(commission)} className="grid h-9 w-9 place-items-center rounded-lg text-[#5F667A] hover:bg-rose-50 hover:text-rose-600 dark:text-[#AEB4C7] dark:hover:bg-rose-950/30" aria-label={`Delete ${commission.service} commission for ${commission.userName}`} title="Delete Commission"><Trash2 className="h-4.5 w-4.5" /></button>
                       </div>
-                    </td>
+                    </td>}
                   </tr>
                 ))}
               </tbody>

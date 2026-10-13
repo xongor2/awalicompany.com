@@ -1,7 +1,7 @@
-import { Router, Request, Response } from 'express';
+import { Router, Response } from 'express';
 import { db } from '../../DataBase/repository.ts';
 import type { HealthSpecialtyStatus } from '../../DataBase/models.ts';
-import { authMiddleware, AuthenticatedRequest } from '../middleware/authMiddleware.ts';
+import { authMiddleware, optionalAuth, AuthenticatedRequest } from '../middleware/authMiddleware.ts';
 import { asyncHandler } from '../middleware/asyncHandler.ts';
 
 export const healthSpecialtyRouter = Router();
@@ -34,9 +34,10 @@ const imageValue = (value: unknown): string | null => {
   }
 };
 
-healthSpecialtyRouter.get('/', asyncHandler(async (req: Request, res: Response) => {
+healthSpecialtyRouter.get('/', optionalAuth, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
   const search = typeof req.query.search === 'string' ? req.query.search.trim().toLowerCase() : '';
-  let items = await db.getHealthSpecialties();
+  const isAgencyPortal = req.query.portal === 'true' && req.user?.role === 'Agency';
+  let items = await db.getHealthSpecialties(isAgencyPortal ? { createdByUserId: req.user!.id } : undefined);
   if (search) {
     items = items.filter(item =>
       item.name.toLowerCase().includes(search) ||
@@ -52,8 +53,8 @@ healthSpecialtyRouter.get('/', asyncHandler(async (req: Request, res: Response) 
 }));
 
 healthSpecialtyRouter.post('/', authMiddleware, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-  if (req.user?.role !== 'Admin') {
-    return res.status(403).json({ error: 'Forbidden: Admin access required.' });
+  if (!req.user || !['Admin', 'Agency'].includes(req.user.role)) {
+    return res.status(403).json({ error: 'Forbidden: This account cannot add health services.' });
   }
 
   const category = text(req.body.category, 150);
@@ -75,16 +76,20 @@ healthSpecialtyRouter.post('/', authMiddleware, asyncHandler(async (req: Authent
 
   return res.status(201).json(await db.createHealthSpecialty({
     category, name, country, city, tagline, description, keyProcedures, destinations, image, status,
+    createdByUserId: req.user.id,
   }));
 }));
 
 healthSpecialtyRouter.put('/:id', authMiddleware, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-  if (req.user?.role !== 'Admin') {
-    return res.status(403).json({ error: 'Forbidden: Admin access required.' });
+  if (!req.user || !['Admin', 'Agency'].includes(req.user.role)) {
+    return res.status(403).json({ error: 'Forbidden: This account cannot update health services.' });
   }
 
   const current = await db.getHealthSpecialtyById(req.params.id);
   if (!current) return res.status(404).json({ error: 'Health specialty not found.' });
+  if (req.user.role === 'Agency' && current.createdByUserId !== req.user.id) {
+    return res.status(403).json({ error: 'Forbidden: You can only update health services you created.' });
+  }
 
   const category = req.body.category === undefined ? current.category : text(req.body.category, 150);
   const name = req.body.name === undefined ? current.name : text(req.body.name, 255);
@@ -111,8 +116,13 @@ healthSpecialtyRouter.put('/:id', authMiddleware, asyncHandler(async (req: Authe
 }));
 
 healthSpecialtyRouter.delete('/:id', authMiddleware, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-  if (req.user?.role !== 'Admin') {
-    return res.status(403).json({ error: 'Forbidden: Admin access required.' });
+  if (!req.user || !['Admin', 'Agency'].includes(req.user.role)) {
+    return res.status(403).json({ error: 'Forbidden: This account cannot delete health services.' });
+  }
+  const current = await db.getHealthSpecialtyById(req.params.id);
+  if (!current) return res.status(404).json({ error: 'Health specialty not found.' });
+  if (req.user.role === 'Agency' && current.createdByUserId !== req.user.id) {
+    return res.status(403).json({ error: 'Forbidden: You can only delete health services you created.' });
   }
   if (!await db.deleteHealthSpecialty(req.params.id)) {
     return res.status(404).json({ error: 'Health specialty not found.' });
