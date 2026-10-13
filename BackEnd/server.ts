@@ -2,7 +2,7 @@ import express, { Request, Response } from 'express';
 import path from 'path';
 import { createServer as createViteServer } from 'vite';
 import { createExpressApp } from './app.ts';
-import { assertDatabaseConfiguration, testMySQLConnection } from '../DataBase/mysql.ts';
+import { assertDatabaseConfiguration, closeMySQLPool, testMySQLConnection } from '../DataBase/mysql.ts';
 import { initializeDatabase } from '../DataBase/repository.ts';
 
 const app = createExpressApp();
@@ -46,13 +46,46 @@ async function startServer() {
     console.log(`- Architecture: FrontEnd (React), BackEnd (Node.js/Express), DataBase (MySQL)`);
   });
 
-  server.on('error', (err: any) => {
+  let shuttingDown = false;
+
+  async function stopServer(signal: string, exitCode = 0) {
+    if (shuttingDown) return;
+    shuttingDown = true;
+    console.log(`[Server] ${signal} received. Shutting down gracefully...`);
+
+    const forceExitTimer = setTimeout(() => {
+      console.error('[Server] Graceful shutdown timed out. Forcing exit.');
+      process.exit(1);
+    }, 10_000);
+    forceExitTimer.unref();
+
+    try {
+      if (server.listening) {
+        await new Promise<void>((resolve, reject) => {
+          server.close(error => error ? reject(error) : resolve());
+        });
+      }
+      await closeMySQLPool();
+      clearTimeout(forceExitTimer);
+      console.log('[Server] HTTP server and MySQL pool closed.');
+      process.exit(exitCode);
+    } catch (error) {
+      console.error('[Server] Error during graceful shutdown:', error);
+      process.exit(1);
+    }
+  }
+
+  server.once('error', (err: NodeJS.ErrnoException) => {
     if (err.code === 'EADDRINUSE') {
-      console.warn(`Port ${PORT} is in use; continuing...`);
+      console.error(`[Server] Port ${PORT} is already in use. Stopping this duplicate process.`);
     } else {
       console.error('Server error:', err);
     }
+    void stopServer('SERVER_ERROR', 1);
   });
+
+  process.once('SIGTERM', () => void stopServer('SIGTERM'));
+  process.once('SIGINT', () => void stopServer('SIGINT'));
 }
 
 startServer();

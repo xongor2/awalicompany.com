@@ -40,6 +40,23 @@ export function getMySQLPool(): mysql.Pool {
 }
 
 /**
+ * Close the shared pool before the Node.js process exits.
+ *
+ * Hostinger restarts the application during deployments. Explicitly closing the
+ * pool prevents database keep-alive sockets from keeping an old process alive
+ * after its HTTP server has stopped.
+ */
+export async function closeMySQLPool(): Promise<void> {
+  const activePool = pool;
+  pool = null;
+  isConnected = false;
+
+  if (activePool) {
+    await activePool.end();
+  }
+}
+
+/**
  * Check if MySQL server is reachable
  */
 export async function testMySQLConnection(): Promise<boolean> {
@@ -76,5 +93,6 @@ export default {
   testMySQLConnection,
   query,
   isMySQLActive,
+  closeMySQLPool,
   dbConfig,
 };
