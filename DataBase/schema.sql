@@ -231,6 +231,20 @@ CREATE TABLE IF NOT EXISTS customers (
   INDEX idx_customers_created (created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE IF NOT EXISTS commissions (
+  id VARCHAR(64) PRIMARY KEY,
+  user_id VARCHAR(64) NOT NULL,
+  service ENUM('Health', 'Education', 'Real Estate', 'Consulting') NOT NULL,
+  percentage DECIMAL(5, 2) NOT NULL,
+  created_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  updated_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
+  CONSTRAINT fk_commissions_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  UNIQUE KEY uq_commissions_user_service (user_id, service),
+  INDEX idx_commissions_user (user_id),
+  INDEX idx_commissions_service (service),
+  INDEX idx_commissions_created (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE IF NOT EXISTS roles (
   id VARCHAR(64) PRIMARY KEY, name VARCHAR(100) NOT NULL UNIQUE, description TEXT NOT NULL,
   type ENUM('System', 'Custom') NOT NULL DEFAULT 'Custom', page_access JSON NOT NULL,

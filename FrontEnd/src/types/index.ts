@@ -210,6 +210,19 @@ export interface Customer {
   updatedAt: string;
 }
 
+export type CommissionService = CustomerService;
+
+export interface Commission {
+  id: string;
+  userId: string;
+  userName: string;
+  userEmail: string;
+  service: CommissionService;
+  percentage: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface DashboardStats {
   totalProperties: number;
   totalServices: number;

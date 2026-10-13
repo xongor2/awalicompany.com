@@ -5,7 +5,7 @@ import type { ResultSetHeader } from 'mysql2';
 import { query } from './mysql.ts';
 import { runMigrations } from './migrate.ts';
 import { hashPassword } from './security.ts';
-import type { Agency, BlogPost, Customer, EducationOpportunity, HealthSpecialty, Inquiry, Property, PropertyLocationCategory, PropertyLocationKind, Quotation, QuickPopup, QuickPopupDisplayPage, RoleDefinition, Service, User } from './models.ts';
+import type { Agency, BlogPost, Commission, CommissionService, Customer, EducationOpportunity, HealthSpecialty, Inquiry, Property, PropertyLocationCategory, PropertyLocationKind, Quotation, QuickPopup, QuickPopupDisplayPage, RoleDefinition, Service, User } from './models.ts';
 
 const PROTECTED_EMAILS = new Set(['awalicompany2020@gmail.com', 'halsan252@gmail.com']);
 const DEFAULT_AVATAR = '/images/avatars/nature-tree.png';
@@ -186,6 +186,17 @@ const toCustomer = (row: any): Customer => ({
   serviceInfo: row.service_info || '',
   amount: row.amount == null ? null : Number(row.amount),
   receipt: row.receipt || '',
+  createdAt: iso(row.created_at),
+  updatedAt: iso(row.updated_at),
+});
+
+const toCommission = (row: any): Commission => ({
+  id: row.id,
+  userId: row.user_id,
+  userName: row.user_name,
+  userEmail: row.user_email,
+  service: row.service,
+  percentage: Number(row.percentage),
   createdAt: iso(row.created_at),
   updatedAt: iso(row.updated_at),
 });
@@ -788,6 +799,75 @@ class MySQLRepository {
     return (await query<ResultSetHeader>('DELETE FROM customers WHERE id = ?', [id])).affectedRows > 0;
   }
 
+  async getCommissions(filter?: { search?: string; service?: string; userId?: string }): Promise<Commission[]> {
+    const where: string[] = [];
+    const params: unknown[] = [];
+    if (filter?.search) {
+      where.push('(u.name LIKE ? OR u.email LIKE ?)');
+      params.push(`%${filter.search}%`, `%${filter.search}%`);
+    }
+    if (filter?.service && filter.service !== 'All') {
+      where.push('c.service = ?');
+      params.push(filter.service);
+    }
+    if (filter?.userId) {
+      where.push('c.user_id = ?');
+      params.push(filter.userId);
+    }
+    const rows = await query<any[]>(
+      `SELECT c.*, u.name AS user_name, u.email AS user_email
+       FROM commissions c
+       JOIN users u ON u.id = c.user_id
+       ${where.length ? `WHERE ${where.join(' AND ')}` : ''}
+       ORDER BY c.created_at DESC, u.name ASC, c.service ASC`,
+      params,
+    );
+    return rows.map(toCommission);
+  }
+
+  async getCommissionById(id: string): Promise<Commission | null> {
+    const rows = await query<any[]>(
+      `SELECT c.*, u.name AS user_name, u.email AS user_email
+       FROM commissions c JOIN users u ON u.id = c.user_id
+       WHERE c.id = ? LIMIT 1`,
+      [id],
+    );
+    return rows[0] ? toCommission(rows[0]) : null;
+  }
+
+  async createCommissions(
+    userId: string,
+    commissions: Array<{ service: CommissionService; percentage: number }>,
+  ): Promise<Commission[]> {
+    const values = commissions.map(item => [
+      `commission-${Date.now()}-${crypto.randomBytes(3).toString('hex')}`,
+      userId,
+      item.service,
+      item.percentage,
+    ]);
+    const placeholders = values.map(() => '(?, ?, ?, ?)').join(', ');
+    await query(
+      `INSERT INTO commissions (id, user_id, service, percentage)
+       VALUES ${placeholders}
+       ON DUPLICATE KEY UPDATE percentage = VALUES(percentage), updated_at = CURRENT_TIMESTAMP(3)`,
+      values.flat(),
+    );
+    return this.getCommissions({ userId });
+  }
+
+  async updateCommission(
+    id: string,
+    data: { service: CommissionService; percentage: number },
+  ): Promise<Commission | null> {
+    if (!await this.getCommissionById(id)) return null;
+    await updateColumns('commissions', id, data, { service: 'service', percentage: 'percentage' });
+    return this.getCommissionById(id);
+  }
+
+  async deleteCommission(id: string): Promise<boolean> {
+    return (await query<ResultSetHeader>('DELETE FROM commissions WHERE id = ?', [id])).affectedRows > 0;
+  }
+
   async getRoles():Promise<RoleDefinition[]>{return (await query<any[]>('SELECT * FROM roles ORDER BY type DESC, name')).map(toRole);}
 
   async createRole(data:Pick<RoleDefinition,'name'|'description'|'pageAccess'>):Promise<RoleDefinition>{
@@ -872,5 +952,5 @@ export async function initializeDatabase():Promise<void>{
   console.log('[DataBase] MySQL schema and production data are ready.');
 }
 
-export type { User, Property, PropertyLocationCategory, PropertyLocationKind, Service, EducationOpportunity, HealthSpecialty, Quotation, QuickPopup, BlogPost, Agency, Customer, RoleDefinition, Inquiry } from './models.ts';
+export type { User, Property, PropertyLocationCategory, PropertyLocationKind, Service, EducationOpportunity, HealthSpecialty, Quotation, QuickPopup, BlogPost, Agency, Customer, Commission, CommissionService, RoleDefinition, Inquiry } from './models.ts';
 export { verifyPassword } from './security.ts';

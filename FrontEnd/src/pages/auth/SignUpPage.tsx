@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { Lock, Mail, User, Shield, ArrowRight } from 'lucide-react';
 import { BrandLogo } from '../../components/common/BrandLogo';
 import { Input } from '../../components/ui/Input';
-import { Select } from '../../components/ui/Select';
 import { Button } from '../../components/ui/Button';
 import { ThemeToggle } from '../../components/common/ThemeToggle';
 import { useAuth } from '../../context/AuthContext';
@@ -19,7 +18,6 @@ export const SignUpPage: React.FC<{
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [role, setRole] = useState('Agent');
   const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -42,7 +40,7 @@ export const SignUpPage: React.FC<{
     }
 
     try {
-      await register({ name, email, password, confirmPassword, role });
+      await register({ name, email, password, confirmPassword });
       showToast('Registration successful! Welcome to AW Ali Company.', 'success');
     } catch (err: any) {
       setError(err.message || 'Registration failed. Please try again.');
@@ -111,19 +109,6 @@ export const SignUpPage: React.FC<{
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="tariq@awali.com"
                 leftIcon={<Mail className="w-4 h-4" />}
-              />
-            </div>
-
-            <div>
-              <Select
-                label="System Role"
-                value={role}
-                onChange={(e) => setRole(e.target.value)}
-                options={[
-                  { value: 'Agent', label: 'Real Estate / Services Agent' },
-                  { value: 'Agency', label: 'Agency / Partner Account' },
-                  { value: 'Client', label: 'Client / Customer Account' },
-                ]}
               />
             </div>
 

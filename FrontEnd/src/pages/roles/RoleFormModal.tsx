@@ -1,5 +1,5 @@
 import React, { FormEvent, useEffect, useState } from 'react';
-import { Check, LayoutDashboard, Building2, ShieldCheck, Newspaper, Users, KeyRound, User, HeartPulse, Handshake, GraduationCap, Settings, Megaphone, ContactRound, ReceiptText, ScrollText } from 'lucide-react';
+import { Check, LayoutDashboard, Building2, ShieldCheck, Newspaper, Users, KeyRound, User, HeartPulse, Handshake, GraduationCap, Settings, Megaphone, ContactRound, ReceiptText, ScrollText, BadgePercent } from 'lucide-react';
 import { Modal } from '../../components/ui/Modal';
 import { Button } from '../../components/ui/Button';
 import { RoleDefinition } from '../../types';
@@ -13,6 +13,7 @@ export const ROLE_PAGES = [
   { id: 'quotations', label: 'Quotations', description: 'Customer quotation management', icon: ScrollText },
   { id: 'agencies', label: 'Agencies', description: 'Partner agency directory', icon: ShieldCheck },
   { id: 'customers', label: 'Customers', description: 'Agency customer records', icon: ContactRound },
+  { id: 'commissions', label: 'Commissions', description: 'Agency service commission rules', icon: BadgePercent },
   { id: 'invoices', label: 'Invoices', description: 'Agency billing and invoices', icon: ReceiptText },
   { id: 'settings', label: 'Settings', description: 'System preferences and configuration', icon: Settings },
   { id: 'blogs', label: 'Blogs', description: 'Articles and categories', icon: Newspaper },
@@ -139,20 +140,19 @@ export const RoleFormModal: React.FC<RoleFormModalProps> = ({ isOpen, role, onCl
               const Icon = page.icon;
               const isSelected = pageAccess.includes(page.id);
               return (
-                <label
+                <button
+                  type="button"
+                  role="checkbox"
+                  aria-checked={isSelected}
+                  aria-label={`${page.label}: ${page.description}`}
                   key={page.id}
-                  className={`flex items-center gap-3 rounded-xl border p-3.5 cursor-pointer transition-all ${
+                  onClick={() => togglePage(page.id)}
+                  className={`flex w-full items-center gap-3 rounded-xl border p-3.5 text-left transition-all focus:outline-none focus:ring-2 focus:ring-[#FF7817]/30 ${
                     isSelected
                       ? 'border-[#FF7817] bg-[#FFF6EF] dark:bg-[#FF7817]/10'
                       : 'border-[#D9DDE8] hover:border-[#FF7817]/50 dark:border-[#252B5C] dark:hover:border-[#FF7817]/60'
                   }`}
                 >
-                  <input
-                    type="checkbox"
-                    checked={isSelected}
-                    onChange={() => togglePage(page.id)}
-                    className="sr-only"
-                  />
                   <span className={`grid h-9 w-9 place-items-center rounded-lg ${isSelected ? 'bg-[#FF7817] text-white' : 'bg-[#EEF0F5] text-[#151A46] dark:bg-[#252B5C] dark:text-[#D9DDE8]'}`}>
                     <Icon className="h-4 w-4" />
                   </span>
@@ -163,7 +163,7 @@ export const RoleFormModal: React.FC<RoleFormModalProps> = ({ isOpen, role, onCl
                   <span className={`grid h-5 w-5 place-items-center rounded-md border ${isSelected ? 'border-[#FF7817] bg-[#FF7817] text-white' : 'border-[#C5CBE0] dark:border-[#5F667A]'}`}>
                     {isSelected ? <Check className="h-3.5 w-3.5" /> : null}
                   </span>
-                </label>
+                </button>
               );
             })}
           </div>
