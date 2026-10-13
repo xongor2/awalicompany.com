@@ -1,5 +1,5 @@
 import React, { FormEvent, useCallback, useEffect, useMemo, useState } from 'react';
-import { CheckCircle2, ContactRound, Edit3, Eye, FileImage, MapPin, Plus, Search, Trash2, Upload, X } from 'lucide-react';
+import { CheckCircle2, ContactRound, Download, Edit3, Eye, FileImage, MapPin, Plus, Search, Trash2, Upload, X } from 'lucide-react';
 import { PageHeader } from '../../components/layout/PageHeader';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
@@ -86,6 +86,11 @@ export const CustomersPage: React.FC = () => {
     setStep(1); setErrors({}); setIsFormOpen(true);
   };
 
+  const openServiceCompletionForm = (customer: Customer) => {
+    openEditForm(customer);
+    setStep(2);
+  };
+
   const closeForm = () => { setIsFormOpen(false); setEditing(null); resetForm(); };
 
   const validateCustomerDetails = (): boolean => {
@@ -153,6 +158,29 @@ export const CustomersPage: React.FC = () => {
     } catch (error) {
       showToast(error instanceof Error ? error.message : 'Failed to delete customer.', 'error');
     } finally { setIsSaving(false); }
+  };
+
+  const downloadReceipt = (customer: Customer) => {
+    if (!customer.receipt) {
+      showToast('No receipt has been uploaded for this customer yet.', 'info');
+      return;
+    }
+
+    const mimeMatch = customer.receipt.match(/^data:image\/([a-zA-Z0-9.+-]+);base64,/);
+    const rawExtension = mimeMatch?.[1]?.toLowerCase() || 'png';
+    const extension = rawExtension === 'jpeg' ? 'jpg' : rawExtension === 'svg+xml' ? 'svg' : rawExtension;
+    const customerName = customer.fullName
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-|-$/g, '') || 'customer';
+    const link = document.createElement('a');
+    link.href = customer.receipt;
+    link.download = `${customerName}-receipt.${extension}`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    showToast('Receipt download started.', 'success');
   };
 
   if (isFormOpen) {
@@ -248,7 +276,19 @@ export const CustomersPage: React.FC = () => {
               <thead className="bg-[#F8F9FC] text-[11px] font-bold uppercase tracking-wider text-[#5F667A] dark:bg-[#0E1335] dark:text-[#8A90A2]"><tr><th className="px-6 py-4">Customer</th><th className="px-6 py-4">Contact</th><th className="px-6 py-4">Location</th><th className="px-6 py-4">Service</th><th className="px-6 py-4">Service Record</th><th className="px-6 py-4">Amount</th><th className="px-6 py-4">Added</th><th className="px-6 py-4 text-center">Actions</th></tr></thead>
               <tbody className="divide-y divide-[#E8EAF0] dark:divide-[#252B5C]">
                 {filteredCustomers.map(customer => (
-                  <tr key={customer.id} className="transition-colors hover:bg-[#FFF8F2] dark:hover:bg-[#1A2053]">
+                  <tr
+                    key={customer.id}
+                    tabIndex={0}
+                    aria-label={`Complete service details for ${customer.fullName}`}
+                    onClick={() => openServiceCompletionForm(customer)}
+                    onKeyDown={event => {
+                      if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault();
+                        openServiceCompletionForm(customer);
+                      }
+                    }}
+                    className="cursor-pointer transition-colors hover:bg-[#FFF8F2] focus:bg-[#FFF8F2] focus:outline-none focus:ring-2 focus:ring-inset focus:ring-[#FF7817] dark:hover:bg-[#1A2053] dark:focus:bg-[#1A2053]"
+                  >
                     <td className="px-6 py-5"><div className="flex items-center gap-3"><span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#FFF0E4] font-bold text-[#FF7817] dark:bg-[#252B5C]">{customer.fullName.charAt(0).toUpperCase()}</span><span className="font-semibold text-[#171A2B] dark:text-white">{customer.fullName}</span></div></td>
                     <td className="px-6 py-5"><p className="text-sm font-medium text-[#171A2B] dark:text-white">{customer.phone}</p><p className="mt-0.5 text-xs text-[#8A90A2]">{customer.email || 'No email provided'}</p></td>
                     <td className="px-6 py-5"><div className="flex items-center gap-1.5 text-sm text-[#5F667A] dark:text-[#D9DDE8]"><MapPin className="h-4 w-4 shrink-0 text-[#FF7817]" />{[customer.city, customer.country].filter(Boolean).join(', ') || 'Not provided'}</div></td>
@@ -256,7 +296,29 @@ export const CustomersPage: React.FC = () => {
                     <td className="px-6 py-5"><span className={`rounded-full px-2.5 py-1 text-xs font-bold ${customer.serviceInfo || customer.amount !== null || customer.receipt ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300' : 'bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300'}`}>{customer.serviceInfo || customer.amount !== null || customer.receipt ? 'Completed' : 'Pending'}</span></td>
                     <td className="px-6 py-5 text-sm font-bold text-[#171A2B] dark:text-white">{formatAmount(customer.amount)}</td>
                     <td className="whitespace-nowrap px-6 py-5 text-sm text-[#5F667A] dark:text-[#AEB4C7]">{new Date(customer.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</td>
-                    <td className="px-6 py-5 text-center"><ActionMenu actions={[{ label: 'View Customer', icon: <Eye className="h-4 w-4" />, onClick: () => setViewing(customer) }, { label: 'Edit Customer', icon: <Edit3 className="h-4 w-4" />, onClick: () => openEditForm(customer) }, { label: 'Delete Customer', icon: <Trash2 className="h-4 w-4" />, onClick: () => setDeleting(customer), variant: 'danger' }]} /></td>
+                    <td className="px-6 py-5 text-center" onClick={event => event.stopPropagation()} onKeyDown={event => event.stopPropagation()}>
+                      <div className="inline-flex items-center gap-1">
+                        <button
+                          type="button"
+                          onClick={() => downloadReceipt(customer)}
+                          className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-[#5F667A] transition-colors hover:bg-[#FFF0E4] hover:text-[#FF7817] focus:outline-none focus:ring-2 focus:ring-[#FF7817]/40 dark:text-[#AEB4C7] dark:hover:bg-[#252B5C] dark:hover:text-[#FF9B52]"
+                          aria-label={`Download receipt for ${customer.fullName}`}
+                          title="Download Receipt"
+                        >
+                          <Download className="h-5 w-5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setViewing(customer)}
+                          className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-[#5F667A] transition-colors hover:bg-[#FFF0E4] hover:text-[#FF7817] focus:outline-none focus:ring-2 focus:ring-[#FF7817]/40 dark:text-[#AEB4C7] dark:hover:bg-[#252B5C] dark:hover:text-[#FF9B52]"
+                          aria-label={`View details for ${customer.fullName}`}
+                          title="View Customer"
+                        >
+                          <Eye className="h-5 w-5" />
+                        </button>
+                        <ActionMenu actions={[{ label: 'Edit Customer', icon: <Edit3 className="h-4 w-4" />, onClick: () => openEditForm(customer) }, { label: 'Complete Service Details', icon: <CheckCircle2 className="h-4 w-4" />, onClick: () => openServiceCompletionForm(customer) }, { label: 'Delete Customer', icon: <Trash2 className="h-4 w-4" />, onClick: () => setDeleting(customer), variant: 'danger' }]} />
+                      </div>
+                    </td>
                   </tr>
                 ))}
               </tbody>
