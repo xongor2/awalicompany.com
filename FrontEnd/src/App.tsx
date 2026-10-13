@@ -28,6 +28,7 @@ import { QuickPopupPage } from './pages/settings/QuickPopupPage';
 import { Property, User } from './types';
 import { BrandLogo } from './components/common/BrandLogo';
 import { LandingPageContainer } from './pages/public/LandingPageContainer';
+import { canAccessSection, firstAccessibleSection } from './utils/pageAccess';
 
 const MainApplication: React.FC = () => {
   const { user, isLoading } = useAuth();
@@ -41,6 +42,16 @@ const MainApplication: React.FC = () => {
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [globalSearchTerm, setGlobalSearchTerm] = useState('');
+  const pageAccess = user?.pageAccess ?? [];
+  const currentSection = canAccessSection(pageAccess, activeSection)
+    ? activeSection
+    : firstAccessibleSection(pageAccess);
+
+  const navigateToSection = (section: NavSection): boolean => {
+    if (!canAccessSection(pageAccess, section)) return false;
+    setActiveSection(section);
+    return true;
+  };
 
   if (isLoading) {
     return (
@@ -68,7 +79,7 @@ const MainApplication: React.FC = () => {
         }}
         onNavigateCMSBlog={() => {
           if (user) {
-            setActiveSection('blogs');
+            navigateToSection('blogs');
             setViewMode('dashboard');
           } else {
             setViewMode('auth');
@@ -102,54 +113,54 @@ const MainApplication: React.FC = () => {
 
   // Handlers for cross-page interactions
   const handleOpenAddProperty = () => {
+    if (!navigateToSection('property-form')) return;
     setSelectedProperty(null);
-    setActiveSection('property-form');
   };
 
   const handleOpenAddService = () => {
-    setActiveSection('services');
+    if (!navigateToSection('services')) return;
     setIsAddServiceModalOpen(true);
   };
 
   const handleOpenAddUser = () => {
-    setActiveSection('users');
+    if (!navigateToSection('users')) return;
     setIsAddUserModalOpen(true);
   };
 
   const handleViewPropertyFromDashboard = (prop: Property) => {
+    if (!navigateToSection('properties')) return;
     setSelectedProperty(prop);
-    setActiveSection('properties');
   };
 
   const handleEditPropertyFromDashboard = (prop: Property) => {
+    if (!navigateToSection('property-form')) return;
     setSelectedProperty(prop);
-    setActiveSection('property-form');
   };
 
   const handleViewUserFromDashboard = (u: User) => {
+    if (!navigateToSection('users')) return;
     setSelectedUser(u);
-    setActiveSection('users');
   };
 
   const handleEditUserFromDashboard = (u: User) => {
+    if (!navigateToSection('users')) return;
     setSelectedUser(u);
     setIsAddUserModalOpen(true);
-    setActiveSection('users');
   };
 
   const handleGlobalSearch = (term: string) => {
     setGlobalSearchTerm(term);
     // If on dashboard, default search jumps to properties
-    if (activeSection === 'dashboard' && term.trim()) {
-      setActiveSection('properties');
+    if (currentSection === 'dashboard' && term.trim()) {
+      navigateToSection('properties');
     }
   };
 
   return (
     <DashboardLayout
-      currentSection={activeSection}
+      currentSection={currentSection}
       onNavigate={(sec) => {
-        setActiveSection(sec);
+        if (!navigateToSection(sec)) return;
         setSelectedProperty(null);
         setSelectedUser(null);
       }}
@@ -157,10 +168,10 @@ const MainApplication: React.FC = () => {
       onSearch={handleGlobalSearch}
       onGoToWebsite={() => setViewMode('public')}
     >
-      {activeSection === 'dashboard' && (
+      {currentSection === 'dashboard' && (
         <DashboardPage
           onNavigate={(sec) => {
-            setActiveSection(sec);
+            if (!navigateToSection(sec)) return;
             setSelectedProperty(null);
             setSelectedUser(null);
           }}
@@ -174,41 +185,41 @@ const MainApplication: React.FC = () => {
         />
       )}
 
-      {activeSection === 'health' && <HealthPage />}
+      {currentSection === 'health' && <HealthPage />}
 
-      {activeSection === 'education' && <EducationPage />}
+      {currentSection === 'education' && <EducationPage />}
 
-      {activeSection === 'properties' && (
+      {currentSection === 'properties' && (
         <PropertiesListPage
           initialSearch={globalSearchTerm}
           onOpenPropertyForm={(property) => {
+            if (!navigateToSection('property-form')) return;
             setSelectedProperty(property || null);
-            setActiveSection('property-form');
           }}
           selectedProperty={selectedProperty}
           onClearSelectedProperty={() => setSelectedProperty(null)}
         />
       )}
 
-      {activeSection === 'property-form' && (
+      {currentSection === 'property-form' && (
         <PropertyFormPage
           propertyToEdit={selectedProperty}
           onClose={() => {
             setSelectedProperty(null);
-            setActiveSection('properties');
+            navigateToSection('properties');
           }}
           onSuccess={() => {
             setSelectedProperty(null);
-            setActiveSection('properties');
+            navigateToSection('properties');
           }}
         />
       )}
 
-      {activeSection === 'countries' && <LocationCategoriesPage kind="Country" />}
+      {currentSection === 'countries' && <LocationCategoriesPage kind="Country" />}
 
-      {activeSection === 'cities' && <LocationCategoriesPage kind="City" />}
+      {currentSection === 'cities' && <LocationCategoriesPage kind="City" />}
 
-      {activeSection === 'services' && (
+      {currentSection === 'services' && (
         <ServicesListPage
           initialSearch={globalSearchTerm}
           isAddModalOpen={isAddServiceModalOpen}
@@ -216,27 +227,27 @@ const MainApplication: React.FC = () => {
         />
       )}
 
-      {activeSection === 'quotations' && <QuotationsPage />}
+      {currentSection === 'quotations' && <QuotationsPage />}
 
-      {activeSection === 'agencies' && <AgenciesAdminPage />}
+      {currentSection === 'agencies' && <AgenciesAdminPage />}
 
-      {activeSection === 'customers' && <CustomersPage />}
+      {currentSection === 'customers' && <CustomersPage />}
 
-      {activeSection === 'commissions' && <CommissionsPage />}
+      {currentSection === 'commissions' && <CommissionsPage />}
 
-      {activeSection === 'invoices' && <InvoicesPage />}
+      {currentSection === 'invoices' && <InvoicesPage />}
 
-      {activeSection === 'settings' && <SettingsPage />}
+      {currentSection === 'settings' && <SettingsPage />}
 
-      {activeSection === 'quick-popup' && <QuickPopupPage />}
+      {currentSection === 'quick-popup' && <QuickPopupPage />}
 
-      {activeSection === 'blogs' && (
+      {currentSection === 'blogs' && (
         <BlogsListPage
           initialSearch={globalSearchTerm}
         />
       )}
 
-      {activeSection === 'users' && (
+      {currentSection === 'users' && (
         <UsersListPage
           initialSearch={globalSearchTerm}
           isAddModalOpen={isAddUserModalOpen}
@@ -246,9 +257,9 @@ const MainApplication: React.FC = () => {
         />
       )}
 
-      {activeSection === 'roles' && <RolesPage />}
+      {currentSection === 'roles' && <RolesPage />}
 
-      {activeSection === 'profile' && <ProfilePage />}
+      {currentSection === 'profile' && <ProfilePage />}
     </DashboardLayout>
   );
 };

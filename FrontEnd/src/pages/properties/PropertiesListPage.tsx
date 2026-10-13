@@ -97,6 +97,7 @@ export const PropertiesListPage: React.FC<PropertiesListPageProps> = ({
           : countryFilter !== 'All'
             ? countryFilter
             : undefined,
+        portal: true,
       });
       setProperties(data);
     } catch (err: any) {

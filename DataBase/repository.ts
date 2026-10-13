@@ -37,6 +37,7 @@ const toUser = (row: any): User => ({
   status: row.status,
   profile_image: row.profile_image || DEFAULT_AVATAR,
   phone: row.phone || '',
+  pageAccess: jsonArray(row.page_access),
   created_at: iso(row.created_at),
   updated_at: iso(row.updated_at),
 });
@@ -49,6 +50,7 @@ const toProperty = (row: any): Property => ({
   sqm: row.sqm == null ? undefined : Number(row.sqm),
   area_sqft: row.area_sqft == null ? undefined : Number(row.area_sqft),
   gallery: jsonArray(row.gallery),
+  created_by_user_id: row.created_by_user_id || null,
   created_at: iso(row.created_at),
   updated_at: iso(row.updated_at),
 });
@@ -93,6 +95,7 @@ const toHealthSpecialty = (row: any): HealthSpecialty => ({
   destinations: jsonArray(row.destinations),
   image: row.image,
   status: row.status,
+  createdByUserId: row.created_by_user_id || null,
   createdAt: iso(row.created_at),
   updatedAt: iso(row.updated_at),
 });
@@ -186,6 +189,9 @@ const toCustomer = (row: any): Customer => ({
   serviceInfo: row.service_info || '',
   amount: row.amount == null ? null : Number(row.amount),
   receipt: row.receipt || '',
+  createdByUserId: row.created_by_user_id || null,
+  createdByName: row.created_by_name || '',
+  createdByEmail: row.created_by_email || '',
   createdAt: iso(row.created_at),
   updatedAt: iso(row.updated_at),
 });
@@ -236,7 +242,12 @@ class MySQLRepository {
 
   async getSessionUser(token: string): Promise<User | null> {
     const rows = await query<any[]>(
-      'SELECT u.* FROM sessions s JOIN users u ON u.id = s.user_id WHERE s.token = ? AND s.expires_at > NOW() LIMIT 1',
+      `SELECT u.*, r.page_access
+       FROM sessions s
+       JOIN users u ON u.id = s.user_id
+       LEFT JOIN roles r ON r.name = u.role
+       WHERE s.token = ? AND s.expires_at > NOW()
+       LIMIT 1`,
       [token],
     );
     return rows[0] ? toUser(rows[0]) : null;
@@ -260,12 +271,18 @@ class MySQLRepository {
   }
 
   async getUserById(id: string): Promise<User | null> {
-    const rows = await query<any[]>('SELECT * FROM users WHERE id = ? LIMIT 1', [id]);
+    const rows = await query<any[]>(
+      'SELECT u.*, r.page_access FROM users u LEFT JOIN roles r ON r.name = u.role WHERE u.id = ? LIMIT 1',
+      [id],
+    );
     return rows[0] ? toUser(rows[0]) : null;
   }
 
   async getUserByEmail(email: string): Promise<User | null> {
-    const rows = await query<any[]>('SELECT * FROM users WHERE LOWER(email) = LOWER(?) LIMIT 1', [email]);
+    const rows = await query<any[]>(
+      'SELECT u.*, r.page_access FROM users u LEFT JOIN roles r ON r.name = u.role WHERE LOWER(u.email) = LOWER(?) LIMIT 1',
+      [email],
+    );
     return rows[0] ? toUser(rows[0]) : null;
   }
 
@@ -311,8 +328,10 @@ class MySQLRepository {
     return result.affectedRows > 0;
   }
 
-  async getProperties(): Promise<Property[]> {
-    return (await query<any[]>('SELECT * FROM properties ORDER BY created_at DESC')).map(toProperty);
+  async getProperties(filter?: { createdByUserId?: string }): Promise<Property[]> {
+    const where = filter?.createdByUserId ? 'WHERE created_by_user_id = ?' : '';
+    const params = filter?.createdByUserId ? [filter.createdByUserId] : [];
+    return (await query<any[]>(`SELECT * FROM properties ${where} ORDER BY created_at DESC`, params)).map(toProperty);
   }
 
   async getPropertyById(id: string): Promise<Property | null> {
@@ -323,9 +342,9 @@ class MySQLRepository {
   async createProperty(data: Omit<Property, 'id' | 'created_at' | 'updated_at'>): Promise<Property> {
     const id = `prop-${Date.now()}-${crypto.randomBytes(3).toString('hex')}`;
     await query(
-      `INSERT INTO properties (id,title,description,property_type,location,price,image,status,address,buy_rent,bedrooms,bathrooms,balcony,sqm,area_sqft,street,furnishing_status,shopping,masjid,payment,gallery)
-       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
-      [id,data.title,data.description,data.property_type,data.location,data.price,data.image,data.status,data.address || null,data.buy_rent || null,data.bedrooms ?? null,data.bathrooms ?? null,data.balcony || null,data.sqm ?? null,data.area_sqft ?? null,data.street || null,data.furnishing_status || null,data.shopping || null,data.masjid || null,data.payment || null,JSON.stringify(data.gallery || [])],
+      `INSERT INTO properties (id,title,description,property_type,location,price,image,status,address,buy_rent,bedrooms,bathrooms,balcony,sqm,area_sqft,street,furnishing_status,shopping,masjid,payment,gallery,created_by_user_id)
+       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+      [id,data.title,data.description,data.property_type,data.location,data.price,data.image,data.status,data.address || null,data.buy_rent || null,data.bedrooms ?? null,data.bathrooms ?? null,data.balcony || null,data.sqm ?? null,data.area_sqft ?? null,data.street || null,data.furnishing_status || null,data.shopping || null,data.masjid || null,data.payment || null,JSON.stringify(data.gallery || []),data.created_by_user_id || null],
     );
     return (await this.getPropertyById(id))!;
   }
@@ -500,8 +519,10 @@ class MySQLRepository {
     return (await query<ResultSetHeader>('DELETE FROM education_opportunities WHERE id = ?', [id])).affectedRows > 0;
   }
 
-  async getHealthSpecialties(): Promise<HealthSpecialty[]> {
-    return (await query<any[]>('SELECT * FROM health_specialties ORDER BY created_at DESC')).map(toHealthSpecialty);
+  async getHealthSpecialties(filter?: { createdByUserId?: string }): Promise<HealthSpecialty[]> {
+    const where = filter?.createdByUserId ? 'WHERE created_by_user_id = ?' : '';
+    const params = filter?.createdByUserId ? [filter.createdByUserId] : [];
+    return (await query<any[]>(`SELECT * FROM health_specialties ${where} ORDER BY created_at DESC`, params)).map(toHealthSpecialty);
   }
 
   async getHealthSpecialtyById(id: string): Promise<HealthSpecialty | null> {
@@ -514,15 +535,15 @@ class MySQLRepository {
   ): Promise<HealthSpecialty> {
     const id = `health-${Date.now()}-${crypto.randomBytes(3).toString('hex')}`;
     await query(
-      'INSERT INTO health_specialties (id, category, name, country, city, tagline, description, key_procedures, destinations, image, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [id, data.category, data.name, data.country, data.city, data.tagline, data.description, JSON.stringify(data.keyProcedures), JSON.stringify(data.destinations), data.image, data.status],
+      'INSERT INTO health_specialties (id, category, name, country, city, tagline, description, key_procedures, destinations, image, status, created_by_user_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [id, data.category, data.name, data.country, data.city, data.tagline, data.description, JSON.stringify(data.keyProcedures), JSON.stringify(data.destinations), data.image, data.status, data.createdByUserId],
     );
     return (await this.getHealthSpecialtyById(id))!;
   }
 
   async updateHealthSpecialty(
     id: string,
-    updates: Partial<Omit<HealthSpecialty, 'id' | 'createdAt' | 'updatedAt'>>,
+    updates: Partial<Omit<HealthSpecialty, 'id' | 'createdAt' | 'updatedAt' | 'createdByUserId'>>,
   ): Promise<HealthSpecialty | null> {
     if (!await this.getHealthSpecialtyById(id)) return null;
     await updateColumns(
@@ -765,27 +786,44 @@ class MySQLRepository {
 
   async deleteAgency(id:string):Promise<boolean>{return (await query<ResultSetHeader>('DELETE FROM agencies WHERE id=?',[id])).affectedRows>0;}
 
-  async getCustomers(): Promise<Customer[]> {
-    return (await query<any[]>('SELECT * FROM customers ORDER BY created_at DESC')).map(toCustomer);
+  async getCustomers(filter?: { createdByUserId?: string }): Promise<Customer[]> {
+    const where = filter?.createdByUserId ? 'WHERE c.created_by_user_id = ?' : '';
+    const params = filter?.createdByUserId ? [filter.createdByUserId] : [];
+    return (await query<any[]>(
+      `SELECT c.*, u.name AS created_by_name, u.email AS created_by_email
+       FROM customers c
+       LEFT JOIN users u ON u.id = c.created_by_user_id
+       ${where}
+       ORDER BY c.created_at DESC`,
+      params,
+    )).map(toCustomer);
   }
 
   async getCustomerById(id: string): Promise<Customer | null> {
-    const rows = await query<any[]>('SELECT * FROM customers WHERE id = ? LIMIT 1', [id]);
+    const rows = await query<any[]>(
+      `SELECT c.*, u.name AS created_by_name, u.email AS created_by_email
+       FROM customers c
+       LEFT JOIN users u ON u.id = c.created_by_user_id
+       WHERE c.id = ? LIMIT 1`,
+      [id],
+    );
     return rows[0] ? toCustomer(rows[0]) : null;
   }
 
-  async createCustomer(data: Omit<Customer, 'id' | 'createdAt' | 'updatedAt'>): Promise<Customer> {
+  async createCustomer(
+    data: Omit<Customer, 'id' | 'createdAt' | 'updatedAt' | 'createdByName' | 'createdByEmail'>,
+  ): Promise<Customer> {
     const id = `customer-${Date.now()}-${crypto.randomBytes(3).toString('hex')}`;
     await query(
-      'INSERT INTO customers (id, full_name, email, phone, country, city, service, service_info, amount, receipt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [id, data.fullName, data.email, data.phone, data.country, data.city, data.service, data.serviceInfo, data.amount, data.receipt],
+      'INSERT INTO customers (id, full_name, email, phone, country, city, service, service_info, amount, receipt, created_by_user_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [id, data.fullName, data.email, data.phone, data.country, data.city, data.service, data.serviceInfo, data.amount, data.receipt, data.createdByUserId],
     );
     return (await this.getCustomerById(id))!;
   }
 
   async updateCustomer(
     id: string,
-    data: Partial<Omit<Customer, 'id' | 'createdAt' | 'updatedAt'>>,
+    data: Partial<Omit<Customer, 'id' | 'createdAt' | 'updatedAt' | 'createdByUserId' | 'createdByName' | 'createdByEmail'>>,
   ): Promise<Customer | null> {
     if (!await this.getCustomerById(id)) return null;
     await updateColumns('customers', id, data, {

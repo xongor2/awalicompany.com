@@ -66,7 +66,7 @@ export const CustomersPage: React.FC = () => {
   const filteredCustomers = useMemo(() => {
     const term = search.trim().toLowerCase();
     return customers.filter(customer => {
-      const matchesSearch = !term || [customer.fullName, customer.email, customer.phone, customer.country, customer.city, customer.service, customer.serviceInfo]
+      const matchesSearch = !term || [customer.fullName, customer.email, customer.phone, customer.country, customer.city, customer.service, customer.serviceInfo, customer.createdByName, customer.createdByEmail]
         .some(value => value.toLowerCase().includes(term));
       return matchesSearch && (serviceFilter === 'All' || customer.service === serviceFilter);
     });
@@ -272,8 +272,8 @@ export const CustomersPage: React.FC = () => {
           <EmptyState icon={<ContactRound className="h-8 w-8" />} title={search || serviceFilter !== 'All' ? 'No matching customers' : 'No customers yet'} description={search || serviceFilter !== 'All' ? 'Try adjusting your search or service filter.' : 'Add the first customer record to get started.'} actionLabel={!search && serviceFilter === 'All' ? 'Add Customer' : undefined} onAction={!search && serviceFilter === 'All' ? openCreateForm : undefined} />
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[1120px] text-left">
-              <thead className="bg-[#F8F9FC] text-[11px] font-bold uppercase tracking-wider text-[#5F667A] dark:bg-[#0E1335] dark:text-[#8A90A2]"><tr><th className="px-6 py-4">Customer</th><th className="px-6 py-4">Contact</th><th className="px-6 py-4">Location</th><th className="px-6 py-4">Service</th><th className="px-6 py-4">Service Record</th><th className="px-6 py-4">Amount</th><th className="px-6 py-4">Added</th><th className="px-6 py-4 text-center">Actions</th></tr></thead>
+            <table className="w-full min-w-[1320px] text-left">
+              <thead className="bg-[#F8F9FC] text-[11px] font-bold uppercase tracking-wider text-[#5F667A] dark:bg-[#0E1335] dark:text-[#8A90A2]"><tr><th className="px-6 py-4">Customer</th><th className="px-6 py-4">Recorded By</th><th className="px-6 py-4">Contact</th><th className="px-6 py-4">Location</th><th className="px-6 py-4">Service</th><th className="px-6 py-4">Service Record</th><th className="px-6 py-4">Amount</th><th className="px-6 py-4">Added</th><th className="px-6 py-4 text-center">Actions</th></tr></thead>
               <tbody className="divide-y divide-[#E8EAF0] dark:divide-[#252B5C]">
                 {filteredCustomers.map(customer => (
                   <tr
@@ -290,6 +290,11 @@ export const CustomersPage: React.FC = () => {
                     className="cursor-pointer transition-colors hover:bg-[#FFF8F2] focus:bg-[#FFF8F2] focus:outline-none focus:ring-2 focus:ring-inset focus:ring-[#FF7817] dark:hover:bg-[#1A2053] dark:focus:bg-[#1A2053]"
                   >
                     <td className="px-6 py-5"><div className="flex items-center gap-3"><span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#FFF0E4] font-bold text-[#FF7817] dark:bg-[#252B5C]">{customer.fullName.charAt(0).toUpperCase()}</span><span className="font-semibold text-[#171A2B] dark:text-white">{customer.fullName}</span></div></td>
+                    <td className="px-6 py-5">
+                      {customer.createdByName ? (
+                        <div><p className="text-sm font-semibold text-[#171A2B] dark:text-white">{customer.createdByName}</p><p className="mt-0.5 text-xs text-[#8A90A2]">{customer.createdByEmail}</p></div>
+                      ) : <span className="text-sm text-[#8A90A2]">Not recorded</span>}
+                    </td>
                     <td className="px-6 py-5"><p className="text-sm font-medium text-[#171A2B] dark:text-white">{customer.phone}</p><p className="mt-0.5 text-xs text-[#8A90A2]">{customer.email || 'No email provided'}</p></td>
                     <td className="px-6 py-5"><div className="flex items-center gap-1.5 text-sm text-[#5F667A] dark:text-[#D9DDE8]"><MapPin className="h-4 w-4 shrink-0 text-[#FF7817]" />{[customer.city, customer.country].filter(Boolean).join(', ') || 'Not provided'}</div></td>
                     <td className="px-6 py-5"><span className="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-bold text-[#0F4C81] dark:bg-blue-500/15 dark:text-blue-300">{customer.service}</span></td>
@@ -333,6 +338,7 @@ export const CustomersPage: React.FC = () => {
             <div><p className="text-xs font-bold uppercase tracking-wider text-[#8A90A2]">Full Name</p><p className="mt-1 font-semibold text-[#171A2B] dark:text-white">{viewing.fullName}</p></div><div><p className="text-xs font-bold uppercase tracking-wider text-[#8A90A2]">Service</p><p className="mt-1 font-semibold text-[#171A2B] dark:text-white">{viewing.service}</p></div>
             <div><p className="text-xs font-bold uppercase tracking-wider text-[#8A90A2]">Phone</p><p className="mt-1 text-sm text-[#171A2B] dark:text-white">{viewing.phone}</p></div><div><p className="text-xs font-bold uppercase tracking-wider text-[#8A90A2]">Email</p><p className="mt-1 text-sm text-[#171A2B] dark:text-white">{viewing.email || 'Not provided'}</p></div>
             <div><p className="text-xs font-bold uppercase tracking-wider text-[#8A90A2]">Country</p><p className="mt-1 text-sm text-[#171A2B] dark:text-white">{viewing.country || 'Not provided'}</p></div><div><p className="text-xs font-bold uppercase tracking-wider text-[#8A90A2]">City</p><p className="mt-1 text-sm text-[#171A2B] dark:text-white">{viewing.city || 'Not provided'}</p></div>
+            <div className="sm:col-span-2"><p className="text-xs font-bold uppercase tracking-wider text-[#8A90A2]">Recorded By</p><p className="mt-1 text-sm font-semibold text-[#171A2B] dark:text-white">{viewing.createdByName || 'Not recorded'}</p>{viewing.createdByEmail && <p className="mt-0.5 text-xs text-[#8A90A2]">{viewing.createdByEmail}</p>}</div>
           </div>
           <div><p className="text-xs font-bold uppercase tracking-wider text-[#8A90A2]">Service Information</p><p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-[#171A2B] dark:text-[#D9DDE8]">{viewing.serviceInfo || 'Service details have not been added yet.'}</p></div>
           <div><p className="text-xs font-bold uppercase tracking-wider text-[#8A90A2]">Amount</p><p className="mt-1 text-xl font-bold text-[#0F4C81] dark:text-blue-300">{formatAmount(viewing.amount)}</p></div>

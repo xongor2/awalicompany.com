@@ -39,15 +39,57 @@ CREATE TABLE IF NOT EXISTS properties (
   balcony ENUM('Yes', 'No') NULL, sqm DECIMAL(10,2) NULL, area_sqft DECIMAL(10,2) NULL,
   street VARCHAR(100) NULL, furnishing_status ENUM('Furnished', 'Semi-Furnished', 'Unfurnished') NULL,
   shopping VARCHAR(100) NULL, masjid ENUM('Near', 'Far') NULL, payment VARCHAR(100) NULL, gallery JSON NULL,
+  created_by_user_id VARCHAR(64) NULL,
   created_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
   updated_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
   INDEX idx_properties_status (status), INDEX idx_properties_type (property_type),
-  INDEX idx_properties_location (location), INDEX idx_properties_price (price)
+  INDEX idx_properties_location (location), INDEX idx_properties_price (price),
+  INDEX idx_properties_created_by (created_by_user_id),
+  CONSTRAINT fk_properties_created_by FOREIGN KEY (created_by_user_id) REFERENCES users(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Bedrooms can contain descriptive text such as "3+1" or "Studio".
 ALTER TABLE properties
   MODIFY COLUMN bedrooms VARCHAR(100) NULL;
+
+SET @property_created_by_exists = (
+  SELECT COUNT(*) FROM information_schema.COLUMNS
+  WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'properties' AND COLUMN_NAME = 'created_by_user_id'
+);
+SET @property_created_by_sql = IF(
+  @property_created_by_exists = 0,
+  'ALTER TABLE properties ADD COLUMN created_by_user_id VARCHAR(64) NULL AFTER gallery',
+  'SELECT 1'
+);
+PREPARE property_created_by_statement FROM @property_created_by_sql;
+EXECUTE property_created_by_statement;
+DEALLOCATE PREPARE property_created_by_statement;
+
+SET @property_created_by_index_exists = (
+  SELECT COUNT(*) FROM information_schema.STATISTICS
+  WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'properties' AND INDEX_NAME = 'idx_properties_created_by'
+);
+SET @property_created_by_index_sql = IF(
+  @property_created_by_index_exists = 0,
+  'ALTER TABLE properties ADD INDEX idx_properties_created_by (created_by_user_id)',
+  'SELECT 1'
+);
+PREPARE property_created_by_index_statement FROM @property_created_by_index_sql;
+EXECUTE property_created_by_index_statement;
+DEALLOCATE PREPARE property_created_by_index_statement;
+
+SET @property_created_by_fk_exists = (
+  SELECT COUNT(*) FROM information_schema.TABLE_CONSTRAINTS
+  WHERE CONSTRAINT_SCHEMA = DATABASE() AND TABLE_NAME = 'properties' AND CONSTRAINT_NAME = 'fk_properties_created_by'
+);
+SET @property_created_by_fk_sql = IF(
+  @property_created_by_fk_exists = 0,
+  'ALTER TABLE properties ADD CONSTRAINT fk_properties_created_by FOREIGN KEY (created_by_user_id) REFERENCES users(id) ON DELETE SET NULL',
+  'SELECT 1'
+);
+PREPARE property_created_by_fk_statement FROM @property_created_by_fk_sql;
+EXECUTE property_created_by_fk_statement;
+DEALLOCATE PREPARE property_created_by_fk_statement;
 
 CREATE TABLE IF NOT EXISTS property_location_categories (
   id VARCHAR(64) PRIMARY KEY,
@@ -111,11 +153,14 @@ CREATE TABLE IF NOT EXISTS health_specialties (
   destinations JSON NOT NULL,
   image MEDIUMTEXT NOT NULL,
   status ENUM('Active', 'Inactive') NOT NULL DEFAULT 'Active',
+  created_by_user_id VARCHAR(64) NULL,
   created_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
   updated_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
   INDEX idx_health_specialties_category (category),
   INDEX idx_health_specialties_status (status),
-  INDEX idx_health_specialties_name (name(100))
+  INDEX idx_health_specialties_name (name(100)),
+  INDEX idx_health_specialties_created_by (created_by_user_id),
+  CONSTRAINT fk_health_specialties_created_by FOREIGN KEY (created_by_user_id) REFERENCES users(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Add hospital location safely when upgrading an earlier Health table.
@@ -144,6 +189,45 @@ SET @health_city_sql = IF(
 PREPARE health_city_statement FROM @health_city_sql;
 EXECUTE health_city_statement;
 DEALLOCATE PREPARE health_city_statement;
+
+SET @health_created_by_exists = (
+  SELECT COUNT(*) FROM information_schema.COLUMNS
+  WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'health_specialties' AND COLUMN_NAME = 'created_by_user_id'
+);
+SET @health_created_by_sql = IF(
+  @health_created_by_exists = 0,
+  'ALTER TABLE health_specialties ADD COLUMN created_by_user_id VARCHAR(64) NULL AFTER status',
+  'SELECT 1'
+);
+PREPARE health_created_by_statement FROM @health_created_by_sql;
+EXECUTE health_created_by_statement;
+DEALLOCATE PREPARE health_created_by_statement;
+
+SET @health_created_by_index_exists = (
+  SELECT COUNT(*) FROM information_schema.STATISTICS
+  WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'health_specialties' AND INDEX_NAME = 'idx_health_specialties_created_by'
+);
+SET @health_created_by_index_sql = IF(
+  @health_created_by_index_exists = 0,
+  'ALTER TABLE health_specialties ADD INDEX idx_health_specialties_created_by (created_by_user_id)',
+  'SELECT 1'
+);
+PREPARE health_created_by_index_statement FROM @health_created_by_index_sql;
+EXECUTE health_created_by_index_statement;
+DEALLOCATE PREPARE health_created_by_index_statement;
+
+SET @health_created_by_fk_exists = (
+  SELECT COUNT(*) FROM information_schema.TABLE_CONSTRAINTS
+  WHERE CONSTRAINT_SCHEMA = DATABASE() AND TABLE_NAME = 'health_specialties' AND CONSTRAINT_NAME = 'fk_health_specialties_created_by'
+);
+SET @health_created_by_fk_sql = IF(
+  @health_created_by_fk_exists = 0,
+  'ALTER TABLE health_specialties ADD CONSTRAINT fk_health_specialties_created_by FOREIGN KEY (created_by_user_id) REFERENCES users(id) ON DELETE SET NULL',
+  'SELECT 1'
+);
+PREPARE health_created_by_fk_statement FROM @health_created_by_fk_sql;
+EXECUTE health_created_by_fk_statement;
+DEALLOCATE PREPARE health_created_by_fk_statement;
 
 CREATE TABLE IF NOT EXISTS quotations (
   id VARCHAR(64) PRIMARY KEY,
@@ -224,12 +308,55 @@ CREATE TABLE IF NOT EXISTS customers (
   service_info TEXT NOT NULL,
   amount DECIMAL(15, 2) NULL,
   receipt MEDIUMTEXT NULL,
+  created_by_user_id VARCHAR(64) NULL,
   created_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
   updated_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
   INDEX idx_customers_name (full_name),
   INDEX idx_customers_service (service),
-  INDEX idx_customers_created (created_at)
+  INDEX idx_customers_created (created_at),
+  INDEX idx_customers_created_by (created_by_user_id),
+  CONSTRAINT fk_customers_created_by FOREIGN KEY (created_by_user_id) REFERENCES users(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Preserve the logged-in user who created each customer when upgrading an existing database.
+SET @customer_created_by_exists = (
+  SELECT COUNT(*) FROM information_schema.COLUMNS
+  WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'customers' AND COLUMN_NAME = 'created_by_user_id'
+);
+SET @customer_created_by_sql = IF(
+  @customer_created_by_exists = 0,
+  'ALTER TABLE customers ADD COLUMN created_by_user_id VARCHAR(64) NULL AFTER receipt',
+  'SELECT 1'
+);
+PREPARE customer_created_by_statement FROM @customer_created_by_sql;
+EXECUTE customer_created_by_statement;
+DEALLOCATE PREPARE customer_created_by_statement;
+
+SET @customer_created_by_index_exists = (
+  SELECT COUNT(*) FROM information_schema.STATISTICS
+  WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'customers' AND INDEX_NAME = 'idx_customers_created_by'
+);
+SET @customer_created_by_index_sql = IF(
+  @customer_created_by_index_exists = 0,
+  'ALTER TABLE customers ADD INDEX idx_customers_created_by (created_by_user_id)',
+  'SELECT 1'
+);
+PREPARE customer_created_by_index_statement FROM @customer_created_by_index_sql;
+EXECUTE customer_created_by_index_statement;
+DEALLOCATE PREPARE customer_created_by_index_statement;
+
+SET @customer_created_by_fk_exists = (
+  SELECT COUNT(*) FROM information_schema.TABLE_CONSTRAINTS
+  WHERE CONSTRAINT_SCHEMA = DATABASE() AND TABLE_NAME = 'customers' AND CONSTRAINT_NAME = 'fk_customers_created_by'
+);
+SET @customer_created_by_fk_sql = IF(
+  @customer_created_by_fk_exists = 0,
+  'ALTER TABLE customers ADD CONSTRAINT fk_customers_created_by FOREIGN KEY (created_by_user_id) REFERENCES users(id) ON DELETE SET NULL',
+  'SELECT 1'
+);
+PREPARE customer_created_by_fk_statement FROM @customer_created_by_fk_sql;
+EXECUTE customer_created_by_fk_statement;
+DEALLOCATE PREPARE customer_created_by_fk_statement;
 
 CREATE TABLE IF NOT EXISTS commissions (
   id VARCHAR(64) PRIMARY KEY,

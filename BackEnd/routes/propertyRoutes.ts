@@ -9,7 +9,8 @@ export const propertyRouter = Router();
 propertyRouter.get('/', optionalAuth, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
   const { type, location, status, search, minPrice, maxPrice, buy_rent } = req.query;
 
-  let properties = await db.getProperties();
+  const isAgencyPortal = req.query.portal === 'true' && req.user?.role === 'Agency';
+  let properties = await db.getProperties(isAgencyPortal ? { createdByUserId: req.user!.id } : undefined);
 
   if (type && typeof type === 'string' && type !== 'All') {
     properties = properties.filter(p => p.property_type.toLowerCase() === type.toLowerCase());
@@ -56,10 +57,10 @@ propertyRouter.get('/:id', asyncHandler(async (req: Request, res: Response) => {
   return res.json(property);
 }));
 
-// POST /api/properties (Admin or Agent)
+// POST /api/properties (Admin, Agent, or Agency)
 propertyRouter.post('/', authMiddleware, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-  if (req.user?.role !== 'Admin' && req.user?.role !== 'Agent') {
-    return res.status(403).json({ error: 'Forbidden: Admin or Agent role required to add properties.' });
+  if (!req.user || !['Admin', 'Agent', 'Agency'].includes(req.user.role)) {
+    return res.status(403).json({ error: 'Forbidden: This account cannot add properties.' });
   }
 
   const { title, description, property_type, price, image } = req.body;
@@ -83,7 +84,8 @@ propertyRouter.post('/', authMiddleware, asyncHandler(async (req: AuthenticatedR
     location: `${city}, ${country}`,
     price: Number(price),
     image: image || 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1200&auto=format&fit=crop&q=80',
-    status: req.body.status || 'Active'
+    status: req.body.status || 'Active',
+    created_by_user_id: req.user.id,
   });
 
   return res.status(201).json(newProperty);
@@ -91,12 +93,16 @@ propertyRouter.post('/', authMiddleware, asyncHandler(async (req: AuthenticatedR
 
 // PUT /api/properties/:id
 propertyRouter.put('/:id', authMiddleware, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-  if (req.user?.role !== 'Admin' && req.user?.role !== 'Agent') {
-    return res.status(403).json({ error: 'Forbidden: Admin or Agent role required.' });
+  if (!req.user || !['Admin', 'Agent', 'Agency'].includes(req.user.role)) {
+    return res.status(403).json({ error: 'Forbidden: This account cannot update properties.' });
   }
 
-  if (!await db.getPropertyById(req.params.id)) {
+  const current = await db.getPropertyById(req.params.id);
+  if (!current) {
     return res.status(404).json({ error: 'Property not found.' });
+  }
+  if (req.user.role === 'Agency' && current.created_by_user_id !== req.user.id) {
+    return res.status(403).json({ error: 'Forbidden: You can only update properties you created.' });
   }
 
   const city = typeof req.body.city === 'string' ? req.body.city.trim() : '';
@@ -121,13 +127,18 @@ propertyRouter.put('/:id', authMiddleware, asyncHandler(async (req: Authenticate
 
 // DELETE /api/properties/:id
 propertyRouter.delete('/:id', authMiddleware, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-  if (req.user?.role !== 'Admin') {
-    return res.status(403).json({ error: 'Forbidden: Only Admins can delete properties.' });
+  if (!req.user || !['Admin', 'Agency'].includes(req.user.role)) {
+    return res.status(403).json({ error: 'Forbidden: This account cannot delete properties.' });
+  }
+  const current = await db.getPropertyById(req.params.id);
+  if (!current) {
+    return res.status(404).json({ error: 'Property not found.' });
+  }
+  if (req.user.role === 'Agency' && current.created_by_user_id !== req.user.id) {
+    return res.status(403).json({ error: 'Forbidden: You can only delete properties you created.' });
   }
 
   const deleted = await db.deleteProperty(req.params.id);
-  if (!deleted) {
-    return res.status(404).json({ error: 'Property not found.' });
-  }
+  if (!deleted) return res.status(404).json({ error: 'Property not found.' });
   return res.json({ message: 'Property deleted successfully', id: req.params.id });
 }));

@@ -6,6 +6,7 @@ export interface User {
   status: 'Active' | 'Pending' | 'Inactive';
   profile_image: string;
   phone?: string;
+  pageAccess: string[];
   created_at: string;
   updated_at?: string;
 }
@@ -46,6 +47,7 @@ export interface Property {
   masjid?: 'Near' | 'Far';
   payment?: string;
   gallery?: string[];
+  created_by_user_id?: string | null;
   created_at: string;
   updated_at?: string;
 }
@@ -102,6 +104,7 @@ export interface HealthSpecialty {
   destinations: string[];
   image: string;
   status: HealthSpecialtyStatus;
+  createdByUserId: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -206,6 +209,9 @@ export interface Customer {
   serviceInfo: string;
   amount: number | null;
   receipt: string;
+  createdByUserId: string | null;
+  createdByName: string;
+  createdByEmail: string;
   createdAt: string;
   updatedAt: string;
 }
