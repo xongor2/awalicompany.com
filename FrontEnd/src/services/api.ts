@@ -1,4 +1,4 @@
-import { User, Property, PropertyLocationCategory, PropertyLocationKind, Service, EducationOpportunity, HealthSpecialty, Quotation, QuickPopup, QuickPopupDisplayPage, QuickPopupStatus, BlogPost, DashboardStats, Agency, Customer, RoleDefinition } from '../types';
+import { User, Property, PropertyLocationCategory, PropertyLocationKind, Service, EducationOpportunity, HealthSpecialty, Quotation, QuickPopup, QuickPopupDisplayPage, QuickPopupStatus, BlogPost, DashboardStats, Agency, Customer, Commission, CommissionService, RoleDefinition } from '../types';
 import { SAMPLE_AGENCIES } from '../data/sampleAgencies';
 
 const API_BASE = '/api';
@@ -33,7 +33,7 @@ export const api = {
     return handleResponse(res);
   },
 
-  async register(data: { name: string; email: string; password: string; confirmPassword: string; role?: string }): Promise<{ token: string; user: User }> {
+  async register(data: { name: string; email: string; password: string; confirmPassword: string }): Promise<{ token: string; user: User }> {
     const res = await fetch(`${API_BASE}/auth/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -657,6 +657,42 @@ export const api = {
 
   async deleteCustomer(id: string): Promise<{ message: string }> {
     const res = await fetch(`${API_BASE}/customers/${id}`, {
+      method: 'DELETE', headers: getAuthHeaders()
+    });
+    return handleResponse(res);
+  },
+
+  // Commissions
+  async getCommissions(params?: { search?: string; service?: string }): Promise<Commission[]> {
+    const query = new URLSearchParams();
+    if (params?.search) query.append('search', params.search);
+    if (params?.service && params.service !== 'All') query.append('service', params.service);
+    const res = await fetch(`${API_BASE}/commissions?${query.toString()}`, { headers: getAuthHeaders() });
+    return handleResponse(res);
+  },
+
+  async createCommissions(data: {
+    userId: string;
+    commissions: Array<{ service: CommissionService; percentage: number }>;
+  }): Promise<Commission[]> {
+    const res = await fetch(`${API_BASE}/commissions`, {
+      method: 'POST', headers: getAuthHeaders(), body: JSON.stringify(data)
+    });
+    return handleResponse(res);
+  },
+
+  async updateCommission(
+    id: string,
+    data: { service: CommissionService; percentage: number },
+  ): Promise<Commission> {
+    const res = await fetch(`${API_BASE}/commissions/${id}`, {
+      method: 'PUT', headers: getAuthHeaders(), body: JSON.stringify(data)
+    });
+    return handleResponse(res);
+  },
+
+  async deleteCommission(id: string): Promise<{ message: string }> {
+    const res = await fetch(`${API_BASE}/commissions/${id}`, {
       method: 'DELETE', headers: getAuthHeaders()
     });
     return handleResponse(res);

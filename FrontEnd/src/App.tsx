@@ -18,6 +18,7 @@ import { UsersListPage } from './pages/users/UsersListPage';
 import { ProfilePage } from './pages/profile/ProfilePage';
 import { AgenciesAdminPage } from './pages/agencies/AgenciesAdminPage';
 import { CustomersPage } from './pages/agencies/CustomersPage';
+import { CommissionsPage } from './pages/agencies/CommissionsPage';
 import { InvoicesPage } from './pages/agencies/InvoicesPage';
 import { RolesPage } from './pages/roles/RolesPage';
 import { HealthPage } from './pages/health/HealthPage';
@@ -220,6 +221,8 @@ const MainApplication: React.FC = () => {
       {activeSection === 'agencies' && <AgenciesAdminPage />}
 
       {activeSection === 'customers' && <CustomersPage />}
+
+      {activeSection === 'commissions' && <CommissionsPage />}
 
       {activeSection === 'invoices' && <InvoicesPage />}
 

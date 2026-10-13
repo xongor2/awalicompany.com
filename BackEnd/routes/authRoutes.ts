@@ -37,7 +37,7 @@ authRouter.post('/login', asyncHandler(async (req: Request, res: Response) => {
 
 // POST /api/auth/register
 authRouter.post('/register', asyncHandler(async (req: Request, res: Response) => {
-  const { name, email, password, confirmPassword, role } = req.body;
+  const { name, email, password, confirmPassword } = req.body;
 
   if (!name || !email || !password) {
     return res.status(400).json({ error: 'Full name, email, and password are required.' });
@@ -52,13 +52,11 @@ authRouter.post('/register', asyncHandler(async (req: Request, res: Response) =>
   }
 
   try {
-    const publicRoles = ['Agent', 'Agency', 'Client'] as const;
-    const selectedRole = publicRoles.includes(role) ? role : 'Client';
     const newUser = await db.createUser({
       name,
       email,
       password,
-      role: selectedRole,
+      role: 'Agency',
       status: 'Active'
     });
 
