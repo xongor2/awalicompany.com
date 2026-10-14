@@ -1,5 +1,5 @@
 import React, { FormEvent, useEffect, useState } from 'react';
-import { Check, LayoutDashboard, Building2, ShieldCheck, Newspaper, Users, KeyRound, User, HeartPulse, Handshake, GraduationCap, Settings, Megaphone, ContactRound, ReceiptText, ScrollText, BadgePercent } from 'lucide-react';
+import { Check, LayoutDashboard, Building2, ShieldCheck, Newspaper, Users, KeyRound, User, HeartPulse, Handshake, GraduationCap, Settings, Megaphone, ContactRound, ReceiptText, ScrollText, BadgePercent, CreditCard } from 'lucide-react';
 import { Modal } from '../../components/ui/Modal';
 import { Button } from '../../components/ui/Button';
 import { RoleDefinition } from '../../types';
@@ -12,6 +12,7 @@ export const ROLE_PAGES = [
   { id: 'services', label: 'Consulting', description: 'Consulting service management', icon: Handshake },
   { id: 'quotations', label: 'Quotations', description: 'Customer quotation management', icon: ScrollText },
   { id: 'agencies', label: 'Agencies', description: 'Partner agency directory', icon: ShieldCheck },
+  { id: 'payments', label: 'Payments', description: 'Agency payment records', icon: CreditCard },
   { id: 'customers', label: 'Customers', description: 'Agency customer records', icon: ContactRound },
   { id: 'commissions', label: 'Commissions', description: 'Agency service commission rules', icon: BadgePercent },
   { id: 'invoices', label: 'Invoices', description: 'Agency billing and invoices', icon: ReceiptText },

@@ -54,6 +54,7 @@ export const Navbar: React.FC<NavbarProps> = ({
     services: 'Consulting',
     quotations: 'Quotations',
     agencies: 'Agencies',
+    payments: 'Payments',
     customers: 'Customers',
     commissions: 'Commissions',
     invoices: 'Invoices',

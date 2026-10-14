@@ -59,6 +59,21 @@ const SAMPLE_GALLERY_PRESETS = [
   'https://images.unsplash.com/photo-1600585154526-990dced4db0d?w=800&auto=format&fit=crop&q=80',
 ];
 
+const MAX_IMAGE_SIZE_BYTES = 5 * 1024 * 1024;
+
+const readImageAsDataUrl = (file: File): Promise<string> => new Promise((resolve, reject) => {
+  const reader = new FileReader();
+  reader.onload = () => {
+    if (typeof reader.result === 'string') {
+      resolve(reader.result);
+      return;
+    }
+    reject(new Error(`Unable to read ${file.name}.`));
+  };
+  reader.onerror = () => reject(new Error(`Unable to read ${file.name}.`));
+  reader.readAsDataURL(file);
+});
+
 interface FormErrors {
   title?: string;
   address?: string;
@@ -201,7 +216,7 @@ export const PropertyFormPage: React.FC<PropertyFormPageProps> = ({
       return;
     }
 
-    if (file.size > 5 * 1024 * 1024) {
+    if (file.size > MAX_IMAGE_SIZE_BYTES) {
       showToast('Image size should be less than 5MB.', 'error');
       return;
     }
@@ -220,31 +235,31 @@ export const PropertyFormPage: React.FC<PropertyFormPageProps> = ({
   };
 
   // Handle Multiple Gallery Images Upload
-  const handleGalleryFilesUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files || files.length === 0) return;
-
-    const newImages: string[] = [];
-    let processed = 0;
-
-    Array.from(files).forEach((file) => {
-      if (!file.type.startsWith('image/')) return;
-      if (file.size > 5 * 1024 * 1024) return;
-
-      const reader = new FileReader();
-      reader.onload = () => {
-        if (typeof reader.result === 'string') {
-          newImages.push(reader.result);
-        }
-        processed++;
-        if (processed === files.length) {
-          setGalleryImages((prev) => [...prev, ...newImages]);
-          showToast(`Added ${newImages.length} photo(s) to gallery.`, 'info');
-        }
-      };
-      reader.readAsDataURL(file);
-    });
+  const handleGalleryFilesUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    // Snapshot the files before clearing the input. FileList is live and becomes empty
+    // when the input value is reset, which previously prevented the upload from finishing.
+    const selectedFiles = Array.from(e.target.files ?? []);
     e.target.value = '';
+    if (selectedFiles.length === 0) return;
+
+    const validFiles = selectedFiles.filter(file =>
+      file.type.startsWith('image/') && file.size <= MAX_IMAGE_SIZE_BYTES
+    );
+    const skippedCount = selectedFiles.length - validFiles.length;
+
+    if (validFiles.length === 0) {
+      showToast('Choose JPG, PNG, or WebP images smaller than 5MB.', 'error');
+      return;
+    }
+
+    try {
+      const newImages = await Promise.all(validFiles.map(readImageAsDataUrl));
+      setGalleryImages(current => Array.from(new Set([...current, ...newImages])));
+      const skippedMessage = skippedCount > 0 ? ` ${skippedCount} invalid or oversized file(s) were skipped.` : '';
+      showToast(`Added ${newImages.length} photo(s) to gallery.${skippedMessage}`, 'info');
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : 'Unable to read the selected gallery photos.', 'error');
+    }
   };
 
   // Remove gallery photo

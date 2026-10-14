@@ -20,6 +20,7 @@ import {
   ReceiptText,
   ScrollText,
   BadgePercent,
+  CreditCard,
   X
 } from 'lucide-react';
 import { BrandLogo } from '../common/BrandLogo';
@@ -27,7 +28,7 @@ import { Avatar } from '../ui/Avatar';
 import { useAuth } from '../../context/AuthContext';
 import { canAccessSection } from '../../utils/pageAccess';
 
-export type NavSection = 'dashboard' | 'health' | 'education' | 'properties' | 'property-form' | 'countries' | 'cities' | 'services' | 'quotations' | 'agencies' | 'customers' | 'commissions' | 'invoices' | 'settings' | 'blogs' | 'quick-popup' | 'users' | 'roles' | 'profile';
+export type NavSection = 'dashboard' | 'health' | 'education' | 'properties' | 'property-form' | 'countries' | 'cities' | 'services' | 'quotations' | 'agencies' | 'payments' | 'customers' | 'commissions' | 'invoices' | 'settings' | 'blogs' | 'quick-popup' | 'users' | 'roles' | 'profile';
 
 interface SidebarProps {
   currentSection: NavSection;
@@ -44,7 +45,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   const { user, logout } = useAuth();
   const isPropertySection = currentSection === 'properties' || currentSection === 'property-form' || currentSection === 'countries' || currentSection === 'cities';
-  const isAgenciesSection = currentSection === 'agencies' || currentSection === 'customers' || currentSection === 'commissions' || currentSection === 'invoices';
+  const isAgenciesSection = currentSection === 'agencies' || currentSection === 'payments' || currentSection === 'customers' || currentSection === 'commissions' || currentSection === 'invoices';
   const isSettingsSection = currentSection === 'settings' || currentSection === 'blogs' || currentSection === 'quick-popup' || currentSection === 'users' || currentSection === 'roles' || currentSection === 'profile';
   const [expandedSection, setExpandedSection] = useState<'properties' | 'agencies' | 'settings' | null>(() => {
     if (isPropertySection) return 'properties';
@@ -71,6 +72,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   }, [isPropertySection, isAgenciesSection, isSettingsSection]);
 
   const agencyChildren = [
+    { id: 'payments' as NavSection, label: 'Payments', icon: CreditCard },
     { id: 'customers' as NavSection, label: 'Customers', icon: ContactRound },
     { id: 'commissions' as NavSection, label: 'Commissions', icon: BadgePercent },
     { id: 'invoices' as NavSection, label: 'Invoices', icon: ReceiptText },
