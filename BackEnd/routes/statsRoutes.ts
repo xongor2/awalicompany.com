@@ -6,7 +6,10 @@ import { asyncHandler } from '../middleware/asyncHandler.ts';
 export const statsRouter = Router();
 
 // GET /api/stats (Admin overview stats)
-statsRouter.get('/', authMiddleware, asyncHandler(async (_req: AuthenticatedRequest, res: Response) => {
+statsRouter.get('/', authMiddleware, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+  if (req.user?.role !== 'Admin') {
+    return res.status(403).json({ error: 'Forbidden: Admin access required.' });
+  }
   const [properties, services, agencies, blogs, users] = await Promise.all([
     db.getProperties(), db.getServices(), db.getAgencies(), db.getBlogs(), db.getUsers(),
   ]);

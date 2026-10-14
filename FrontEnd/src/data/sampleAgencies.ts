@@ -3,6 +3,7 @@ import { Agency } from '../types';
 export const SAMPLE_AGENCIES: Agency[] = [
   {
     id: 'agency-1',
+    userId: null,
     name: 'Solas Maritime & Logistics Agency',
     logo: '',
     country: 'United Arab Emirates',
@@ -17,6 +18,7 @@ export const SAMPLE_AGENCIES: Agency[] = [
   },
   {
     id: 'agency-2',
+    userId: null,
     name: 'Apex Point Consulting & Property Agency',
     logo: '',
     country: 'Turkey',
@@ -31,6 +33,7 @@ export const SAMPLE_AGENCIES: Agency[] = [
   },
   {
     id: 'agency-3',
+    userId: null,
     name: 'Horn Horizon Trade & Procurement Agency',
     logo: '',
     country: 'Somalia',
@@ -45,6 +48,7 @@ export const SAMPLE_AGENCIES: Agency[] = [
   },
   {
     id: 'agency-4',
+    userId: null,
     name: 'Nile Valley Educational Admissions Agency',
     logo: '',
     country: 'Egypt',
@@ -59,6 +63,7 @@ export const SAMPLE_AGENCIES: Agency[] = [
   },
   {
     id: 'agency-5',
+    userId: null,
     name: 'Khatib & Partners Commercial Realty',
     logo: '',
     country: 'Qatar',
@@ -73,6 +78,7 @@ export const SAMPLE_AGENCIES: Agency[] = [
   },
   {
     id: 'agency-6',
+    userId: null,
     name: 'Meridian Global Healthcare Placement Agency',
     logo: '',
     country: 'Malaysia',

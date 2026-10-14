@@ -3,6 +3,7 @@ import { SAMPLE_AGENCIES } from '../data/sampleAgencies';
 
 const API_BASE = '/api';
 type CustomerPayload = Omit<Customer, 'id' | 'createdAt' | 'updatedAt' | 'createdByUserId' | 'createdByName' | 'createdByEmail'>;
+type AgencyPayload = Omit<Agency, 'id' | 'createdAt' | 'userId'>;
 
 function getAuthHeaders(): HeadersInit {
   const token = localStorage.getItem('aw_ali_token');
@@ -239,9 +240,10 @@ export const api = {
   },
 
   // Education opportunities
-  async getEducationOpportunities(search?: string): Promise<EducationOpportunity[]> {
+  async getEducationOpportunities(search?: string, portal = false): Promise<EducationOpportunity[]> {
     const query = new URLSearchParams();
     if (search) query.append('search', search);
+    if (portal) query.append('portal', 'true');
     const res = await fetch(`${API_BASE}/education?${query.toString()}`, {
       headers: getAuthHeaders()
     });
@@ -574,18 +576,21 @@ export const api = {
   },
 
   // Agencies
-  async getAgencies(params?: { search?: string; country?: string; city?: string; verified?: string | boolean }): Promise<Agency[]> {
+  async getAgencies(params?: { search?: string; country?: string; city?: string; verified?: string | boolean; portal?: boolean }): Promise<Agency[]> {
     try {
       const query = new URLSearchParams();
       if (params?.search) query.append('search', params.search);
       if (params?.country && params.country !== 'All') query.append('country', params.country);
       if (params?.city && params.city !== 'All') query.append('city', params.city);
       if (params?.verified !== undefined && params.verified !== 'All') query.append('verified', String(params.verified));
-      const res = await fetch(`${API_BASE}/agencies?${query.toString()}`);
+      if (params?.portal) query.append('portal', 'true');
+      const res = await fetch(`${API_BASE}/agencies?${query.toString()}`, params?.portal ? { headers: getAuthHeaders() } : undefined);
       if (res.ok) {
         return await res.json();
       }
-    } catch {
+      if (params?.portal) return handleResponse(res);
+    } catch (error) {
+      if (params?.portal) throw error;
       // Fallback to sample data
     }
     let result = [...SAMPLE_AGENCIES];
@@ -613,7 +618,7 @@ export const api = {
     return result;
   },
 
-  async createAgency(data: Omit<Agency, 'id' | 'createdAt'>): Promise<Agency> {
+  async createAgency(data: AgencyPayload): Promise<Agency> {
     const res = await fetch(`${API_BASE}/agencies`, {
       method: 'POST',
       headers: getAuthHeaders(),
