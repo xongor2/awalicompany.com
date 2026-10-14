@@ -17,6 +17,7 @@ import { BlogsListPage } from './pages/blogs/BlogsListPage';
 import { UsersListPage } from './pages/users/UsersListPage';
 import { ProfilePage } from './pages/profile/ProfilePage';
 import { AgenciesAdminPage } from './pages/agencies/AgenciesAdminPage';
+import { PaymentsPage } from './pages/agencies/PaymentsPage';
 import { CustomersPage } from './pages/agencies/CustomersPage';
 import { CommissionsPage } from './pages/agencies/CommissionsPage';
 import { InvoicesPage } from './pages/agencies/InvoicesPage';
@@ -230,6 +231,8 @@ const MainApplication: React.FC = () => {
       {currentSection === 'quotations' && <QuotationsPage />}
 
       {currentSection === 'agencies' && <AgenciesAdminPage />}
+
+      {currentSection === 'payments' && <PaymentsPage />}
 
       {currentSection === 'customers' && <CustomersPage />}
 

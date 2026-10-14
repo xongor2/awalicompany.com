@@ -12,3 +12,9 @@ INSERT IGNORE INTO roles (id, name, description, type, page_access) VALUES
    '["dashboard","agencies","profile"]'),
   ('role-client', 'Client', 'Limited portal access for authorized clients.', 'System',
    '["dashboard","properties","services","profile"]');
+
+-- Keep the new Payments page available to existing Admin and Agency system roles.
+UPDATE roles
+SET page_access = JSON_ARRAY_APPEND(page_access, '$', 'payments')
+WHERE name IN ('Admin', 'Agency')
+  AND JSON_CONTAINS(page_access, JSON_QUOTE('payments')) = 0;

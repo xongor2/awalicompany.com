@@ -14,6 +14,7 @@ const PAGE_ORDER: NavSection[] = [
   'services',
   'quotations',
   'agencies',
+  'payments',
   'customers',
   'commissions',
   'invoices',

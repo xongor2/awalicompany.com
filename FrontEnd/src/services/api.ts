@@ -682,7 +682,7 @@ export const api = {
 
   async createCommissions(data: {
     userId: string;
-    commissions: Array<{ service: CommissionService; percentage: number }>;
+    commissions: Array<{ service: CommissionService | 'All Services'; percentage: number }>;
   }): Promise<Commission[]> {
     const res = await fetch(`${API_BASE}/commissions`, {
       method: 'POST', headers: getAuthHeaders(), body: JSON.stringify(data)

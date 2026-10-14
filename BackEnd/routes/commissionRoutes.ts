@@ -7,6 +7,8 @@ import { asyncHandler } from '../middleware/asyncHandler.ts';
 export const commissionRouter = Router();
 
 const SERVICES: CommissionService[] = ['Health', 'Education', 'Real Estate', 'Consulting'];
+const ALL_SERVICES = 'All Services' as const;
+type CommissionInputService = CommissionService | typeof ALL_SERVICES;
 
 commissionRouter.use(authMiddleware);
 
@@ -16,12 +18,17 @@ const requireAdmin = (req: AuthenticatedRequest, res: Response): boolean => {
   return false;
 };
 
-const parseCommission = (value: unknown): { service: CommissionService; percentage: number } | null => {
+const parseCommission = (
+  value: unknown,
+  allowAllServices = false,
+): { service: CommissionInputService; percentage: number } | null => {
   if (!value || typeof value !== 'object') return null;
   const item = value as Record<string, unknown>;
-  const service = item.service as CommissionService;
+  const service = item.service as CommissionInputService;
   const percentage = Number(item.percentage);
-  if (!SERVICES.includes(service) || !Number.isFinite(percentage) || percentage <= 0 || percentage > 100) {
+  const hasValidService = SERVICES.includes(service as CommissionService)
+    || (allowAllServices && service === ALL_SERVICES);
+  if (!hasValidService || !Number.isFinite(percentage) || percentage <= 0 || percentage > 100) {
     return null;
   }
   return { service, percentage };
@@ -53,26 +60,39 @@ commissionRouter.post('/', asyncHandler(async (req: AuthenticatedRequest, res: R
     return res.status(400).json({ error: 'Commissions can only be assigned to users with the Agency role.' });
   }
 
-  const commissions = requested.map(parseCommission);
+  const commissions = requested.map(item => parseCommission(item, true));
   if (commissions.some(item => item === null)) {
     return res.status(400).json({ error: 'Each commission needs a valid service and a percentage from 0.01 to 100.' });
   }
-  const validCommissions = commissions as Array<{ service: CommissionService; percentage: number }>;
-  if (new Set(validCommissions.map(item => item.service)).size !== validCommissions.length) {
+  const validCommissions = commissions as Array<{ service: CommissionInputService; percentage: number }>;
+  const includesAllServices = validCommissions.some(item => item.service === ALL_SERVICES);
+  if (includesAllServices && validCommissions.length > 1) {
+    return res.status(400).json({ error: 'All Services must be used by itself because it applies the percentage to every service.' });
+  }
+
+  const expandedCommissions: Array<{ service: CommissionService; percentage: number }> = validCommissions.flatMap(item =>
+    item.service === ALL_SERVICES
+      ? SERVICES.map(service => ({ service, percentage: item.percentage }))
+      : [{ service: item.service, percentage: item.percentage }]
+  );
+  if (new Set(expandedCommissions.map(item => item.service)).size !== expandedCommissions.length) {
     return res.status(400).json({ error: 'Each service can only be added once for the selected user.' });
   }
 
-  return res.status(201).json(await db.createCommissions(userId, validCommissions));
+  return res.status(201).json(await db.createCommissions(userId, expandedCommissions));
 }));
 
 commissionRouter.put('/:id', asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
   if (!requireAdmin(req, res)) return;
   const commission = parseCommission(req.body);
-  if (!commission) {
+  if (!commission || commission.service === ALL_SERVICES) {
     return res.status(400).json({ error: 'Select a valid service and enter a percentage from 0.01 to 100.' });
   }
   try {
-    const updated = await db.updateCommission(req.params.id, commission);
+    const updated = await db.updateCommission(req.params.id, {
+      service: commission.service,
+      percentage: commission.percentage,
+    });
     if (!updated) return res.status(404).json({ error: 'Commission not found.' });
     return res.json(updated);
   } catch (error: any) {

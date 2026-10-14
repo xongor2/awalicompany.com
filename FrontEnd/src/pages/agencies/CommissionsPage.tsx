@@ -13,17 +13,20 @@ import type { Commission, CommissionService, User } from '../../types';
 
 type CommissionDraft = {
   id: string;
-  service: CommissionService | '';
+  service: CommissionService | 'All Services' | '';
   percentage: string;
 };
 
 type AgencyUser = Pick<User, 'id' | 'name' | 'email'>;
 
 const services: CommissionService[] = ['Health', 'Education', 'Real Estate', 'Consulting'];
+const allServicesValue = 'All Services' as const;
 const serviceOptions = [
   { value: '', label: 'Select a service' },
+  { value: allServicesValue, label: 'All Services (same percentage)' },
   ...services.map(service => ({ value: service, label: service })),
 ];
+const editServiceOptions = serviceOptions.filter(option => option.value !== allServicesValue);
 
 const createDraft = (): CommissionDraft => ({
   id: `draft-${Date.now()}-${Math.random().toString(16).slice(2)}`,
@@ -119,7 +122,12 @@ export const CommissionsPage: React.FC = () => {
   };
 
   const updateDraft = (id: string, updates: Partial<CommissionDraft>) => {
-    setDrafts(current => current.map(draft => draft.id === id ? { ...draft, ...updates } : draft));
+    setDrafts(current => {
+      const updated = current.map(draft => draft.id === id ? { ...draft, ...updates } : draft);
+      return updates.service === allServicesValue
+        ? updated.filter(draft => draft.id === id)
+        : updated;
+    });
     setFormError('');
   };
 
@@ -148,6 +156,11 @@ export const CommissionsPage: React.FC = () => {
       setFormError('Every row needs a service and a commission percentage from 0.01 to 100.');
       return;
     }
+    const includesAllServices = normalized.some(item => item.service === allServicesValue);
+    if (includesAllServices && normalized.length > 1) {
+      setFormError('All Services must be used by itself because it applies the percentage to every service.');
+      return;
+    }
     if (new Set(normalized.map(item => item.service)).size !== normalized.length) {
       setFormError('Choose each service only once for this user.');
       return;
@@ -167,11 +180,12 @@ export const CommissionsPage: React.FC = () => {
         await api.createCommissions({
           userId: selectedUser.id,
           commissions: normalized.map(item => ({
-            service: item.service as CommissionService,
+            service: item.service as CommissionService | typeof allServicesValue,
             percentage: item.percentage,
           })),
         });
-        showToast(`${normalized.length} commission ${normalized.length === 1 ? 'rule' : 'rules'} saved successfully.`, 'success');
+        const savedRuleCount = includesAllServices ? services.length : normalized.length;
+        showToast(`${savedRuleCount} commission ${savedRuleCount === 1 ? 'rule' : 'rules'} saved successfully.`, 'success');
       }
       closeForm();
       await loadCommissions();
@@ -289,8 +303,8 @@ export const CommissionsPage: React.FC = () => {
                     <Select
                       label="Service *"
                       value={draft.service}
-                      onChange={event => updateDraft(draft.id, { service: event.target.value as CommissionService | '' })}
-                      options={serviceOptions}
+                      onChange={event => updateDraft(draft.id, { service: event.target.value as CommissionDraft['service'] })}
+                      options={editing ? editServiceOptions : serviceOptions}
                     />
                     <Input
                       type="number"
@@ -323,7 +337,7 @@ export const CommissionsPage: React.FC = () => {
                   variant="secondary"
                   leftIcon={<Plus className="h-4 w-4" />}
                   onClick={addDraft}
-                  disabled={drafts.length >= services.length}
+                  disabled={drafts.length >= services.length || drafts.some(draft => draft.service === allServicesValue)}
                 >
                   Add Another Commission
                 </Button>
