@@ -59,7 +59,7 @@ export const EducationPage: React.FC = () => {
   const loadItems = useCallback(async () => {
     setIsLoading(true);
     try {
-      setItems(await api.getEducationOpportunities());
+      setItems(await api.getEducationOpportunities(undefined, true));
     } catch (error) {
       showToast(error instanceof Error ? error.message : 'Failed to load education opportunities.', 'error');
     } finally {

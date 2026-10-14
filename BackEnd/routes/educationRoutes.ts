@@ -1,7 +1,7 @@
-import { Router, Request, Response } from 'express';
+import { Router, Response } from 'express';
 import { db } from '../../DataBase/repository.ts';
 import type { EducationDegree } from '../../DataBase/models.ts';
-import { authMiddleware, AuthenticatedRequest } from '../middleware/authMiddleware.ts';
+import { authMiddleware, optionalAuth, AuthenticatedRequest } from '../middleware/authMiddleware.ts';
 import { asyncHandler } from '../middleware/asyncHandler.ts';
 
 export const educationRouter = Router();
@@ -33,9 +33,10 @@ const normalizeThumbnail = (value: unknown): string | null => {
   return normalizeUrl(thumbnail);
 };
 
-educationRouter.get('/', asyncHandler(async (req: Request, res: Response) => {
+educationRouter.get('/', optionalAuth, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
   const search = typeof req.query.search === 'string' ? req.query.search.trim().toLowerCase() : '';
-  let opportunities = await db.getEducationOpportunities();
+  const isAgencyPortal = req.query.portal === 'true' && req.user?.role === 'Agency';
+  let opportunities = await db.getEducationOpportunities(isAgencyPortal ? { createdByUserId: req.user!.id } : undefined);
   if (search) {
     opportunities = opportunities.filter(item =>
       item.title.toLowerCase().includes(search) ||
@@ -47,8 +48,8 @@ educationRouter.get('/', asyncHandler(async (req: Request, res: Response) => {
 }));
 
 educationRouter.post('/', authMiddleware, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-  if (req.user?.role !== 'Admin') {
-    return res.status(403).json({ error: 'Forbidden: Admin access required.' });
+  if (!req.user || !['Admin', 'Agency'].includes(req.user.role)) {
+    return res.status(403).json({ error: 'Forbidden: This account cannot add education opportunities.' });
   }
 
   const title = typeof req.body.title === 'string' ? req.body.title.trim() : '';
@@ -69,16 +70,20 @@ educationRouter.post('/', authMiddleware, asyncHandler(async (req: Authenticated
     thumbnail,
     availableDegrees,
     universityUrl,
+    createdByUserId: req.user.id,
   }));
 }));
 
 educationRouter.put('/:id', authMiddleware, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-  if (req.user?.role !== 'Admin') {
-    return res.status(403).json({ error: 'Forbidden: Admin access required.' });
+  if (!req.user || !['Admin', 'Agency'].includes(req.user.role)) {
+    return res.status(403).json({ error: 'Forbidden: This account cannot update education opportunities.' });
   }
 
   const current = await db.getEducationOpportunityById(req.params.id);
   if (!current) return res.status(404).json({ error: 'Education opportunity not found.' });
+  if (req.user.role === 'Agency' && current.createdByUserId !== req.user.id) {
+    return res.status(403).json({ error: 'Forbidden: You can only update education opportunities you created.' });
+  }
 
   const title = typeof req.body.title === 'string' ? req.body.title.trim() : current.title;
   const description = typeof req.body.description === 'string' ? req.body.description.trim() : current.description;
@@ -106,8 +111,13 @@ educationRouter.put('/:id', authMiddleware, asyncHandler(async (req: Authenticat
 }));
 
 educationRouter.delete('/:id', authMiddleware, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-  if (req.user?.role !== 'Admin') {
-    return res.status(403).json({ error: 'Forbidden: Admin access required.' });
+  if (!req.user || !['Admin', 'Agency'].includes(req.user.role)) {
+    return res.status(403).json({ error: 'Forbidden: This account cannot delete education opportunities.' });
+  }
+  const current = await db.getEducationOpportunityById(req.params.id);
+  if (!current) return res.status(404).json({ error: 'Education opportunity not found.' });
+  if (req.user.role === 'Agency' && current.createdByUserId !== req.user.id) {
+    return res.status(403).json({ error: 'Forbidden: You can only delete education opportunities you created.' });
   }
   if (!await db.deleteEducationOpportunity(req.params.id)) {
     return res.status(404).json({ error: 'Education opportunity not found.' });

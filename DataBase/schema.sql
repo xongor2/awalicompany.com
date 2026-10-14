@@ -120,9 +120,12 @@ CREATE TABLE IF NOT EXISTS education_opportunities (
   thumbnail MEDIUMTEXT NULL,
   available_degrees JSON NOT NULL,
   university_url VARCHAR(2048) NOT NULL,
+  created_by_user_id VARCHAR(64) NULL,
   created_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
   updated_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
-  INDEX idx_education_opportunities_title (title(100))
+  INDEX idx_education_opportunities_title (title(100)),
+  INDEX idx_education_opportunities_created_by (created_by_user_id),
+  CONSTRAINT fk_education_opportunities_created_by FOREIGN KEY (created_by_user_id) REFERENCES users(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Add thumbnails safely when upgrading an Education table created by an earlier release.
@@ -140,6 +143,45 @@ SET @education_thumbnail_sql = IF(
 PREPARE education_thumbnail_statement FROM @education_thumbnail_sql;
 EXECUTE education_thumbnail_statement;
 DEALLOCATE PREPARE education_thumbnail_statement;
+
+SET @education_created_by_exists = (
+  SELECT COUNT(*) FROM information_schema.COLUMNS
+  WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'education_opportunities' AND COLUMN_NAME = 'created_by_user_id'
+);
+SET @education_created_by_sql = IF(
+  @education_created_by_exists = 0,
+  'ALTER TABLE education_opportunities ADD COLUMN created_by_user_id VARCHAR(64) NULL AFTER university_url',
+  'SELECT 1'
+);
+PREPARE education_created_by_statement FROM @education_created_by_sql;
+EXECUTE education_created_by_statement;
+DEALLOCATE PREPARE education_created_by_statement;
+
+SET @education_created_by_index_exists = (
+  SELECT COUNT(*) FROM information_schema.STATISTICS
+  WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'education_opportunities' AND INDEX_NAME = 'idx_education_opportunities_created_by'
+);
+SET @education_created_by_index_sql = IF(
+  @education_created_by_index_exists = 0,
+  'ALTER TABLE education_opportunities ADD INDEX idx_education_opportunities_created_by (created_by_user_id)',
+  'SELECT 1'
+);
+PREPARE education_created_by_index_statement FROM @education_created_by_index_sql;
+EXECUTE education_created_by_index_statement;
+DEALLOCATE PREPARE education_created_by_index_statement;
+
+SET @education_created_by_fk_exists = (
+  SELECT COUNT(*) FROM information_schema.TABLE_CONSTRAINTS
+  WHERE CONSTRAINT_SCHEMA = DATABASE() AND TABLE_NAME = 'education_opportunities' AND CONSTRAINT_NAME = 'fk_education_opportunities_created_by'
+);
+SET @education_created_by_fk_sql = IF(
+  @education_created_by_fk_exists = 0,
+  'ALTER TABLE education_opportunities ADD CONSTRAINT fk_education_opportunities_created_by FOREIGN KEY (created_by_user_id) REFERENCES users(id) ON DELETE SET NULL',
+  'SELECT 1'
+);
+PREPARE education_created_by_fk_statement FROM @education_created_by_fk_sql;
+EXECUTE education_created_by_fk_statement;
+DEALLOCATE PREPARE education_created_by_fk_statement;
 
 CREATE TABLE IF NOT EXISTS health_specialties (
   id VARCHAR(64) PRIMARY KEY,
@@ -289,13 +331,54 @@ CREATE TABLE IF NOT EXISTS blog_categories (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS agencies (
-  id VARCHAR(64) PRIMARY KEY, name VARCHAR(255) NOT NULL, logo MEDIUMTEXT NULL,
+  id VARCHAR(64) PRIMARY KEY, user_id VARCHAR(64) NULL, name VARCHAR(255) NOT NULL, logo MEDIUMTEXT NULL,
   country VARCHAR(100) NOT NULL, city VARCHAR(100) NOT NULL, contact_name VARCHAR(150) NOT NULL,
   email VARCHAR(191) NOT NULL, phone VARCHAR(50) NOT NULL, website VARCHAR(255) NOT NULL DEFAULT '',
   address VARCHAR(255) NOT NULL DEFAULT '', verified BOOLEAN NOT NULL DEFAULT FALSE,
   created_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-  INDEX idx_agencies_country (country), INDEX idx_agencies_city (city), INDEX idx_agencies_verified (verified)
+  UNIQUE KEY uq_agencies_user (user_id), INDEX idx_agencies_country (country), INDEX idx_agencies_city (city), INDEX idx_agencies_verified (verified),
+  CONSTRAINT fk_agencies_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Link an Agency profile to exactly one Agency user when upgrading an existing database.
+SET @agency_user_id_exists = (
+  SELECT COUNT(*) FROM information_schema.COLUMNS
+  WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'agencies' AND COLUMN_NAME = 'user_id'
+);
+SET @agency_user_id_sql = IF(
+  @agency_user_id_exists = 0,
+  'ALTER TABLE agencies ADD COLUMN user_id VARCHAR(64) NULL AFTER id',
+  'SELECT 1'
+);
+PREPARE agency_user_id_statement FROM @agency_user_id_sql;
+EXECUTE agency_user_id_statement;
+DEALLOCATE PREPARE agency_user_id_statement;
+
+SET @agency_user_index_exists = (
+  SELECT COUNT(*) FROM information_schema.STATISTICS
+  WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'agencies' AND INDEX_NAME = 'uq_agencies_user'
+);
+SET @agency_user_index_sql = IF(
+  @agency_user_index_exists = 0,
+  'ALTER TABLE agencies ADD UNIQUE INDEX uq_agencies_user (user_id)',
+  'SELECT 1'
+);
+PREPARE agency_user_index_statement FROM @agency_user_index_sql;
+EXECUTE agency_user_index_statement;
+DEALLOCATE PREPARE agency_user_index_statement;
+
+SET @agency_user_fk_exists = (
+  SELECT COUNT(*) FROM information_schema.TABLE_CONSTRAINTS
+  WHERE CONSTRAINT_SCHEMA = DATABASE() AND TABLE_NAME = 'agencies' AND CONSTRAINT_NAME = 'fk_agencies_user'
+);
+SET @agency_user_fk_sql = IF(
+  @agency_user_fk_exists = 0,
+  'ALTER TABLE agencies ADD CONSTRAINT fk_agencies_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL',
+  'SELECT 1'
+);
+PREPARE agency_user_fk_statement FROM @agency_user_fk_sql;
+EXECUTE agency_user_fk_statement;
+DEALLOCATE PREPARE agency_user_fk_statement;
 
 CREATE TABLE IF NOT EXISTS customers (
   id VARCHAR(64) PRIMARY KEY,

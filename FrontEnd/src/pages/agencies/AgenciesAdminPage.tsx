@@ -1,21 +1,12 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Plus,
-  ShieldCheck,
   Search,
-  Filter,
   Eye,
   Edit2,
   Trash2,
   MapPin,
-  Mail,
-  Phone,
-  Globe,
   Building2,
-  CheckCircle2,
-  XCircle,
-  RotateCcw,
-  User,
   X,
 } from 'lucide-react';
 import { PageHeader } from '../../components/layout/PageHeader';
@@ -27,9 +18,13 @@ import { ConfirmModal } from '../../components/common/ConfirmModal';
 import { Agency } from '../../types';
 import { api } from '../../services/api';
 import { useToast } from '../../components/ui/Toast';
+import { useAuth } from '../../context/AuthContext';
 
 export const AgenciesAdminPage: React.FC = () => {
   const { showToast } = useToast();
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'Admin';
+  const isAgencyUser = user?.role === 'Agency';
   const [agencies, setAgencies] = useState<Agency[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -60,21 +55,21 @@ export const AgenciesAdminPage: React.FC = () => {
     logo: '',
   });
 
-  const loadAgencies = async () => {
+  const loadAgencies = useCallback(async () => {
     try {
       setIsLoading(true);
-      const data = await api.getAgencies();
+      const data = await api.getAgencies({ portal: isAgencyUser });
       setAgencies(data);
-    } catch (err: any) {
+    } catch {
       showToast('Failed to load agencies directory.', 'error');
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [isAgencyUser, showToast]);
 
   useEffect(() => {
-    loadAgencies();
-  }, []);
+    void loadAgencies();
+  }, [loadAgencies]);
 
   const locationOptions = useMemo(() => {
     const set = new Set<string>();
@@ -113,8 +108,8 @@ export const AgenciesAdminPage: React.FC = () => {
       name: '',
       country: '',
       city: '',
-      contactName: '',
-      email: '',
+      contactName: isAgencyUser ? user?.name || '' : '',
+      email: isAgencyUser ? user?.email || '' : '',
       phone: '',
       website: '',
       address: '',
@@ -143,7 +138,7 @@ export const AgenciesAdminPage: React.FC = () => {
 
   const handleSaveForm = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formState.name.trim() || !formState.country.trim() || !formState.city.trim() || !formState.contactName.trim() || !formState.email.trim()) {
+    if (!formState.name.trim() || !formState.country.trim() || !formState.city.trim() || (!isAgencyUser && !formState.contactName.trim()) || !formState.email.trim()) {
       showToast('Please fill all required fields.', 'error');
       return;
     }
@@ -198,13 +193,20 @@ export const AgenciesAdminPage: React.FC = () => {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Agencies Management"
-        subtitle="Oversee verified international partner agencies, contact persons, and compliance credentials on file."
-        action={
-          <Button onClick={handleOpenAdd} leftIcon={<Plus className="w-4 h-4" />}>
-            Add Agency
+        title={isAgencyUser ? 'Agency Profile' : 'Agencies Management'}
+        subtitle={isAgencyUser
+          ? 'Complete and maintain your public Agency profile.'
+          : 'Oversee verified international partner agencies, contact persons, and compliance credentials on file.'}
+        action={(isAdmin || isAgencyUser) ? (
+          <Button
+            onClick={() => isAgencyUser && agencies[0] ? handleOpenEdit(agencies[0]) : handleOpenAdd()}
+            leftIcon={isAgencyUser ? <Building2 className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+          >
+            {isAgencyUser
+              ? (agencies[0] ? 'Edit Agency Profile' : 'Complete Agency Profile')
+              : 'Add Agency'}
           </Button>
-        }
+        ) : undefined}
       />
 
       {/* Filter Bar */}
@@ -328,9 +330,10 @@ export const AgenciesAdminPage: React.FC = () => {
                     <td className="py-3.5 px-4">
                       <button
                         type="button"
-                        onClick={() => handleToggleVerified(agency)}
-                        title="Click to toggle status"
-                        className="cursor-pointer"
+                        onClick={() => isAdmin && handleToggleVerified(agency)}
+                        title={isAdmin ? 'Click to toggle status' : 'Published Agency profile'}
+                        disabled={!isAdmin}
+                        className={isAdmin ? 'cursor-pointer' : 'cursor-default'}
                       >
                         {agency.verified ? (
                           <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#E3F1EB] border border-[#A9D3C0] text-[#1F7A55] text-[10px] font-bold tracking-wider uppercase select-none">
@@ -368,14 +371,16 @@ export const AgenciesAdminPage: React.FC = () => {
                         >
                           <Edit2 className="w-4 h-4" />
                         </button>
-                        <button
-                          type="button"
-                          onClick={() => setDeleteTarget(agency)}
-                          className="p-1.5 rounded-lg text-rose-600 hover:bg-rose-50 dark:hover:bg-white/10"
-                          title="Delete Agency"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                        {isAdmin && (
+                          <button
+                            type="button"
+                            onClick={() => setDeleteTarget(agency)}
+                            className="p-1.5 rounded-lg text-rose-600 hover:bg-rose-50 dark:hover:bg-white/10"
+                            title="Delete Agency"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -383,7 +388,9 @@ export const AgenciesAdminPage: React.FC = () => {
               ) : (
                 <tr>
                   <td colSpan={6} className="py-12 text-center text-[#6B7280]">
-                    No agencies match the selected criteria.
+                    {isAgencyUser
+                      ? 'Complete your Agency profile to publish it on the public Agencies page.'
+                      : 'No agencies match the selected criteria.'}
                   </td>
                 </tr>
               )}
@@ -404,7 +411,9 @@ export const AgenciesAdminPage: React.FC = () => {
           >
             <div className="flex items-center justify-between border-b border-gray-100 dark:border-[#202754] pb-3">
               <h2 className="font-heading text-lg font-bold text-[#0F1F4D] dark:text-white">
-                {editingAgency ? 'Edit Agency' : 'Add New Agency'}
+                {isAgencyUser
+                  ? (editingAgency ? 'Edit Agency Profile' : 'Complete Agency Profile')
+                  : (editingAgency ? 'Edit Agency' : 'Add New Agency')}
               </h2>
               <button
                 type="button"
@@ -456,19 +465,21 @@ export const AgenciesAdminPage: React.FC = () => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-bold text-[#0F1F4D] dark:text-slate-200 mb-1">
-                    Contact Person *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={formState.contactName}
-                    onChange={(e) => setFormState({ ...formState, contactName: e.target.value })}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 dark:border-[#202754] bg-[#F8F9FC] dark:bg-[#0B1030] text-xs sm:text-sm text-[#0F1F4D] dark:text-white focus:outline-none focus:border-[#FF7817] focus:ring-1 focus:ring-[#FF7817]"
-                  />
-                </div>
+              <div className={`grid grid-cols-1 ${isAgencyUser ? '' : 'sm:grid-cols-2'} gap-4`}>
+                {!isAgencyUser && (
+                  <div>
+                    <label className="block text-xs font-bold text-[#0F1F4D] dark:text-slate-200 mb-1">
+                      Contact Person *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={formState.contactName}
+                      onChange={(e) => setFormState({ ...formState, contactName: e.target.value })}
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 dark:border-[#202754] bg-[#F8F9FC] dark:bg-[#0B1030] text-xs sm:text-sm text-[#0F1F4D] dark:text-white focus:outline-none focus:border-[#FF7817] focus:ring-1 focus:ring-[#FF7817]"
+                    />
+                  </div>
+                )}
                 <div>
                   <label className="block text-xs font-bold text-[#0F1F4D] dark:text-slate-200 mb-1">
                     Email *
@@ -520,25 +531,31 @@ export const AgenciesAdminPage: React.FC = () => {
                 />
               </div>
 
-              <div className="flex items-center gap-2 pt-2">
-                <input
-                  type="checkbox"
-                  id="admin-verified"
-                  checked={formState.verified}
-                  onChange={(e) => setFormState({ ...formState, verified: e.target.checked })}
-                  className="w-4 h-4 rounded text-[#1F7A55] focus:ring-[#1F7A55]"
-                />
-                <label htmlFor="admin-verified" className="text-xs font-medium text-[#0F1F4D] dark:text-slate-200 cursor-pointer">
-                  Mark as Verified Agency (Display verified green badge)
-                </label>
-              </div>
+              {isAdmin && (
+                <div className="flex items-center gap-2 pt-2">
+                  <input
+                    type="checkbox"
+                    id="admin-verified"
+                    checked={formState.verified}
+                    onChange={(e) => setFormState({ ...formState, verified: e.target.checked })}
+                    className="w-4 h-4 rounded text-[#1F7A55] focus:ring-[#1F7A55]"
+                  />
+                  <label htmlFor="admin-verified" className="text-xs font-medium text-[#0F1F4D] dark:text-slate-200 cursor-pointer">
+                    Mark as Verified Agency (Display verified green badge)
+                  </label>
+                </div>
+              )}
 
               <div className="flex items-center justify-end gap-3 pt-3 border-t border-gray-100 dark:border-[#202754]">
                 <Button variant="secondary" type="button" onClick={() => setIsFormOpen(false)}>
                   Cancel
                 </Button>
                 <Button type="submit" disabled={isSaving}>
-                  {isSaving ? 'Saving...' : editingAgency ? 'Update Agency' : 'Create Agency'}
+                  {isSaving
+                    ? 'Saving...'
+                    : isAgencyUser
+                      ? (editingAgency ? 'Update Profile' : 'Publish Profile')
+                      : (editingAgency ? 'Update Agency' : 'Create Agency')}
                 </Button>
               </div>
             </form>

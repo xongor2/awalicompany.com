@@ -86,6 +86,7 @@ export interface EducationOpportunity {
   thumbnail: string;
   availableDegrees: EducationDegree[];
   universityUrl: string;
+  createdByUserId: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -183,6 +184,7 @@ export interface BlogPost {
 
 export interface Agency {
   id: string;
+  userId: string | null;
   name: string;
   logo?: string;
   country: string;

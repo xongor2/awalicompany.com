@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   Building2,
   BriefcaseBusiness,
@@ -29,11 +29,13 @@ import { Avatar } from '../../components/ui/Avatar';
 import { ActionMenu } from '../../components/ui/Dropdown';
 import { Skeleton } from '../../components/ui/Skeleton';
 import { ConfirmModal } from '../../components/common/ConfirmModal';
-import { Property, User, DashboardStats } from '../../types';
+import { Customer, Property, User, DashboardStats } from '../../types';
 import { api } from '../../services/api';
 import { useToast } from '../../components/ui/Toast';
 import { NavSection } from '../../components/layout/Sidebar';
 import { isProtectedUser } from '../../utils/protectedUsers';
+import { useAuth } from '../../context/AuthContext';
+import { canAccessSection } from '../../utils/pageAccess';
 
 interface DashboardPageProps {
   onNavigate: (section: NavSection) => void;
@@ -57,9 +59,18 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
   onEditUser,
 }) => {
   const { showToast } = useToast();
+  const { user } = useAuth();
+  const isAgency = user?.role === 'Agency';
+  const pageAccess = user?.pageAccess ?? [];
+  const canAccessProperties = canAccessSection(pageAccess, 'properties');
+  const canAccessServices = canAccessSection(pageAccess, 'services');
+  const canAccessUsers = canAccessSection(pageAccess, 'users');
+  const canAccessCustomers = canAccessSection(pageAccess, 'customers');
+  const canAccessBlogs = canAccessSection(pageAccess, 'blogs');
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [recentProperties, setRecentProperties] = useState<Property[]>([]);
   const [recentUsers, setRecentUsers] = useState<User[]>([]);
+  const [recentCustomers, setRecentCustomers] = useState<Customer[]>([]);
   const [chartData, setChartData] = useState<{ month: string; listings: number; sales: number }[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -67,19 +78,26 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
   const [deleteTarget, setDeleteTarget] = useState<{ type: 'property' | 'user'; id: string; title: string } | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const fetchDashboardData = async () => {
+  const fetchDashboardData = useCallback(async () => {
     try {
       setIsLoading(true);
-      const [statsRes, propsRes, usersRes, chartRes] = await Promise.all([
+      const peopleRequest: Promise<User[] | Customer[]> = isAgency ? api.getCustomers() : api.getRecentUsers();
+      const [statsRes, propsRes, peopleRes, chartRes] = await Promise.all([
         api.getDashboardStats(),
         api.getRecentProperties(),
-        api.getRecentUsers(),
+        peopleRequest,
         api.getChartData(),
       ]);
 
       setStats(statsRes);
       setRecentProperties(propsRes);
-      setRecentUsers(usersRes);
+      if (isAgency) {
+        setRecentCustomers((peopleRes as Customer[]).slice(0, 5));
+        setRecentUsers([]);
+      } else {
+        setRecentUsers(peopleRes as User[]);
+        setRecentCustomers([]);
+      }
       setChartData(chartRes);
     } catch (err: any) {
       console.error('Failed to load dashboard data:', err);
@@ -87,11 +105,11 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [isAgency, showToast]);
 
   useEffect(() => {
-    fetchDashboardData();
-  }, []);
+    void fetchDashboardData();
+  }, [fetchDashboardData]);
 
   const handleDeleteConfirm = async () => {
     if (!deleteTarget) return;
@@ -105,7 +123,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
         showToast('User account deleted successfully.', 'success');
       }
       setDeleteTarget(null);
-      fetchDashboardData();
+      void fetchDashboardData();
     } catch (err: any) {
       showToast(err.message || 'Failed to delete record.', 'error');
     } finally {
@@ -131,7 +149,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
       <PageHeader
         title="Dashboard"
         subtitle="Welcome back to AW Ali Company management system"
-        action={
+        action={canAccessProperties ? (
           <Button
             variant="accent"
             onClick={onOpenAddProperty}
@@ -139,7 +157,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
           >
             Add Property
           </Button>
-        }
+        ) : undefined}
       />
 
       {/* 4 Summary Stat Cards */}
@@ -156,12 +174,12 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
           </div>
           <div className="mt-2 flex items-baseline justify-between">
             <div className="font-heading text-2xl font-bold text-[#171A2B] dark:text-white">
-              {isLoading ? <Skeleton className="h-8 w-16" /> : stats?.totalProperties || 128}
+              {isLoading ? <Skeleton className="h-8 w-16" /> : stats?.totalProperties ?? 0}
             </div>
           </div>
           <div className="mt-2 flex items-center text-xs font-medium text-[#FF7817]">
             <TrendingUp className="w-3.5 h-3.5 mr-1" />
-            <span>{stats?.changes.properties || '+12 this month'}</span>
+            <span>{stats?.changes.properties ?? '0 this month'}</span>
           </div>
         </Card>
 
@@ -177,12 +195,12 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
           </div>
           <div className="mt-2 flex items-baseline justify-between">
             <div className="font-heading text-2xl font-bold text-[#171A2B] dark:text-white">
-              {isLoading ? <Skeleton className="h-8 w-16" /> : stats?.totalServices || 24}
+              {isLoading ? <Skeleton className="h-8 w-16" /> : stats?.totalServices ?? 0}
             </div>
           </div>
           <div className="mt-2 flex items-center text-xs font-medium text-[#FF7817]">
             <TrendingUp className="w-3.5 h-3.5 mr-1" />
-            <span>{stats?.changes.services || '+3 this month'}</span>
+            <span>{stats?.changes.services ?? '0 this month'}</span>
           </div>
         </Card>
 
@@ -190,7 +208,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
         <Card className="hover:border-[#FF7817]/40 transition-all">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-[#5F667A] dark:text-[#8A90A2]">
-              Total Users
+              {isAgency ? 'Total Customers' : 'Total Users'}
             </span>
             <div className="w-8 h-8 rounded-lg bg-[#FFF0E4] dark:bg-[#252B5C] flex items-center justify-center text-[#FF7817]">
               <Users className="w-4 h-4" />
@@ -198,12 +216,12 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
           </div>
           <div className="mt-2 flex items-baseline justify-between">
             <div className="font-heading text-2xl font-bold text-[#171A2B] dark:text-white">
-              {isLoading ? <Skeleton className="h-8 w-16" /> : stats?.totalUsers || 56}
+              {isLoading ? <Skeleton className="h-8 w-16" /> : stats?.totalUsers ?? 0}
             </div>
           </div>
           <div className="mt-2 flex items-center text-xs font-medium text-[#FF7817]">
             <TrendingUp className="w-3.5 h-3.5 mr-1" />
-            <span>{stats?.changes.users || '+8 this month'}</span>
+            <span>{stats?.changes.users ?? '0 this month'}</span>
           </div>
         </Card>
 
@@ -219,12 +237,12 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
           </div>
           <div className="mt-2 flex items-baseline justify-between">
             <div className="font-heading text-2xl font-bold text-[#171A2B] dark:text-white">
-              {isLoading ? <Skeleton className="h-8 w-16" /> : stats?.activeListings || 89}
+              {isLoading ? <Skeleton className="h-8 w-16" /> : stats?.activeListings ?? 0}
             </div>
           </div>
           <div className="mt-2 flex items-center text-xs font-medium text-[#FF7817]">
             <TrendingUp className="w-3.5 h-3.5 mr-1" />
-            <span>{stats?.changes.activeListings || '+5 this week'}</span>
+            <span>{stats?.changes.activeListings ?? '0 this week'}</span>
           </div>
         </Card>
       </div>
@@ -236,7 +254,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
           {/* Recent Properties */}
           <Card
             title="Recent Properties"
-            action={
+            action={canAccessProperties ? (
               <button
                 onClick={() => onNavigate('properties')}
                 className="text-xs font-semibold text-[#FF7817] hover:underline flex items-center gap-1 cursor-pointer"
@@ -244,7 +262,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                 <span>View All</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </button>
-            }
+            ) : undefined}
             noPadding
           >
             <div className="overflow-x-auto">
@@ -404,18 +422,18 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
 
         {/* RIGHT COLUMN: 5 cols */}
         <div className="lg:col-span-5 space-y-6">
-          {/* Recent Users */}
+          {/* Recent Users / Agency Customers */}
           <Card
-            title="Recent Users"
-            action={
+            title={isAgency ? 'Recent Customers' : 'Recent Users'}
+            action={(isAgency ? canAccessCustomers : canAccessUsers) ? (
               <button
-                onClick={() => onNavigate('users')}
+                onClick={() => onNavigate(isAgency ? 'customers' : 'users')}
                 className="text-xs font-semibold text-[#FF7817] hover:underline flex items-center gap-1 cursor-pointer"
               >
                 <span>View All</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </button>
-            }
+            ) : undefined}
             noPadding
           >
             <div className="divide-y divide-[#D9DDE8] dark:divide-[#252B5C]">
@@ -425,6 +443,30 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                   <Skeleton className="h-10 w-full" />
                   <Skeleton className="h-10 w-full" />
                 </div>
+              ) : isAgency ? (
+                recentCustomers.length === 0 ? (
+                  <div className="p-6 text-center text-xs text-[#8A90A2]">
+                    No customers registered by you yet.
+                  </div>
+                ) : recentCustomers.map(customer => (
+                  <div
+                    key={customer.id}
+                    className="flex items-center justify-between gap-3 p-3.5 px-4 transition-colors hover:bg-[#EEF0F5]/40 dark:hover:bg-[#252B5C]/30"
+                  >
+                    <div className="flex min-w-0 items-center gap-3">
+                      <Avatar name={customer.fullName} size="md" />
+                      <div className="min-w-0">
+                        <span className="block truncate text-xs font-bold text-[#171A2B] dark:text-white">
+                          {customer.fullName}
+                        </span>
+                        <span className="block truncate text-[11px] text-[#8A90A2]">
+                          {customer.email || customer.phone}
+                        </span>
+                      </div>
+                    </div>
+                    <Badge variant="active">{customer.service}</Badge>
+                  </div>
+                ))
               ) : recentUsers.length === 0 ? (
                 <div className="p-6 text-center text-xs text-[#8A90A2]">
                   No registered users found.
@@ -489,7 +531,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
           {/* Quick Actions Card */}
           <Card title="Quick Actions">
             <div className="space-y-2.5">
-              <button
+              {canAccessProperties ? <button
                 type="button"
                 onClick={onOpenAddProperty}
                 className="w-full flex items-center justify-between p-3 rounded-lg border border-[#D9DDE8] dark:border-[#252B5C] bg-[#F8F9FC] dark:bg-[#0B1030]/50 hover:border-[#FF7817] dark:hover:border-[#FF7817] transition-all text-left cursor-pointer group"
@@ -508,9 +550,9 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                   </div>
                 </div>
                 <ArrowRight className="w-4 h-4 text-[#8A90A2] group-hover:text-[#FF7817] group-hover:translate-x-0.5 transition-all" />
-              </button>
+              </button> : null}
 
-              <button
+              {canAccessServices ? <button
                 type="button"
                 onClick={onOpenAddService}
                 className="w-full flex items-center justify-between p-3 rounded-lg border border-[#D9DDE8] dark:border-[#252B5C] bg-[#F8F9FC] dark:bg-[#0B1030]/50 hover:border-[#FF7817] dark:hover:border-[#FF7817] transition-all text-left cursor-pointer group"
@@ -529,9 +571,9 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                   </div>
                 </div>
                 <ArrowRight className="w-4 h-4 text-[#8A90A2] group-hover:text-[#151A46] dark:group-hover:text-white group-hover:translate-x-0.5 transition-all" />
-              </button>
+              </button> : null}
 
-              <button
+              {canAccessUsers ? <button
                 type="button"
                 onClick={onOpenAddUser}
                 className="w-full flex items-center justify-between p-3 rounded-lg border border-[#D9DDE8] dark:border-[#252B5C] bg-[#F8F9FC] dark:bg-[#0B1030]/50 hover:border-[#FF7817] dark:hover:border-[#FF7817] transition-all text-left cursor-pointer group"
@@ -550,9 +592,9 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                   </div>
                 </div>
                 <ArrowRight className="w-4 h-4 text-[#8A90A2] group-hover:text-[#FF7817] group-hover:translate-x-0.5 transition-all" />
-              </button>
+              </button> : null}
 
-              <button
+              {canAccessBlogs ? <button
                 type="button"
                 onClick={() => onNavigate('blogs')}
                 className="w-full flex items-center justify-between p-3 rounded-lg border border-[#D9DDE8] dark:border-[#252B5C] bg-[#F8F9FC] dark:bg-[#0B1030]/50 hover:border-[#FF7817] dark:hover:border-[#FF7817] transition-all text-left cursor-pointer group"
@@ -571,7 +613,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
                   </div>
                 </div>
                 <ArrowRight className="w-4 h-4 text-[#8A90A2] group-hover:text-[#FF7817] group-hover:translate-x-0.5 transition-all" />
-              </button>
+              </button> : null}
             </div>
           </Card>
 
