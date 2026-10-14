@@ -231,6 +231,29 @@ export interface Commission {
   updatedAt: string;
 }
 
+export interface PaymentDetail {
+  customerId: string;
+  customerName: string;
+  service: CommissionService;
+  serviceInfo: string;
+  serviceAmount: number;
+  commissionPercentage: number;
+  commissionAmount: number;
+  registeredAt: string;
+}
+
+export interface AgencyPayment {
+  id: string;
+  userId: string;
+  agencyName: string;
+  agencyEmail: string;
+  month: string;
+  customerCount: number;
+  serviceAmount: number;
+  commissionAmount: number;
+  details: PaymentDetail[];
+}
+
 export interface DashboardStats {
   totalProperties: number;
   totalServices: number;

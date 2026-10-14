@@ -5,7 +5,7 @@ import type { ResultSetHeader } from 'mysql2';
 import { query } from './mysql.ts';
 import { runMigrations } from './migrate.ts';
 import { hashPassword } from './security.ts';
-import type { Agency, BlogPost, Commission, CommissionService, Customer, EducationOpportunity, HealthSpecialty, Inquiry, Property, PropertyLocationCategory, PropertyLocationKind, Quotation, QuickPopup, QuickPopupDisplayPage, RoleDefinition, Service, User } from './models.ts';
+import type { Agency, AgencyPayment, BlogPost, Commission, CommissionService, Customer, EducationOpportunity, HealthSpecialty, Inquiry, PaymentDetail, Property, PropertyLocationCategory, PropertyLocationKind, Quotation, QuickPopup, QuickPopupDisplayPage, RoleDefinition, Service, User } from './models.ts';
 
 const PROTECTED_EMAILS = new Set(['awalicompany2020@gmail.com', 'halsan252@gmail.com']);
 const DEFAULT_AVATAR = '/images/avatars/nature-tree.png';
@@ -936,6 +936,62 @@ class MySQLRepository {
     return (await query<ResultSetHeader>('DELETE FROM commissions WHERE id = ?', [id])).affectedRows > 0;
   }
 
+  async getAgencyPayments(filter?: { userId?: string }): Promise<AgencyPayment[]> {
+    const userFilter = filter?.userId ? 'AND c.created_by_user_id = ?' : '';
+    const rows = await query<any[]>(
+      `SELECT c.id AS customer_id, c.full_name AS customer_name, c.service, c.service_info,
+              c.amount AS service_amount, c.created_at AS registered_at,
+              u.id AS user_id, COALESCE(NULLIF(a.name, ''), u.name) AS agency_name,
+              u.email AS agency_email, commission.percentage AS commission_percentage,
+              ROUND(c.amount * commission.percentage / 100, 2) AS commission_amount,
+              DATE_FORMAT(c.created_at, '%Y-%m') AS payment_month
+       FROM customers c
+       JOIN users u ON u.id = c.created_by_user_id AND u.role = 'Agency'
+       LEFT JOIN agencies a ON a.user_id = u.id
+       JOIN commissions commission ON commission.user_id = u.id AND commission.service = c.service
+       WHERE c.amount IS NOT NULL ${userFilter}
+       ORDER BY c.created_at DESC, u.name ASC, c.full_name ASC`,
+      filter?.userId ? [filter.userId] : [],
+    );
+
+    const grouped = new Map<string, AgencyPayment>();
+    for (const row of rows) {
+      const userId = String(row.user_id);
+      const month = String(row.payment_month);
+      const key = `${userId}:${month}`;
+      const detail: PaymentDetail = {
+        customerId: String(row.customer_id),
+        customerName: String(row.customer_name),
+        service: row.service,
+        serviceInfo: String(row.service_info || ''),
+        serviceAmount: Number(row.service_amount || 0),
+        commissionPercentage: Number(row.commission_percentage || 0),
+        commissionAmount: Number(row.commission_amount || 0),
+        registeredAt: iso(row.registered_at),
+      };
+      const payment = grouped.get(key) || {
+        id: key,
+        userId,
+        agencyName: String(row.agency_name || ''),
+        agencyEmail: String(row.agency_email || ''),
+        month,
+        customerCount: 0,
+        serviceAmount: 0,
+        commissionAmount: 0,
+        details: [],
+      };
+      payment.details.push(detail);
+      payment.customerCount += 1;
+      payment.serviceAmount = Number((payment.serviceAmount + detail.serviceAmount).toFixed(2));
+      payment.commissionAmount = Number((payment.commissionAmount + detail.commissionAmount).toFixed(2));
+      grouped.set(key, payment);
+    }
+
+    return Array.from(grouped.values()).sort((left, right) =>
+      right.month.localeCompare(left.month) || left.agencyName.localeCompare(right.agencyName)
+    );
+  }
+
   async getRoles():Promise<RoleDefinition[]>{return (await query<any[]>('SELECT * FROM roles ORDER BY type DESC, name')).map(toRole);}
 
   async createRole(data:Pick<RoleDefinition,'name'|'description'|'pageAccess'>):Promise<RoleDefinition>{
@@ -1020,5 +1076,5 @@ export async function initializeDatabase():Promise<void>{
   console.log('[DataBase] MySQL schema and production data are ready.');
 }
 
-export type { User, Property, PropertyLocationCategory, PropertyLocationKind, Service, EducationOpportunity, HealthSpecialty, Quotation, QuickPopup, BlogPost, Agency, Customer, Commission, CommissionService, RoleDefinition, Inquiry } from './models.ts';
+export type { User, Property, PropertyLocationCategory, PropertyLocationKind, Service, EducationOpportunity, HealthSpecialty, Quotation, QuickPopup, BlogPost, Agency, Customer, Commission, CommissionService, AgencyPayment, PaymentDetail, RoleDefinition, Inquiry } from './models.ts';
 export { verifyPassword } from './security.ts';
