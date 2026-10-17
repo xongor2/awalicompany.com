@@ -59,7 +59,11 @@ export const HealthPage: React.FC<HealthPageProps> = ({
   const [activeModalSpecialty, setActiveModalSpecialty] = useState<Specialty | null>(null);
   const [isInquiryModalOpen, setIsInquiryModalOpen] = useState(false);
   const [inquirySuccess, setInquirySuccess] = useState(false);
-  const [activeHospitalSlide, setActiveHospitalSlide] = useState(0);
+  const [hospitalSlide, setHospitalSlide] = useState({
+    current: 0,
+    previous: 0,
+    changeId: 0,
+  });
 
   // Inquiry form state
   const [inquiryForm, setInquiryForm] = useState({
@@ -90,7 +94,11 @@ export const HealthPage: React.FC<HealthPageProps> = ({
 
   useEffect(() => {
     const intervalId = window.setInterval(() => {
-      setActiveHospitalSlide(current => (current + 1) % hospitalSlides.length);
+      setHospitalSlide(({ current, changeId }) => ({
+        previous: current,
+        current: (current + 1) % hospitalSlides.length,
+        changeId: changeId + 1,
+      }));
     }, 4500);
 
     return () => window.clearInterval(intervalId);
@@ -357,19 +365,33 @@ export const HealthPage: React.FC<HealthPageProps> = ({
                 aria-roledescription="carousel"
                 aria-label="TÜRKİYE HASTANESİ photo gallery"
               >
-                <img
-                  key={hospitalSlides[activeHospitalSlide]}
-                  src={hospitalSlides[activeHospitalSlide]}
-                  alt={`TÜRKİYE HASTANESİ view ${activeHospitalSlide + 1}`}
-                  className="w-full h-[440px] object-cover animate-in fade-in duration-700"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#0B1030] via-[#0B1030]/40 to-transparent" />
+                <div className="relative h-[440px] overflow-hidden">
+                  <img
+                    src={hospitalSlides[hospitalSlide.previous]}
+                    alt=""
+                    aria-hidden="true"
+                    className="absolute inset-0 h-full w-full object-cover"
+                  />
+                  <img
+                    key={`${hospitalSlide.current}-${hospitalSlide.changeId}`}
+                    src={hospitalSlides[hospitalSlide.current]}
+                    alt={`TÜRKİYE HASTANESİ view ${hospitalSlide.current + 1}`}
+                    className={`absolute inset-0 h-full w-full object-cover ${
+                      hospitalSlide.changeId === 0
+                        ? ''
+                        : 'hospital-slide-enter'
+                    }`}
+                  />
+                </div>
+                <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
 
                 <button
                   type="button"
-                  onClick={() => setActiveHospitalSlide(current =>
-                    (current - 1 + hospitalSlides.length) % hospitalSlides.length
-                  )}
+                  onClick={() => setHospitalSlide(({ current, changeId }) => ({
+                    previous: current,
+                    current: (current - 1 + hospitalSlides.length) % hospitalSlides.length,
+                    changeId: changeId + 1,
+                  }))}
                   className="absolute left-4 top-1/2 -translate-y-1/2 rounded-full border border-white/25 bg-[#0B1030]/45 p-2.5 text-white backdrop-blur-md transition-colors hover:bg-[#FF7817] focus:outline-none focus:ring-2 focus:ring-white"
                   aria-label="Show previous hospital photo"
                 >
@@ -377,9 +399,11 @@ export const HealthPage: React.FC<HealthPageProps> = ({
                 </button>
                 <button
                   type="button"
-                  onClick={() => setActiveHospitalSlide(current =>
-                    (current + 1) % hospitalSlides.length
-                  )}
+                  onClick={() => setHospitalSlide(({ current, changeId }) => ({
+                    previous: current,
+                    current: (current + 1) % hospitalSlides.length,
+                    changeId: changeId + 1,
+                  }))}
                   className="absolute right-4 top-1/2 -translate-y-1/2 rounded-full border border-white/25 bg-[#0B1030]/45 p-2.5 text-white backdrop-blur-md transition-colors hover:bg-[#FF7817] focus:outline-none focus:ring-2 focus:ring-white"
                   aria-label="Show next hospital photo"
                 >
