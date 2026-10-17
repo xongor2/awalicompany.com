@@ -10,6 +10,7 @@ import {
   MessageCircle,
   PhoneCall,
   Clock,
+  ChevronLeft,
   ChevronRight,
   ArrowRight,
   Users,
@@ -22,6 +23,11 @@ import {
   HelpCircle,
 } from 'lucide-react';
 import { api } from '../../services/api';
+
+const hospitalSlides = Array.from(
+  { length: 11 },
+  (_, index) => `/images/other-Imge/${index + 1}.jpeg`,
+);
 
 export interface HealthPageProps {
   onNavigateHome: () => void;
@@ -53,6 +59,7 @@ export const HealthPage: React.FC<HealthPageProps> = ({
   const [activeModalSpecialty, setActiveModalSpecialty] = useState<Specialty | null>(null);
   const [isInquiryModalOpen, setIsInquiryModalOpen] = useState(false);
   const [inquirySuccess, setInquirySuccess] = useState(false);
+  const [activeHospitalSlide, setActiveHospitalSlide] = useState(0);
 
   // Inquiry form state
   const [inquiryForm, setInquiryForm] = useState({
@@ -79,6 +86,14 @@ export const HealthPage: React.FC<HealthPageProps> = ({
         if (active) setIsSpecialtiesLoading(false);
       });
     return () => { active = false; };
+  }, []);
+
+  useEffect(() => {
+    const intervalId = window.setInterval(() => {
+      setActiveHospitalSlide(current => (current + 1) % hospitalSlides.length);
+    }, 4500);
+
+    return () => window.clearInterval(intervalId);
   }, []);
 
   const categories = ['All', ...new Set(specialties.map(item => item.category))];
@@ -334,33 +349,47 @@ export const HealthPage: React.FC<HealthPageProps> = ({
               </div>
             </div>
 
-            {/* Right Hero Visual Feature */}
+            {/* Right Hero Hospital Slideshow */}
             <div className="lg:col-span-5 relative">
-              <div className="relative rounded-3xl overflow-hidden border border-white/15 shadow-2xl bg-[#151A46]">
+              <div
+                className="relative rounded-3xl overflow-hidden border border-white/15 shadow-2xl bg-[#151A46]"
+                role="region"
+                aria-roledescription="carousel"
+                aria-label="TÜRKİYE HASTANESİ photo gallery"
+              >
                 <img
-                  src="https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=900&auto=format&fit=crop&q=80"
-                  alt="Modern Hospital Room and Medical Facility"
-                  className="w-full h-[440px] object-cover"
+                  key={hospitalSlides[activeHospitalSlide]}
+                  src={hospitalSlides[activeHospitalSlide]}
+                  alt={`TÜRKİYE HASTANESİ view ${activeHospitalSlide + 1}`}
+                  className="w-full h-[440px] object-cover animate-in fade-in duration-700"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-[#0B1030] via-[#0B1030]/40 to-transparent" />
 
-                {/* Floating highlight card */}
-                <div className="absolute bottom-6 left-6 right-6 p-5 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 text-white space-y-2 shadow-2xl">
-                  <div className="flex items-center justify-between">
-                    <span className="inline-flex items-center gap-1.5 text-xs font-bold text-[#FF7817] uppercase tracking-wider">
-                      <ShieldCheck className="w-4 h-4 text-[#FF7817]" />
-                      JCI Accredited Care
-                    </span>
-                    <span className="text-[10px] bg-[#FF7817] text-white px-2 py-0.5 rounded-full font-bold">
-                      Verified
-                    </span>
-                  </div>
-                  <h3 className="font-heading text-base font-bold text-white">
-                    Direct Liaison with Turkish & Indian Super Specialty Hospitals
+                <button
+                  type="button"
+                  onClick={() => setActiveHospitalSlide(current =>
+                    (current - 1 + hospitalSlides.length) % hospitalSlides.length
+                  )}
+                  className="absolute left-4 top-1/2 -translate-y-1/2 rounded-full border border-white/25 bg-[#0B1030]/45 p-2.5 text-white backdrop-blur-md transition-colors hover:bg-[#FF7817] focus:outline-none focus:ring-2 focus:ring-white"
+                  aria-label="Show previous hospital photo"
+                >
+                  <ChevronLeft className="h-5 w-5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveHospitalSlide(current =>
+                    (current + 1) % hospitalSlides.length
+                  )}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 rounded-full border border-white/25 bg-[#0B1030]/45 p-2.5 text-white backdrop-blur-md transition-colors hover:bg-[#FF7817] focus:outline-none focus:ring-2 focus:ring-white"
+                  aria-label="Show next hospital photo"
+                >
+                  <ChevronRight className="h-5 w-5" />
+                </button>
+
+                <div className="absolute bottom-6 left-6 right-6 rounded-2xl border border-white/20 bg-white/10 p-5 text-white shadow-2xl backdrop-blur-xl">
+                  <h3 className="text-center font-heading text-xl font-bold text-white">
+                    TÜRKİYE HASTANESİ
                   </h3>
-                  <p className="text-xs text-[#D9DDE8] leading-relaxed">
-                    Personal medical escort, pre negotiated treatment packages, zero hidden hospital fees.
-                  </p>
                 </div>
               </div>
             </div>
