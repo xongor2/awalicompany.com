@@ -1,4 +1,4 @@
-import { User, Property, PropertyLocationCategory, PropertyLocationKind, Service, EducationOpportunity, HealthSpecialty, Quotation, QuickPopup, QuickPopupDisplayPage, QuickPopupStatus, BlogPost, DashboardStats, Agency, Customer, Commission, CommissionService, RoleDefinition } from '../types';
+import { User, Property, PropertyLocationCategory, PropertyLocationKind, Service, EducationOpportunity, HealthSpecialty, Quotation, QuickPopup, QuickPopupDisplayPage, QuickPopupStatus, BlogPost, DashboardStats, Agency, Customer, Commission, CommissionService, AgencyPayment, RoleDefinition } from '../types';
 import { SAMPLE_AGENCIES } from '../data/sampleAgencies';
 
 const API_BASE = '/api';
@@ -704,6 +704,11 @@ export const api = {
     const res = await fetch(`${API_BASE}/commissions/${id}`, {
       method: 'DELETE', headers: getAuthHeaders()
     });
+    return handleResponse(res);
+  },
+
+  async getPayments(): Promise<AgencyPayment[]> {
+    const res = await fetch(`${API_BASE}/payments`, { headers: getAuthHeaders() });
     return handleResponse(res);
   }
 };
